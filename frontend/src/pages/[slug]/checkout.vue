@@ -136,8 +136,13 @@
   // Dynamic Payment Methods
   const availablePaymentMethods = computed(() => {
     const methods = []
-    // Handle both array and potential legacy formats, default to stripe if missing
-    const configMethods = event.value?.config?.paymentMethods || ['stripe']
+    
+    // If event/config not loaded yet, return empty to avoid defaults
+    if (!event.value || !event.value.config) return methods
+
+    // Handle both array and potential legacy formats
+    // Do NOT default to stripe here, rely strictly on what's in config
+    const configMethods = event.value?.config?.paymentMethods || []
 
     if (configMethods.includes('stripe')) {
       methods.push({ 
@@ -165,8 +170,16 @@
 
   // Auto-select first payment method
   watch(availablePaymentMethods, (newMethods) => {
-    if (newMethods.length > 0 && !selectedPaymentMethod.value) {
-      selectedPaymentMethod.value = newMethods[0].value
+    // If we have methods available
+    if (newMethods.length > 0) {
+       // If no method selected, OR current selection is not in the new list (e.g. config changed or loaded)
+       const currentValid = newMethods.find(m => m.value === selectedPaymentMethod.value)
+       if (!selectedPaymentMethod.value || !currentValid) {
+         selectedPaymentMethod.value = newMethods[0].value
+       }
+    } else {
+      // No methods available, clear selection
+      selectedPaymentMethod.value = null
     }
   }, { immediate: true })
 
