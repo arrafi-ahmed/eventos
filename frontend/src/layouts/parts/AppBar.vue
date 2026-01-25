@@ -48,7 +48,7 @@
   // Computed logo width - responsive: mobile or desktop
   const { xs } = useDisplay()
   const computedLogoWidth = computed(() => {
-    if (xs) {
+    if (xs.value) {
       return headerSettings.value.logoWidthMobile || 120
     }
     return headerSettings.value.logoWidthLeft || 300

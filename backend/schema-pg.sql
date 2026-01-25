@@ -5,7 +5,7 @@ CREATE TABLE organization
     location TEXT,
     logo     VARCHAR(255),
     verification_status VARCHAR(20) DEFAULT 'unverified',
-    verified_by INT REFERENCES app_user (id) ON DELETE SET NULL,
+    verified_by INT,
     verified_at TIMESTAMP,
     rejection_reason TEXT,
     created_at TIMESTAMP DEFAULT NOW()
@@ -472,6 +472,9 @@ CREATE TABLE support_otp (
 );
 
 -- Circular Reference / Late Dependency Handling
+ALTER TABLE organization
+    ADD CONSTRAINT organization_verified_by_fkey FOREIGN KEY (verified_by) REFERENCES app_user (id) ON DELETE SET NULL;
+
 ALTER TABLE registration
     ADD COLUMN primary_attendee_id INT REFERENCES attendees (id);
 
