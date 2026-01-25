@@ -116,7 +116,7 @@ class OrangeMoneyAdapter {
                 order_id: orderId,
                 amount: scaledAmount,
                 return_url: sanitizeUrl(`${VUE_BASE_URL}/${metadata.eventSlug || 'event'}/success?session_id=${orderId}`).substring(0, 120),
-                cancel_url: sanitizeUrl(`${VUE_BASE_URL}/payment/cancel`).substring(0, 120),
+                cancel_url: sanitizeUrl(`${VUE_BASE_URL}/payment/cancel?slug=${metadata.eventSlug || ''}`).substring(0, 120),
                 notif_url: sanitizeUrl(`${API_BASE_URL}/payment/webhook/orange_money`).substring(0, 120),
                 lang: this.environment === 'sandbox' ? 'fr' : 'en',
                 reference: (metadata.sessionId || orderId).substring(0, 30)
