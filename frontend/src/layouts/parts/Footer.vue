@@ -187,10 +187,7 @@
     <div class="footer-content">
       <p class="footer-copyright text-center">
         © {{ currentYear }} {{ companyName }}.
-        <span v-if="customText"> {{ customText }}.</span>
-        <span class="d-md-inline-block d-block ml-md-1">
-          Developed with ❤️ by <a class="developer-link" href="https://www.fiverr.com/rafi89" target="_blank">Arrafi</a>
-        </span>
+        <span v-if="customText"> {{ customText }}.</span>       
       </p>
     </div>
   </v-footer>

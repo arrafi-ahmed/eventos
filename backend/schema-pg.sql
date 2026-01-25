@@ -216,6 +216,9 @@ CREATE TABLE sponsorship
     amount                   INT         NOT NULL,
     currency                 VARCHAR(3)  NOT NULL DEFAULT 'USD',
     payment_status           VARCHAR(20) NOT NULL DEFAULT 'pending',                      -- pending, paid, failed, refunded
+    payment_gateway          VARCHAR(50),
+    gateway_transaction_id   VARCHAR(255),
+    gateway_response         JSONB,
     stripe_payment_intent_id VARCHAR(255),
     event_id                 INT         NOT NULL REFERENCES event (id) ON DELETE CASCADE,
     organization_id          INT         NOT NULL REFERENCES organization (id) ON DELETE CASCADE,
@@ -506,7 +509,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_organizer_dashboard_banner_singleton ON or
 CREATE INDEX idx_orders_sales_channel ON orders (sales_channel);
 CREATE INDEX idx_orders_cashier_id ON orders (cashier_id);
 CREATE INDEX idx_orders_ticket_counter_id ON orders (ticket_counter_id);
-CREATE INDEX idx_orders_cash_session_id ON orders (cash_session_id);
+    CREATE INDEX idx_orders_cash_session_id ON orders (cash_session_id);
+    CREATE INDEX idx_orders_gateway_transaction_id ON orders (gateway_transaction_id);
+    CREATE INDEX idx_sponsorship_gateway_transaction_id ON sponsorship (gateway_transaction_id);
 
 CREATE INDEX idx_ticket_counter_organization_id ON ticket_counter (organization_id);
 CREATE INDEX idx_cash_session_organization_id ON cash_session (organization_id);

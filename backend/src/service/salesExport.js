@@ -1,5 +1,6 @@
 const CustomError = require("../model/CustomError");
 const { formatDateOnly } = require("../utils/date");
+const { query } = require("../db");
 
 /**
  * Get sales data formatted for Billit export

@@ -3,7 +3,7 @@ const path = require("path");
 const qr = require("qrcode");
 const { API_BASE_URL, VUE_BASE_URL, ANDROID_BASE_URL, NODE_ENV } = process.env;
 
-const appInfo = { name: "Ticketi", version: 1.0 };
+const appInfo = { name: "EventOS", version: 1.0 };
 
 const excludedSecurityURLs = [];
 

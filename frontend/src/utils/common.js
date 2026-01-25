@@ -3,8 +3,8 @@ import $axios from '@/plugins/axios'
 import { countries } from '@/utils/country-list'
 
 export const appInfo = {
-  name: 'Ticketi',
-  version: 1,
+  name: 'EventOS',
+  version: 1.0,
   company: {
     name: null,
     address: null,
