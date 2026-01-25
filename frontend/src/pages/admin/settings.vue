@@ -851,7 +851,8 @@
           </v-expansion-panel>
 
           <!-- Customize Header Section -->
-          <v-expansion-panel>
+          <!-- Customize Header Hidden -->
+          <v-expansion-panel v-if="false">
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-view-dashboard-variant</v-icon>
               <span class="text-h6">Customize Header</span>
@@ -1043,7 +1044,8 @@
           </v-expansion-panel>
 
           <!-- Customize Footer Section -->
-          <v-expansion-panel>
+          <!-- Customize Footer Hidden -->
+          <v-expansion-panel v-if="false">
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-format-page-break</v-icon>
               <span class="text-h6">Customize Footer</span>
