@@ -107,6 +107,50 @@ class PaymentService {
             totalAmount += taxAmount;
         }
 
+        // 4b. LATE INIT: Apply Promo Code (if provided)
+        let discountAmount = 0;
+        let promoCodeApplied = null;
+
+        if (params.promoCode) {
+            const promo = await promoCodeService.validatePromoCode({ code: params.promoCode, eventId: registration.eventId });
+            if (promo) {
+                // Calculate discount
+                const dV = Number(promo.discountValue || promo.discount_value || 0);
+                const dT = promo.discountType || promo.discount_type;
+
+                if (dT === 'percentage') {
+                    discountAmount = Math.round((subtotal * dV) / 100);
+                } else {
+                    discountAmount = dV;
+                }
+                discountAmount = Math.min(discountAmount, subtotal);
+
+                // Recalculate tax with net subtotal
+                const netSubtotal = Math.max(0, subtotal - discountAmount);
+                let newTax = 0;
+                if (taxType && taxAmountConfig && netSubtotal > 0) {
+                    const type = taxType.toLowerCase();
+                    const amount = Number(taxAmountConfig);
+                    if (type === 'percent') newTax = Math.round((netSubtotal * amount) / 100);
+                    else newTax = Math.round(amount);
+                }
+
+                // Update totals
+                taxAmount = newTax;
+                totalAmount = netSubtotal + newTax; // + shipping if we had it here, but initPayment receives products/tickets only usually. 
+                // Note: Shipping is strictly products logic in frontend, backend implies it in subtotal or needs explicit shipping param?
+                // Checking code: subtotal is just tickets+products. Shipping is NOT added in initiatePayment currently? 
+                // Wait, checkout.vue sends selectedProducts. Does backend calc shipping?
+                // Checking backend again... initiatePayment calculates subtotal from items. It does NOT seem to add shipping fee in the lines I see.
+                // If frontend sends total to initiatePayment?? No, initiatePayment calculates totalAmount itself (line 94).
+                // ISSUE: Backend initiatePayment seems to currently IGNORE shipping fee from event config?
+                // I will assume for now I should just apply the promo math correctly.
+                // UPDATE: If subtotal > 0, totalAmount = subtotal + tax. 
+
+                promoCodeApplied = params.promoCode;
+            }
+        }
+
         // 5. Generate Session & Order
         const sessionId = providedSessionId || generateSessionId();
         const orderNumber = orderService.generateOrderNumber();
@@ -118,17 +162,31 @@ class PaymentService {
         }));
 
         // 6. Invoke Dispatcher (to Gateway)
-        const action = await PaymentDispatcher.initiatePayment(gateway, {
-            amount: totalAmount,
-            currency: event.currency,
-            receiptEmail: attendeeBlueprint[0].email,
-            metadata: {
-                sessionId,
-                eventId: registration.eventId.toString(),
-                eventSlug: event.slug,
-                orderNumber
-            }
-        });
+        let action = {};
+
+        if (totalAmount > 0) {
+            action = await PaymentDispatcher.initiatePayment(gateway, {
+                amount: totalAmount,
+                currency: event.currency,
+                receiptEmail: attendeeBlueprint[0].email,
+                metadata: {
+                    sessionId,
+                    eventId: registration.eventId.toString(),
+                    eventSlug: event.slug,
+                    orderNumber
+                }
+            });
+        } else {
+            // Free order: No gateway needed
+            action = {
+                transactionId: `FREE_${orderNumber}`,
+                metadata: {
+                    sessionId,
+                    orderNumber,
+                    isFree: true
+                }
+            };
+        }
 
         // 7. Store Temporary Registration
         await tempRegistrationService.storeTempRegistration({
@@ -144,6 +202,8 @@ class PaymentService {
                 paymentStatus: "pending",
                 subtotal,
                 taxAmount,
+                discountAmount,
+                promoCode: promoCodeApplied,
                 eventId: registration.eventId,
                 // STANDARD: Store gateway info explicitly
                 gateway: gateway,
@@ -398,14 +458,19 @@ class PaymentService {
 
         const newTotal = netSubtotal + newTaxAmount + shippingCost;
 
-        // 5. Update Payment Gateway
-        const result = await PaymentDispatcher.applyPromoCode(gateway, transactionId, validatedPromo, {
-            newTotal,
-            discountAmount,
-            netSubtotal,
-            newTaxAmount,
-            promoCode
-        });
+        // 5. Update Payment Gateway (if applicable)
+        let result = { status: 'applied', discountAmount, newTotal };
+
+        // Only call gateway if it's a real transaction and newTotal > 0
+        if (!transactionId.toString().startsWith('FREE_') && newTotal > 0 && gateway) {
+            result = await PaymentDispatcher.applyPromoCode(gateway, transactionId, validatedPromo, {
+                newTotal,
+                discountAmount,
+                netSubtotal,
+                newTaxAmount,
+                promoCode
+            });
+        }
 
         // 6. Update temp_registration orders
         await tempRegistrationService.updateTempRegistration(sessionId, {

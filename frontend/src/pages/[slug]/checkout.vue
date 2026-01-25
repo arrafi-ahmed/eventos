@@ -213,6 +213,7 @@
         sessionId: sessionId.value || undefined,
         returnUrl,
         cancelUrl,
+        promoCode: appliedPromoCodeDetails.value?.promoCode // LATE INIT: Pass valid code to be applied at creation
       }
 
       const res = await $axios.post('/payment/init', requestData)
@@ -478,44 +479,62 @@
     try {
       isApplyingPromoCode.value = true
 
-      // Ensure we have a session/transaction before applying promo
-      if (!transactionId.value || !sessionId.value) {
-        if (!selectedPaymentMethod.value) {
-          // Default to stripe if none selected yet, just to get a session
-          selectedPaymentMethod.value = 'stripe'
+      // LATE INIT FLOW: Just validate the code, don't create session yet
+      const response = await $axios.get('/promo-code/validate', {
+        params: {
+          code: promoCodeInput.value,
+          eventId: event.value?.id
         }
-        await initializeCheckout(true)
-      }
-
-      if (!transactionId.value || !sessionId.value) {
-        throw new Error('Failed to create payment session')
-      }
-
-      const response = await $axios.post('/payment/apply-promo', {
-        transactionId: transactionId.value,
-        promoCode: promoCodeInput.value,
-        sessionId: sessionId.value,
-        eventId: event.value?.id,
-        gateway: paymentGateway.value,
       })
 
       if (response.data?.payload) {
-        const payload = response.data.payload
-        appliedPromoCodeDetails.value = {
-          promoCode: payload.promoCode,
-          discountType: payload.discountType,
-          discountValue: payload.discountValue,
+        const promo = response.data.payload
+        
+        // Calculate discount locally to update UI immediately
+        // Logic matches backend for consistency
+        let discountVal = 0
+        const subtotal = subtotalAmount.value // Use computed subtotal
+        
+        if (promo.discountType === 'percentage') {
+             discountVal = Math.round((subtotal * (promo.discountValue || 0)) / 100)
+        } else {
+             discountVal = Number(promo.discountValue || 0)
         }
-        promoDiscountAmount.value = payload.discountAmount
-        promoNewTaxAmount.value = payload.newTaxAmount
-        promoNewTotalAmount.value = payload.newTotal
+        
+        // Cap at subtotal
+        discountVal = Math.min(discountVal, subtotal)
 
-      // Update Stripe elements with new client secret (if backend updated it/amount)
-      // Actually stripe.elements doesn't always need new clientSecret if amount updated on backend PI
-      // but we should call elements.update if we want to be safe, though amount is hidden from Elements UI usually
+        // Store details for UI and for later submission
+        appliedPromoCodeDetails.value = {
+          promoCode: promo.code,
+          discountType: promo.discountType,
+          discountValue: promo.discountValue,
+          discountAmount: discountVal 
+        }
+        
+        // Update reactive totals
+        promoDiscountAmount.value = discountVal
+        
+        // Recalculate tax based on new net subtotal
+        const netSubtotal = Math.max(0, subtotal - discountVal)
+        let newTax = 0
+        const taxConfig = event.value?.taxAmount || event.value?.tax_amount || 0
+        const taxType = (event.value?.taxType || event.value?.tax_type || 'percent').toLowerCase()
+        
+        if (taxConfig && netSubtotal > 0) {
+             if (taxType === 'percent') newTax = Math.round((netSubtotal * taxConfig) / 100)
+             else newTax = Math.round(Number(taxConfig))
+        }
+        
+        promoNewTaxAmount.value = newTax
+        promoNewTotalAmount.value = netSubtotal + newTax + calculatedShippingCost.value
+        
+        store.commit('addSnackbar', { text: `Promo code ${promo.code} applied!`, color: 'success' })
       }
     } catch (error) {
       console.error('Failed to apply promo code:', error)
+      const msg = error.response?.data?.msg || 'Invalid promo code'
+      store.commit('addSnackbar', { text: msg, color: 'error' })
     } finally {
       isApplyingPromoCode.value = false
     }
@@ -545,6 +564,16 @@
   function updatePaymentIntentWithShipping () {
     // This is now handled by initializeCheckout
     initializeCheckout(true)
+  }
+
+  function handleContinueFromStep1 () {
+    if (totalAmount.value === 0) {
+      // Free order: Skip payment method selection (Step 2) and go to Step 3
+      checkoutStep.value = 3
+    } else {
+      // Paid order: Go to Payment Method selection
+      checkoutStep.value = 2
+    }
   }
 
 </script>
@@ -774,7 +803,7 @@
                         density="comfortable"
                         hide-details
                         :rounded="rounded"
-                        :disabled="checkoutStep > 1"
+                        :disabled="checkoutStep > 1 || subtotalAmount === 0"
                         @keydown.enter="handleApplyPromoCode"
                       >
                         <template #append-inner>
@@ -782,7 +811,7 @@
                             color="secondary" 
                             variant="text" 
                             :loading="isApplyingPromoCode"
-                            :disabled="!promoCodeInput || checkoutStep > 1"
+                            :disabled="!promoCodeInput || checkoutStep > 1 || subtotalAmount === 0"
                             :rounded="rounded"
                             icon="mdi-check"
                             @click="handleApplyPromoCode"
@@ -806,10 +835,10 @@
                     :rounded="rounded"
                     class="mt-1 font-weight-bold"
                     block
-                    @click="checkoutStep = 2"
+                    @click="handleContinueFromStep1"
                   >
-                    Continue to Payment Method
-                    <v-icon end>mdi-arrow-right</v-icon>
+                    {{ totalAmount === 0 ? 'Complete Registration' : 'Continue to Payment Method' }}
+                    <v-icon end>{{ totalAmount === 0 ? 'mdi-check-circle' : 'mdi-arrow-right' }}</v-icon>
                   </v-btn>
                 </div>
               </v-stepper-vertical-item>
@@ -882,31 +911,68 @@
                     <p class="mt-4 text-medium-emphasis">Preparing your secure payment session...</p>
                   </div>
 
-                  <template v-else-if="clientSecret">
-                    <PaymentStripe
-                      v-if="paymentGateway === 'stripe'"
-                      ref="paymentComponent"
-                      :client-secret="clientSecret"
-                      :customer-name="registration ? `${registration.firstName} ${registration.lastName}` : ''"
-                      :requires-address="requiresShippingAddress"
-                      :stripe-public-key="stripePublic"
-                      @error="store.commit('addSnackbar', { text: $event, color: 'error' })"
-                      @loaded="paymentElementLoaded = true"
-                      @processing="isProcessingPayment = $event"
-                    />
-                    <PaymentOrangeMoney
-                      v-else-if="paymentGateway === 'orange_money'"
-                      ref="paymentComponent"
-                      :session-id="sessionId"
-                      :total-amount="totalAmount"
-                      :currency="event?.currency || 'USD'"
-                      :payment-url="paymentUrl"
-                      @error="store.commit('addSnackbar', { text: $event, color: 'error' })"
-                      @loaded="paymentElementLoaded = true"
-                      @processing="isProcessingPayment = $event"
-                    />
+                  <template v-else-if="clientSecret || totalAmount === 0">
+                    <!-- FREE ORDER CONFIRMATION -->
+                    <div v-if="totalAmount === 0" class="text-center py-4">
+                      <v-icon color="success" size="64" class="mb-4">mdi-ticket-percent-outline</v-icon>
+                      <h3 class="text-h5 font-weight-bold mb-2">Free Registration</h3>
+                      <p class="text-body-1 text-medium-emphasis mb-6">
+                        No payment is required for this order. Click below to complete your registration.
+                      </p>
+                      
+                      <v-btn
+                        color="success"
+                        :size="size"
+                        variant="flat"
+                        :rounded="rounded"
+                        :loading="isProcessingPayment"
+                        @click="handleFreeRegistration"
+                        min-width="200"
+                        class="font-weight-bold"
+                      >
+                        Complete Registration <v-icon end>mdi-check</v-icon>
+                      </v-btn>
+                      
+                      <div class="mt-4">
+                        <v-btn 
+                          variant="text" 
+                          @click="checkoutStep = 1"
+                          :disabled="isProcessingPayment"
+                          :rounded="rounded"
+                          size="small"
+                        >
+                          <v-icon start>mdi-arrow-left</v-icon> Back to Options
+                        </v-btn>
+                      </div>
+                    </div>
 
-                    <div class="d-flex gap-2 mt-6 align-center">
+                    <!-- PAID ORDER ELEMENTS -->
+                    <template v-else>
+                      <PaymentStripe
+                        v-if="paymentGateway === 'stripe'"
+                        ref="paymentComponent"
+                        :client-secret="clientSecret"
+                        :customer-name="registration ? `${registration.firstName} ${registration.lastName}` : ''"
+                        :requires-address="requiresShippingAddress"
+                        :stripe-public-key="stripePublic"
+                        @error="store.commit('addSnackbar', { text: $event, color: 'error' })"
+                        @loaded="paymentElementLoaded = true"
+                        @processing="isProcessingPayment = $event"
+                      />
+                      <PaymentOrangeMoney
+                        v-else-if="paymentGateway === 'orange_money'"
+                        ref="paymentComponent"
+                        :session-id="sessionId"
+                        :total-amount="totalAmount"
+                        :currency="event?.currency || 'USD'"
+                        :payment-url="paymentUrl"
+                        @error="store.commit('addSnackbar', { text: $event, color: 'error' })"
+                        @loaded="paymentElementLoaded = true"
+                        @processing="isProcessingPayment = $event"
+                      />
+                    </template>
+
+                    <div v-if="totalAmount > 0" class="d-flex gap-2 mt-6 align-center">
                       <v-btn 
                         icon="mdi-arrow-left" 
                         variant="text" 
