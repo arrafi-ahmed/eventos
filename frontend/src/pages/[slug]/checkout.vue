@@ -133,6 +133,43 @@
     return options
   })
 
+  // Dynamic Payment Methods
+  const availablePaymentMethods = computed(() => {
+    const methods = []
+    // Handle both array and potential legacy formats, default to stripe if missing
+    const configMethods = event.value?.config?.paymentMethods || ['stripe']
+
+    if (configMethods.includes('stripe')) {
+      methods.push({ 
+        value: 'stripe', 
+        label: 'Credit / Debit Card', 
+        desc: 'Secure payment via Stripe', 
+        icon: 'mdi-credit-card', 
+        color: 'primary' 
+      })
+    }
+
+    // Support both 'om' (from config) and 'orange_money' (legacy/checkout internal)
+    if (configMethods.includes('om') || configMethods.includes('orange_money')) {
+      methods.push({ 
+        value: 'orange_money', 
+        label: 'Orange Money', 
+        desc: 'Pay with OM mobile wallet', 
+        icon: 'mdi-cellphone-check', 
+        color: 'orange-darken-2' 
+      })
+    }
+
+    return methods
+  })
+
+  // Auto-select first payment method
+  watch(availablePaymentMethods, (newMethods) => {
+    if (newMethods.length > 0 && !selectedPaymentMethod.value) {
+      selectedPaymentMethod.value = newMethods[0].value
+    }
+  }, { immediate: true })
+
   // Helper for cart consistency
   function getCartHash () {
     return `${JSON.stringify(selectedTickets.value)}|${JSON.stringify(selectedProducts.value)}`
@@ -669,6 +706,8 @@
               hide-actions
               class="rounded-xl border shadow-sm"
               flat
+              color="primary"
+        variant="inset"
             >
               <!-- Step 1: Order Details -->
               <v-stepper-vertical-item
@@ -771,10 +810,7 @@
                   >
                     <div class="payment-grid">
                       <v-card
-                        v-for="method in [
-                          { value: 'stripe', label: 'Credit / Debit Card', desc: 'Secure payment via Stripe', icon: 'mdi-credit-card', color: 'primary' },
-                          { value: 'orange_money', label: 'Orange Money', desc: 'Pay with OM mobile wallet', icon: 'mdi-cellphone-check', color: 'orange-darken-2' }
-                        ]"
+                        v-for="method in availablePaymentMethods"
                         :key="method.value"
                         :class="['payment-method-card', { 'active': selectedPaymentMethod === method.value }]"
                         variant="outlined"
