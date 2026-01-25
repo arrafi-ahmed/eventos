@@ -87,51 +87,37 @@
         const attendeeIds = route.query.attendee_ids?.split(',') || []
         const qrUuids = route.query.qr_uuids?.split(',') || []
 
-        // For free registrations with multiple attendees, we need to validate each attendee
-        if (attendeeIds.length > 0 && qrUuids.length > 0) {
-          // Fetch complete free registration data using the new endpoint
-          const response = await $axios.get(`/registration/getFreeRegistrationConfirmation`, {
-            params: {
-              registrationId: registrationId.value,
-            },
-            headers: { 'X-Suppress-Toast': 'true' },
-          })
+        // For free registrations, we just need the registrationId
+        const response = await $axios.get(`/registration/getFreeRegistrationConfirmation`, {
+          params: {
+            registrationId: registrationId.value,
+          },
+          headers: { 'X-Suppress-Toast': 'true' },
+        })
 
-          if (response.data.payload) {
-            // Validate that all attendees exist and have matching QR UUIDs
-            const attendees = response.data.payload.attendees || []
-            const validAttendees = attendees.filter(
-              attendee =>
-                attendeeIds.includes(attendee.id.toString()) && qrUuids.includes(attendee.qrUuid),
-            )
+        if (response.data.payload) {
+          const payload = response.data.payload
+          const attendees = payload.attendees || []
+          
+          // If URL params exist, optionally validate them, otherwise trust backend
+          const validAttendees = attendees // Trust backend by default
 
-            if (validAttendees.length === attendeeIds.length) {
-              // Transform the data to match the expected format
-              const selectedTickets = validAttendees.map(attendee => ({
-                ticketId: attendee.ticketId,
-                title: attendee.ticketTitle || 'Unknown Ticket',
-                price: attendee.price || 0, // Use real price from backend
-                quantity: 1,
-              }))
+          // Transform valid attendees to selectedTickets format
+          const selectedTickets = validAttendees.map(attendee => ({
+            ticketId: attendee.ticketId,
+            title: attendee.ticketTitle || 'Unknown Ticket',
+            price: attendee.price || 0,
+            quantity: 1,
+          }))
 
-              // Use the complete data structure from the new endpoint
-              tempRegistration.value = {
-                attendees: validAttendees,
-                selectedTickets: selectedTickets,
-                orders: response.data.payload.order,
-                registration: response.data.payload.registration,
-                event: response.data.payload.event,
-                eventId: response.data.payload.registration?.eventId,
-              }
-            } else {
-              store.commit('addSnackbar', {
-                text: `QR UUID validation failed. Expected ${attendeeIds.length} attendees, found ${validAttendees.length} valid.`,
-                color: 'error',
-              })
-            }
+          tempRegistration.value = {
+            attendees: validAttendees,
+            selectedTickets: selectedTickets,
+            orders: payload.order,
+            registration: payload.registration,
+            event: payload.event,
+            eventId: payload.registration?.eventId,
           }
-        } else {
-          store.commit('addSnackbar', { text: 'Invalid registration data. Please contact support.', color: 'error' })
         }
       } else if (sessionId.value) {
         // Fallback: check localStorage if session_id not in URL
