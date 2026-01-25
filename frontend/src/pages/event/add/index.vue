@@ -9,7 +9,6 @@
   import { useUiProps } from '@/composables/useUiProps'
   import { Event } from '@/models/Event'
   import { EventConfig } from '@/models/EventConfig'
-  import { EventConfig } from '@/models/EventConfig'
   import { generateSlug, mergeDateTime, getCurrencySymbol } from '@/utils'
   import CurrencySelector from '@/components/CurrencySelector.vue'
 

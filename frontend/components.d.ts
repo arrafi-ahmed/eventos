@@ -16,7 +16,6 @@ declare module 'vue' {
     ChatMessage: typeof import('./src/components/support/ChatMessage.vue')['default']
     ColorPicker: typeof import('./src/components/ColorPicker.vue')['default']
     ConfirmationDialog: typeof import('./src/components/ConfirmationDialog.vue')['default']
-    CountrySelector: typeof import('./src/components/CountrySelector.vue')['default']
     CurrencySelector: typeof import('./src/components/CurrencySelector.vue')['default']
     DigitalTicketCard: typeof import('./src/components/ticket/DigitalTicketCard.vue')['default']
     EventCard: typeof import('./src/components/EventCard.vue')['default']
