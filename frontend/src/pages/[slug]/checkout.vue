@@ -568,8 +568,8 @@
 
   function handleContinueFromStep1 () {
     if (totalAmount.value === 0) {
-      // Free order: Skip payment method selection (Step 2) and go to Step 3
-      checkoutStep.value = 3
+      // Free order: Complete directly from Step 1
+      handleFreeRegistration()
     } else {
       // Paid order: Go to Payment Method selection
       checkoutStep.value = 2
@@ -789,7 +789,7 @@
                   </div>
 
                   <!-- Promo Code -->
-                  <div class="mb-6">
+                  <div v-if="subtotalAmount > 0" class="mb-6">
                     <div class="d-flex align-center mb-3">
                       <v-icon color="primary" class="mr-2">mdi-tag-outline</v-icon>
                       <span class="text-subtitle-2 font-weight-bold">Promo Code</span>
@@ -803,7 +803,7 @@
                         density="comfortable"
                         hide-details
                         :rounded="rounded"
-                        :disabled="checkoutStep > 1 || subtotalAmount === 0"
+                        :disabled="checkoutStep > 1"
                         @keydown.enter="handleApplyPromoCode"
                       >
                         <template #append-inner>
@@ -811,7 +811,7 @@
                             color="secondary" 
                             variant="text" 
                             :loading="isApplyingPromoCode"
-                            :disabled="!promoCodeInput || checkoutStep > 1 || subtotalAmount === 0"
+                            :disabled="!promoCodeInput || checkoutStep > 1"
                             :rounded="rounded"
                             icon="mdi-check"
                             @click="handleApplyPromoCode"
@@ -835,6 +835,7 @@
                     :rounded="rounded"
                     class="mt-1 font-weight-bold"
                     block
+                    :loading="isProcessingPayment"
                     @click="handleContinueFromStep1"
                   >
                     {{ totalAmount === 0 ? 'Complete Registration' : 'Continue to Payment Method' }}
