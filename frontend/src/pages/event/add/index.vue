@@ -438,6 +438,56 @@
                     persistent-hint
                   />
                 </div>
+                <v-divider />
+                <div class="pa-4">
+                  <v-switch
+                    v-model="config.enableOnSiteQuota"
+                    class="mb-4"
+                    color="primary"
+                    hide-details="auto"
+                    hint="When enabled, you can reserve a portion of ticket stock for on-site (box office) sales. Online sales will stop once the quota is reached."
+                    inset
+                    label="Enable On-site Quota Management"
+                    persistent-hint
+                  />
+                  <v-expand-transition>
+                    <div v-if="config.enableOnSiteQuota">
+                      <div class="d-flex gap-4 mt-4">
+                        <v-number-input
+                          v-model.number="config.defaultOnSiteQuota"
+                          :density="density"
+                          hide-details="auto"
+                          class="flex-1"
+                          label="Default On-site Quota (per ticket)"
+                          inset
+                          min="0"
+                          control-variant="default"
+                          prepend-inner-icon="mdi-store-clock"
+                          :rounded="rounded"
+                          :rules="[(v) => v >= 0 || 'Must be 0 or greater']"
+                          :variant="variant"
+                        />
+                        <v-number-input
+                          v-model.number="config.defaultLowStockThreshold"
+                          :density="density"
+                          hide-details="auto"
+                          class="flex-1"
+                          label="Default Low Stock Threshold"
+                          inset
+                          min="0"
+                          control-variant="default"
+                          prepend-inner-icon="mdi-alert-circle-outline"
+                          :rounded="rounded"
+                          :rules="[(v) => v >= 0 || 'Must be 0 or greater']"
+                          :variant="variant"
+                        />
+                      </div>
+                      <p class="text-caption text-medium-emphasis mt-2">
+                        These values will be applied as defaults to new tickets. You can still override them per ticket.
+                      </p>
+                    </div>
+                  </v-expand-transition>
+                </div>
               </v-card-text>
             </v-card>
 
@@ -476,6 +526,31 @@
                     inset
                     label="Single Day Event"
                     persistent-hint
+                  />
+                </div>
+                <v-divider />
+                <div class="pa-4">
+                  <v-switch
+                    v-model="config.showEndTime"
+                    class="mb-6"
+                    color="primary"
+                    hide-details="auto"
+                    hint="When enabled, the event end time will be displayed on customer-facing pages."
+                    inset
+                    label="Show End Time"
+                    persistent-hint
+                  />
+                  <v-divider class="mb-6" />
+                  <v-select
+                    v-model="config.dateFormat"
+                    hint="Choose how dates will be displayed on customer-facing pages"
+                    hide-details="auto"
+                    :items="dateFormatOptions"
+                    label="Date Format"
+                    persistent-hint
+                    prepend-inner-icon="mdi-calendar"
+                    :rounded="rounded"
+                    :variant="variant"
                   />
                 </div>
               </v-card-text>
@@ -539,7 +614,9 @@
               </v-card-text>
             </v-card>
 
-            <!-- Section: General Settings -->
+
+
+            <!-- Section: Automated Marketing -->
             <v-card
               border
               class="mb-6 overflow-hidden"
@@ -548,23 +625,78 @@
               variant="flat"
             >
               <v-card-title class="pa-4 bg-surface-light d-flex align-center">
-                <v-icon class="me-3" color="primary" size="24">mdi-cog</v-icon>
-                <span class="text-subtitle-1 font-weight-bold">General Settings</span>
+                <v-icon class="me-3" color="primary" size="24">mdi-bullhorn</v-icon>
+                <span class="text-subtitle-1 font-weight-bold">Automated Marketing</span>
               </v-card-title>
               <v-divider />
               <v-card-text class="pa-0">
                 <div class="pa-4">
-                  <v-select
-                    v-model="config.dateFormat"
-                    hint="Choose how dates will be displayed on customer-facing pages"
+                  <v-switch
+                    v-model="config.enableAbandonedCartEmails"
+                    color="primary"
                     hide-details="auto"
-                    :items="dateFormatOptions"
-                    label="Date Format"
+                    hint="When enabled, automated reminder emails will be sent to users who abandon their cart (expired temp registrations). Emails are sent via cron job every 6-12 hours."
+                    inset
+                    label="Enable Abandoned Cart Email Reminders"
                     persistent-hint
-                    prepend-inner-icon="mdi-calendar"
-                    :rounded="rounded"
-                    :variant="variant"
                   />
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <!-- Section: Payment Gateways -->
+            <v-card
+              border
+              class="mb-6 overflow-hidden"
+              elevation="2"
+              :rounded="rounded"
+              variant="flat"
+            >
+              <v-card-title class="pa-4 bg-surface-light d-flex align-center">
+                <v-icon class="me-3" color="primary" size="24">mdi-credit-card-settings</v-icon>
+                <span class="text-subtitle-1 font-weight-bold">Payment Methods</span>
+              </v-card-title>
+              <v-divider />
+              <v-card-text class="pa-0">
+                <div class="pa-4">
+                  <p class="text-body-2 text-medium-emphasis mb-4">
+                    Select the payment gateways you want to enable for this event.
+                  </p>
+
+                  <v-checkbox
+                    v-model="config.paymentMethods"
+                    class="mb-2"
+                    color="primary"
+                    hide-details
+                    label="Stripe (Credit/Debit Cards, Google Pay, Apple Pay)"
+                    value="stripe"
+                  >
+                    <template #append>
+                      <v-img class="ml-2" height="20" src="https://stripe.com/favicon.ico" width="20" />
+                    </template>
+                  </v-checkbox>
+
+                  <v-checkbox
+                    v-model="config.paymentMethods"
+                    color="primary"
+                    hide-details
+                    label="Orange Money (Mobile Money)"
+                    value="om"
+                  >
+                    <template #append>
+                      <v-avatar class="ml-2 font-weight-black" color="orange" size="20" style="font-size: 8px">OM</v-avatar>
+                    </template>
+                  </v-checkbox>
+
+                  <v-alert
+                    v-if="config.paymentMethods.length === 0"
+                    class="mt-4"
+                    density="compact"
+                    type="warning"
+                    variant="tonal"
+                  >
+                    You must select at least one payment method for paid tickets.
+                  </v-alert>
                 </div>
               </v-card-text>
             </v-card>

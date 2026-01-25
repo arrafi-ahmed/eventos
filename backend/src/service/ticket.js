@@ -99,7 +99,7 @@ exports.save = async ({ payload, currentUser }) => {
         // If creating new ticket, don't include id
         const sql = `
             INSERT INTO ticket(title, description, price, current_stock, max_stock, on_site_quota, low_stock_threshold, sale_start_date, sale_end_date, original_price, event_id, created_at)
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW()) RETURNING
         id,
             title,
             description,

@@ -887,6 +887,7 @@
             Cancel
           </v-btn>
           <v-btn
+            class="ml-2"
             color="success"
             :rounded="rounded"
             :size="size"
@@ -1064,6 +1065,7 @@
             Cancel
           </v-btn>
           <v-btn
+            class="ml-2"
             color="error"
             :disabled="!rejectionReason.trim()"
             :rounded="rounded"
