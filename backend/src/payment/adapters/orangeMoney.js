@@ -8,6 +8,7 @@ const {
     ORANGE_MONEY_API_BASE_URL,
     ORANGE_MONEY_ENVIRONMENT,
     ORANGE_MONEY_OAUTH_PATH,
+    ORANGE_MONEY_COUNTRY,
     API_BASE_URL,
     VUE_BASE_URL
 } = process.env;
@@ -22,6 +23,8 @@ class OrangeMoneyAdapter {
         this.baseURL = ORANGE_MONEY_API_BASE_URL || 'https://api.orange.com';
         this.environment = ORANGE_MONEY_ENVIRONMENT || 'sandbox';
         this.merchantKey = ORANGE_MONEY_MERCHANT_KEY;
+        // Default to 'dev' (sandbox) if not specified, use 'ml' etc for prod
+        this.countryCode = ORANGE_MONEY_COUNTRY || 'dev';
 
         // Token cache (in-memory, consider Redis for production)
         this.accessToken = null;
@@ -122,7 +125,7 @@ class OrangeMoneyAdapter {
             console.log(`[Orange Money] Initiating payment (retry: ${isRetry}) with payload:`, JSON.stringify(payload, null, 2));
 
             const response = await axios.post(
-                `${this.baseURL}/orange-money-webpay/dev/v1/webpayment`,
+                `${this.baseURL}/orange-money-webpay/${this.countryCode}/v1/webpayment`,
                 payload,
                 {
                     headers: {
@@ -236,7 +239,7 @@ class OrangeMoneyAdapter {
             console.log(`[Orange Money] Verification Payload to Gateway:`, JSON.stringify(payload, null, 2));
 
             const apiResponse = await axios.post(
-                `${this.baseURL}/orange-money-webpay/dev/v1/transactionstatus`,
+                `${this.baseURL}/orange-money-webpay/${this.countryCode}/v1/transactionstatus`,
                 payload,
                 {
                     headers: {

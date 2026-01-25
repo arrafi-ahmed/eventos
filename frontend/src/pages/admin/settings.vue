@@ -698,7 +698,7 @@
       title="Settings"
     />
 
-    <v-row>
+    <v-row align="center" justify="center">
       <v-col
         cols="12"
         lg="10"

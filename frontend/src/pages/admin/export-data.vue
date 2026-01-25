@@ -139,8 +139,11 @@
         lg="8"
         xl="6"
       >
-        <v-expansion-panels v-model="expandedPanel">
-          <v-expansion-panel>
+        <v-expansion-panels
+          v-model="expandedPanel"
+          :rounded="rounded"
+        >
+          <v-expansion-panel :rounded="rounded">
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-file-export</v-icon>
               <span class="text-h6">Sales Data Export</span>
