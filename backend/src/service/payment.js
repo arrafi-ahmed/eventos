@@ -145,7 +145,16 @@ class PaymentService {
                 subtotal,
                 taxAmount,
                 eventId: registration.eventId,
-                // Store Orange Money tokens if applicable
+                // STANDARD: Store gateway info explicitly
+                gateway: gateway,
+                gatewayTransactionId: action.transactionId,
+                gatewayMetadata: {
+                    payToken: action.payToken,
+                    notifToken: action.notifToken,
+                    paymentUrl: action.paymentUrl,
+                    ...action.metadata
+                },
+                // LEGACY BACK COMPAT: Keep specific fields for now just in case
                 ...(gateway === 'orange_money' && action.payToken ? {
                     omPayToken: action.payToken,
                     omNotifToken: action.notifToken,
@@ -489,40 +498,43 @@ class PaymentService {
             if (orders.paymentStatus === 'paid') return true;
             if (orders.paymentStatus === 'failed') return false;
 
-            // 2. Determine Gateway
-            let gateway = null;
-            let transactionId = null;
-            let extraParams = {};
+            // 2. Determine Gateway - GENERIC APPROACH
+            let gateway = orders.gateway;
+            let transactionId = orders.gatewayTransactionId;
+            let extraParams = orders.gatewayMetadata || {};
 
-            // Heuristic for gateway detection (since we didn't store 'gateway' field explicitly in `orders` previously)
-            // Ideally we should store `gateway` in orders jsonb at init time.
-            if (orders.omPayToken || orders.om_pay_token) {
-                gateway = 'orange_money';
-                transactionId = orders.omTransactionId || orders.om_transaction_id;
-                extraParams = {
-                    amount: orders.totalAmount || orders.total_amount,
-                    payToken: orders.omPayToken || orders.om_pay_token
-                };
-            } else if (orders.paymentIntentId) {
-                // Future Stripe support if needed
-                gateway = 'stripe';
-                transactionId = orders.paymentIntentId;
+            // Fallback for legacy sessions (before we standardized storage)
+            if (!gateway) {
+                if (orders.omPayToken || orders.om_pay_token) {
+                    gateway = 'orange_money';
+                    transactionId = orders.omTransactionId || orders.om_transaction_id;
+                    extraParams = {
+                        amount: orders.totalAmount || orders.total_amount,
+                        payToken: orders.omPayToken || orders.om_pay_token
+                    };
+                } else if (orders.paymentIntentId) {
+                    gateway = 'stripe';
+                    transactionId = orders.paymentIntentId;
+                }
             }
 
-            if (!gateway || !transactionId) return false;
+            if (!gateway || !transactionId) {
+                console.warn(`[PaymentService] Could not identify gateway for verification: ${sessionId}`);
+                return false;
+            }
 
             console.log(`[PaymentService] Proactively verifying ${gateway} payment for session ${sessionId}...`);
 
             // 3. Call Dispatcher
-            // We need to bypass the static verifyPayment signature slightly if adapters need extra params (like OM needs token)
-            // Dispatcher.verifyPayment only takes (gateway, txnId). 
-            // We should ideally update Dispatcher or access adapter directly if signature mismatch.
-            // Dispatcher signature: verifyPayment(gatewayName, transactionId)
-            // OM verifyPayment signature: verifyPayment(transactionId, extraParams)
-            // Let's modify Dispatcher call or direct adapter usage.
-            // Direct adapter access via Dispatcher.getAdapter is cleanest given we need extraParams.
-
+            // Now strictly generic: verifyPayment(gateway, txnId, params)
+            // Adapters must be robust enough to handle the params passed in gatewayMetadata
             const adapter = PaymentDispatcher.getAdapter(gateway);
+
+            // Ensure amount is passed if not in metadata, as adapters often need it
+            if (!extraParams.amount) {
+                extraParams.amount = orders.totalAmount || orders.total_amount;
+            }
+
             const verifyResult = await adapter.verifyPayment(transactionId, extraParams);
 
             // 4. Finalize if paid
