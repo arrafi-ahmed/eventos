@@ -167,11 +167,23 @@
                 // Update local status to avoid redirect
                 orderData.paymentStatus = 'paid';
              } else {
-                throw new Error('Verification failed');
+                // Silent redirect - it's just a pending payment
+                console.log('[Success] Verification confirmed still pending/unpaid.');
+                const eventSlug = route.params.slug
+                if (eventSlug) {
+                   router.replace({ 
+                     name: 'payment-cancel', 
+                     params: { slug: eventSlug },
+                     query: { slug: eventSlug } 
+                   })
+                } else {
+                  router.replace({ name: 'payment-cancel' })
+                }
+                return
              }
            } catch (e) {
-               console.warn('[Success] Payment status not paid and verification failed:', status);
-               // Redirect to cancel page
+               console.warn('[Success] Verification error:', e);
+               // Also silent redirect on error to be safe
                const eventSlug = route.params.slug
                if (eventSlug) {
                   router.replace({ 

@@ -802,7 +802,7 @@
                   <v-btn 
                     color="primary" 
                     :size="size" 
-                    :variant="variant" 
+                    variant="flat"  
                     :rounded="rounded"
                     class="mt-1 font-weight-bold"
                     block
@@ -859,7 +859,7 @@
                     <v-btn 
                       color="primary" 
                       :size="size" 
-                      :variant="variant" 
+                      variant="flat" 
                       :rounded="rounded"
                       class="flex-grow-1 font-weight-bold"
                       :disabled="!selectedPaymentMethod"
@@ -918,7 +918,7 @@
                         class="flex-grow-1 font-weight-bold"
                         color="primary"
                         :size="size"
-                        :variant="variant"
+                        variant="flat" 
                         :rounded="rounded"
                         :loading="isProcessingPayment"
                         @click="handlePayment"
