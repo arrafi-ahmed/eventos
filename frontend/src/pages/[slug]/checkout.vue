@@ -198,6 +198,11 @@
 
     try {
       isProcessingPayment.value = true
+      
+      const baseUrl = window.location.origin
+      const returnUrl = `${baseUrl}/${route.params.slug}/success`
+      const cancelUrl = `${baseUrl}/payment/cancel?slug=${route.params.slug}`
+
       const requestData = {
         gateway: selectedPaymentMethod.value, // Use selected payment method
         attendees: attendees.value,
@@ -206,6 +211,8 @@
         registration: registration.value,
         eventId: event.value?.id,
         sessionId: sessionId.value || undefined,
+        returnUrl,
+        cancelUrl,
       }
 
       const res = await $axios.post('/payment/init', requestData)

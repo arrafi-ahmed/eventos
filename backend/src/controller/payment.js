@@ -211,4 +211,23 @@ router.get("/status/:sessionId", async (req, res, next) => {
     }
 });
 
+// Explicit PROACTIVE VERIFICATION endpoint for Frontend
+router.post("/verify-session", async (req, res, next) => {
+    try {
+        const { sessionId } = req.body;
+        if (!sessionId) {
+            return res.status(400).json(new ApiResponse("Session ID required"));
+        }
+
+        const isPaid = await paymentService.verifyAndFinalize(sessionId);
+
+        res.status(200).json(new ApiResponse(
+            isPaid ? "Payment Verified" : "Payment Pending",
+            { paid: isPaid }
+        ));
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = { router, webhook };

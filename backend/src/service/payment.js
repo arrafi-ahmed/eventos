@@ -471,6 +471,80 @@ class PaymentService {
             gatewayTransactionId: transactionId
         });
     }
+
+    /**
+     * Proactively verify payment status with gateway and finalize if paid.
+     * Used by success page to prevent race conditions.
+     * @param {string} sessionId
+     * @returns {Promise<boolean>} True if finalized/paid, false otherwise
+     */
+    async verifyAndFinalize(sessionId) {
+        try {
+            // 1. Get Temp Registration
+            const tempReg = await tempRegistrationService.getTempRegistration(sessionId);
+            if (!tempReg) return false;
+
+            const orders = tempReg.orders || {};
+            // If check status is pending/missing
+            if (orders.paymentStatus === 'paid') return true;
+            if (orders.paymentStatus === 'failed') return false;
+
+            // 2. Determine Gateway
+            let gateway = null;
+            let transactionId = null;
+            let extraParams = {};
+
+            // Heuristic for gateway detection (since we didn't store 'gateway' field explicitly in `orders` previously)
+            // Ideally we should store `gateway` in orders jsonb at init time.
+            if (orders.omPayToken || orders.om_pay_token) {
+                gateway = 'orange_money';
+                transactionId = orders.omTransactionId || orders.om_transaction_id;
+                extraParams = {
+                    amount: orders.totalAmount || orders.total_amount,
+                    payToken: orders.omPayToken || orders.om_pay_token
+                };
+            } else if (orders.paymentIntentId) {
+                // Future Stripe support if needed
+                gateway = 'stripe';
+                transactionId = orders.paymentIntentId;
+            }
+
+            if (!gateway || !transactionId) return false;
+
+            console.log(`[PaymentService] Proactively verifying ${gateway} payment for session ${sessionId}...`);
+
+            // 3. Call Dispatcher
+            // We need to bypass the static verifyPayment signature slightly if adapters need extra params (like OM needs token)
+            // Dispatcher.verifyPayment only takes (gateway, txnId). 
+            // We should ideally update Dispatcher or access adapter directly if signature mismatch.
+            // Dispatcher signature: verifyPayment(gatewayName, transactionId)
+            // OM verifyPayment signature: verifyPayment(transactionId, extraParams)
+            // Let's modify Dispatcher call or direct adapter usage.
+            // Direct adapter access via Dispatcher.getAdapter is cleanest given we need extraParams.
+
+            const adapter = PaymentDispatcher.getAdapter(gateway);
+            const verifyResult = await adapter.verifyPayment(transactionId, extraParams);
+
+            // 4. Finalize if paid
+            if (verifyResult.status === 'paid') {
+                console.log(`[PaymentService] Gateway confirmed payment! Finalizing...`);
+
+                await this.finalizePayment({
+                    transactionId: verifyResult.transactionId,
+                    metadata: { sessionId, ...verifyResult.metadata },
+                    gateway: gateway,
+                    amount: verifyResult.amount,
+                    rawResponse: verifyResult.metadata
+                });
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error(`[PaymentService] verification failed: ${error.message}`);
+            return false;
+        }
+    }
 }
 
 module.exports = new PaymentService();

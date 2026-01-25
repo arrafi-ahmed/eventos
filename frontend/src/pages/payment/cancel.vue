@@ -30,7 +30,9 @@
             block
             class="mt-6"
             color="primary"
-            size="large"
+            :size="size"
+            :density="density"
+            :rounded="rounded"
             @click="goBack"
           >
             Return to Checkout
@@ -39,6 +41,9 @@
             block
             class="mt-3"
             variant="text"
+            :size="size"
+            :density="density"
+            :rounded="rounded"
             @click="goHome"
           >
             Go to Home
@@ -50,7 +55,8 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUiProps } from '@/composables/useUiProps'
 
 definePage({
@@ -63,7 +69,7 @@ definePage({
 
 const route = useRoute()
 const router = useRouter()
-const { rounded } = useUiProps()
+const { rounded, size, density, variant } = useUiProps()
 
 const eventSlug = computed(() => route.params.slug || route.query.slug || null)
 
@@ -71,7 +77,9 @@ function goBack() {
   if (eventSlug.value) {
     router.push({ name: 'checkout-slug', params: { slug: eventSlug.value } })
   } else {
-    router.back()
+    // router.back() is unsafe here as it might loop back to payment gateway
+    // Default to home if no slug found
+    router.push({ name: 'homepage' })
   }
 }
 

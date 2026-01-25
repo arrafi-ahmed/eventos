@@ -150,11 +150,48 @@
         const response = await $axios.get(`/temp-registration/success/${sessionId.value}`, {
           headers: { 'X-Suppress-Toast': 'true' },
         })
+        
+        const payload = response.data.payload
+        const orderData = payload.orders || payload.order
+        
+        const status = orderData?.paymentStatus
+        
+        // >>> EXPLICIT VERIFICATION <<<
+        // If pending, ask backend to double-check with gateway one last time
+        if (status && status !== 'paid' && status !== 'free' && status !== 'completed') {
+           console.log('[Success] Status is pending. Attempting explicit verification...');
+           try {
+             const verifyRes = await $axios.post('/payment/verify-session', { sessionId: sessionId.value });
+             if (verifyRes.data?.payload?.paid) {
+                console.log('[Success] Verification confirmed payment! Proceeding.');
+                // Update local status to avoid redirect
+                orderData.paymentStatus = 'paid';
+             } else {
+                throw new Error('Verification failed');
+             }
+           } catch (e) {
+               console.warn('[Success] Payment status not paid and verification failed:', status);
+               // Redirect to cancel page
+               const eventSlug = route.params.slug
+               if (eventSlug) {
+                  router.replace({ 
+                    name: 'payment-cancel', 
+                    params: { slug: eventSlug },
+                    query: { slug: eventSlug } 
+                  })
+               } else {
+                 router.replace({ name: 'payment-cancel' })
+               }
+               return
+           }
+        }
+
         // Ensure event config is included
         tempRegistration.value = {
-          ...response.data.payload,
-          event: response.data.payload.event || null,
+          ...payload,
+          event: payload.event || null,
         }
+
       } else {
         error.value
           = 'No registration information provided. Please ensure you completed the registration process.'

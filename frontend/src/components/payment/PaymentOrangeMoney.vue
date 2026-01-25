@@ -92,10 +92,19 @@ async function processPayment(successUrl) {
     let url = props.paymentUrl
 
     if (!url) {
+      const baseUrl = window.location.origin
+      const cancelUrl = `${baseUrl}/payment/cancel` // We don't have slug here easily unless passed as prop, but backend might have context. 
+      // Actually we should probably just rely on props if possible, but for now let's try to pass what we can.
+      // Better to assume backend uses defaults if missing, OR we can try to guess.
+      // But wait, checkout calls this with successUrl. We should use it.
+      
       // Call backend to initiate Orange Money payment ONLY if not already initiated
       const response = await $axios.post('/payment/init', {
         gateway: 'orange_money',
-        sessionId: props.sessionId
+        sessionId: props.sessionId,
+        returnUrl: successUrl,
+        // cancelUrl: ... we lack slug here. But this is a fallback.
+        // Let's hope the main checkout flow handles it.
       })
       url = response.data.payload.paymentUrl
     }

@@ -267,6 +267,8 @@ exports.getTempRegistrationWAttendees = async (sessionId) => {
                 404,
             );
         }
+
+        // Read-only logic: return the row as is
         const row = result.rows[0];
 
         return {
