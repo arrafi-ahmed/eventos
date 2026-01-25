@@ -3,7 +3,7 @@
   import { useStore } from 'vuex'
   import ImageManager from '@/components/ImageManager.vue'
   import { useUiProps } from '@/composables/useUiProps'
-  import { getApiPublicImageUrl } from '@/utils'
+  import { getApiPublicImageUrl, getCurrencySymbol } from '@/utils'
 
   const props = defineProps({
     product: {
@@ -13,6 +13,10 @@
     loading: {
       type: Boolean,
       default: false,
+    },
+    currency: {
+      type: String,
+      default: 'USD',
     },
   })
 
@@ -214,11 +218,11 @@
               v-model.number="formData.price"
               :density="density"
               hide-details="auto"
-              hint="Price in dollars (0 = free product)"
-              label="Price ($)"
+              hint="Price (0 = free product)"
+              :label="`Price (${getCurrencySymbol({ code: currency, type: 'symbol' })})`"
               min="0"
               persistent-hint
-              prepend-inner-icon="mdi-currency-usd"
+              :prefix="getCurrencySymbol({ code: currency, type: 'symbol' })"
               :rounded="rounded"
               :rules="[rules.priceMin]"
               step="0.01"

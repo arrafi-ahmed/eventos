@@ -7,6 +7,7 @@
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { EventConfig } from '@/models/EventConfig'
+  import { getCurrencySymbol } from '@/utils'
 
   definePage({
     name: 'event-config',
@@ -325,7 +326,7 @@
                 label="Shipping Fee"
                 :min="0"
                 hide-details="auto"
-                prepend-inner-icon="mdi-truck-delivery"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
                 :reverse="false"
                 :rounded="rounded"
                 :rules="[(v) => v >= 0 || 'Must be 0 or greater']"

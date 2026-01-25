@@ -9,7 +9,8 @@
   import { useUiProps } from '@/composables/useUiProps'
   import { Event } from '@/models/Event'
   import { EventConfig } from '@/models/EventConfig'
-  import { generateSlug, mergeDateTime } from '@/utils'
+  import { EventConfig } from '@/models/EventConfig'
+  import { generateSlug, mergeDateTime, getCurrencySymbol } from '@/utils'
   import CurrencySelector from '@/components/CurrencySelector.vue'
 
   definePage({
@@ -337,7 +338,7 @@
                     :density="density"
                     hide-details="auto"
                     label="Tax Amount"
-                    prepend-inner-icon="mdi-currency-usd"
+                    :prefix="getCurrencySymbol({ code: newEvent.currency || 'USD', type: 'symbol' })"
                     :rounded="rounded"
                     type="number"
                     :variant="variant"
@@ -603,7 +604,7 @@
                     label="Shipping Fee"
                     :min="0"
                     hide-details="auto"
-                    prepend-inner-icon="mdi-truck-delivery"
+                    :prefix="getCurrencySymbol({ code: newEvent.currency || 'USD', type: 'symbol' })"
                     :reverse="false"
                     :rounded="rounded"
                     :rules="[(v) => v >= 0 || 'Must be 0 or greater']"

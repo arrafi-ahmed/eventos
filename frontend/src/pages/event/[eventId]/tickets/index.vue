@@ -19,8 +19,8 @@
     },
   })
 
-  // Import formatPrice from utils
-  import { formatPrice } from '@/utils'
+  // Import formatPrice and getCurrencySymbol from utils
+  import { formatPrice, getCurrencySymbol } from '@/utils'
 
   const { xs } = useDisplay()
   const { rounded, variant, density, size } = useUiProps()
@@ -432,7 +432,7 @@
                 label="Price"
                 min="0"
                 inset
-                :prefix="event?.currency?.toUpperCase() || 'USD'"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
                 control-variant="default"
                 :rounded="rounded"
                 class="flex-1"
@@ -450,7 +450,7 @@
                 min="0"
                 placeholder="Optional"
                 inset
-                :prefix="event?.currency?.toUpperCase() || 'USD'"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
                 control-variant="default"
                 :rounded="rounded"
                 class="flex-1"

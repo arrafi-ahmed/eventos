@@ -6,7 +6,7 @@
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
-  import { formatPrice } from '@/utils'
+  import { formatPrice, getCurrencySymbol } from '@/utils'
 
   definePage({
     name: 'event-promo-codes',
@@ -283,7 +283,7 @@
                       :density="density"
                       hide-details="auto"
                       label="Discount Value"
-                      :prefix="promoData.discountType === 'fixed' ? '$' : ''"
+                      :prefix="promoData.discountType === 'fixed' ? getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' }) : ''"
                       :rounded="rounded"
                       :rules="[v => !!v || 'Value is required']"
                       :suffix="promoData.discountType === 'percentage' ? '%' : ''"

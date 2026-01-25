@@ -9,6 +9,7 @@
   import { useUiProps } from '@/composables/useUiProps'
   import Extras from '@/models/Extras'
   import ExtrasItem from '@/models/ExtrasItem'
+  import { getCurrencySymbol } from '@/utils'
 
   definePage({
     name: 'event-extras',
@@ -28,6 +29,7 @@
   const currentUser = computed(() => store.state.auth.currentUser)
   const targetOrganizationId = computed(() => currentUser.value.organizationId)
   const organization = computed(() => store.state.organization.organization)
+  const event = computed(() => store.state.event.event)
   const extras = computed(() => store.state.event.extras)
 
   const newExtras = reactive({ ...new Extras() })
@@ -93,6 +95,7 @@
     await Promise.allSettled([
       store.dispatch('organization/setOrganization', targetOrganizationId.value),
       store.dispatch('event/setExtras', route.params.eventId),
+      store.dispatch('event/setEvent', { eventId: route.params.eventId }),
     ])
   }
 
@@ -255,6 +258,7 @@
             density="comfortable"
             hide-details="auto"
             label="Price"
+            :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
             :rules="[(v) => !!v || 'Price is required!']"
             type="number"
             variant="outlined"
@@ -362,6 +366,7 @@
             density="comfortable"
             hide-details="auto"
             label="Price"
+            :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
             :rules="[(v) => !!v || 'Price is required!']"
             type="number"
             variant="outlined"

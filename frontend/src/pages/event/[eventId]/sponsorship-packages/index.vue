@@ -7,7 +7,7 @@
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
-  import { formatPrice } from '@/utils'
+  import { formatPrice, getCurrencySymbol, currencies } from '@/utils'
 
   definePage({
     name: 'event-sponsorship-packages',
@@ -351,6 +351,7 @@
                   v-model="packageForm.price"
                   density="compact"
                   label="Price"
+                  :prefix="getCurrencySymbol({ code: packageForm.currency || 'USD', type: 'symbol' })"
                   required
                   type="number"
                   variant="solo"
@@ -361,10 +362,12 @@
                 cols="12"
                 md="6"
               >
-                <v-select
+                <v-autocomplete
                   v-model="packageForm.currency"
                   density="compact"
-                  :items="['USD', 'EUR', 'GBP']"
+                  :items="currencies"
+                  item-title="name"
+                  item-value="code"
                   label="Currency"
                   required
                   variant="solo"
