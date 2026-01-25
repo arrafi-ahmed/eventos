@@ -19,6 +19,9 @@
     },
   })
 
+  // Import formatPrice from utils
+  import { formatPrice } from '@/utils'
+
   const { xs } = useDisplay()
   const { rounded, variant, density, size } = useUiProps()
   const store = useStore()
@@ -183,19 +186,6 @@
     }
   }
 
-  function formatPrice (price) {
-    // Get currency from event with validation
-    const currency = event.value?.currency
-    const validCurrency = (currency && typeof currency === 'string' && currency.length === 3)
-      ? currency.toUpperCase()
-      : 'USD'
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: validCurrency,
-    }).format(price / 100) // Convert cents to dollars
-  }
-
   onMounted(() => {
     store.dispatch('event/setEvent', { eventId: route.params.eventId })
     fetchTickets()
@@ -311,7 +301,7 @@
               <div class="d-flex justify-space-between align-center mb-3 flex-wrap gap-2">
                 <div class="price-stock-container">
                   <div class="text-h4 font-weight-bold text-primary text-truncate-price">
-                    {{ formatPrice(ticket.price) }}
+                    {{ formatPrice(ticket.price, event?.currency) }}
                   </div>
                   <div class="text-caption text-medium-emphasis">
                     Stock: {{ ticket.currentStock || 0 }}/{{ ticket.maxStock || 0 }}

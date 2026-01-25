@@ -1,5 +1,6 @@
 import store from '@/store'
 import $axios from '@/plugins/axios'
+import { currencies } from '@/utils/currency-list'
 import { countries } from '@/utils/country-list'
 
 export const appInfo = {
@@ -197,18 +198,21 @@ export function getCountryList(filterName) {
 }
 
 export function getCurrencySymbol({ code, type }) {
-  const codeLower = code.toString().toLowerCase()
-  const currencyMap = {
-    usd: { icon: 'mdi-currency-usd', symbol: '$', value: 'usd' },
-    gbp: { icon: 'mdi-currency-gbp', symbol: '£', value: 'gbp' },
-    eur: { icon: 'mdi-currency-eur', symbol: '€', value: 'eur' },
-    thb: { icon: 'mdi-currency-thb', symbol: '฿', value: 'thb' },
-    idr: { icon: 'mdi-currency-cash', symbol: 'Rp', value: 'idr' },
+  if (!code) return null
+  const codeUpper = code.toString().toUpperCase()
+  const currency = currencies.find(c => c.code === codeUpper)
+
+  if (!currency) {
+    return null
   }
-  const currencyData = currencyMap[codeLower]
-  if (!currencyData) {
-    return null // Or undefined, or throw an error, depending on your desired behavior
+
+  const currencyData = {
+    icon: 'mdi-cash', // Default icon
+    symbol: currency.symbol,
+    value: currency.code.toLowerCase(),
+    ...currency,
   }
+
   if (type === undefined) {
     return currencyData
   }
@@ -232,16 +236,33 @@ export function formatPrice(price, currency = 'USD', options = {}) {
   // Convert cents to currency units (prices are always stored in cents)
   const amount = price / 100
 
+  // Get custom symbol if available
+  const symbol = getCurrencySymbol({ code: currency, type: 'symbol' })
+
   const defaultOptions = {
-    style: 'currency',
-    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }
 
   const formatOptions = { ...defaultOptions, ...options }
 
-  return new Intl.NumberFormat('en-US', formatOptions).format(amount)
+  const formattedNumber = new Intl.NumberFormat('en-US', formatOptions).format(amount)
+
+  if (symbol) {
+    // Check if symbol is a suffix type (optional refinement, but usually prefix in this app context)
+    // For simplicity and consistency with design, using prefix + space for longer symbols, or just prefix
+    if (symbol.length > 2) {
+      return `${symbol} ${formattedNumber}`
+    }
+    return `${symbol}${formattedNumber}`
+  }
+
+  // Fallback to standard currency formatting if symbol not found
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    ...formatOptions,
+  }).format(amount)
 }
 
 /**
