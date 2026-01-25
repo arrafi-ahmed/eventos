@@ -161,7 +161,10 @@
         if (status && status !== 'paid' && status !== 'free' && status !== 'completed') {
            console.log('[Success] Status is pending. Attempting explicit verification...');
            try {
-             const verifyRes = await $axios.post('/payment/verify-session', { sessionId: sessionId.value });
+             // Suppress global toast because 'Payment Pending' is not an error we want to show, we handle it via redirect
+             const verifyRes = await $axios.post('/payment/verify-session', { sessionId: sessionId.value }, {
+                headers: { 'X-Suppress-Toast': 'true' }
+             });
              if (verifyRes.data?.payload?.paid) {
                 console.log('[Success] Verification confirmed payment! Proceeding.');
                 // Update local status to avoid redirect
