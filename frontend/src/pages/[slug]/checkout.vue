@@ -673,11 +673,10 @@
               <!-- Step 1: Order Details -->
               <v-stepper-vertical-item
                 :complete="checkoutStep > 1"
-                title="Order Review"
+                title="Order Options"
                 value="1"
               >
                 <div>
-                  <div class="text-subtitle-1 font-weight-bold mb-4">Review your items</div>
                   
                   <!-- Shipping (Condition on Products) -->
                   <div v-if="selectedProducts?.length" class="mb-6">
