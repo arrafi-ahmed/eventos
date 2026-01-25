@@ -1,0 +1,51 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+@use 'vuetify/settings' with ($body-font-family: ('Plus Jakarta Sans', sans-serif));
+
+// Bold headings and specific Vuetify elements with Plus Jakarta Sans
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.v-card-title,
+.v-toolbar-title {
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+}
+
+// Container with border and spacing
+.container-border {
+    border-radius: 4px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    padding: 16px;
+    margin-top: 8px;
+
+    @media (min-width: 960px) {
+        margin-top: 16px;
+    }
+}
+
+// Text gradient utility class
+.text-gradient {
+    color: rgb(var(--v-theme-on-gradient-dark)) !important;
+
+    .v-theme--light & {
+        color: rgb(var(--v-theme-on-gradient-light)) !important;
+    }
+}
+
+// Icon gradient utility class
+.text-gradient-icon,
+.text-gradient .v-icon {
+    color: rgb(var(--v-theme-on-gradient-dark)) !important;
+
+    .v-theme--light & {
+        color: rgb(var(--v-theme-on-gradient-light)) !important;
+    }
+}

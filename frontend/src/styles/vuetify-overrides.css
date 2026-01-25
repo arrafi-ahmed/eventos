@@ -1,0 +1,162 @@
+/* src/styles/vuetify-overrides.css */
+
+/* ========================================
+   FONT LOADING OPTIMIZATION
+   ======================================== */
+
+/* Optimize Material Design Icons font loading */
+/* Optimize Material Design Icons font loading - usually handled by the plugin, but keeping as placeholder if needed */
+/* @font-face {
+    font-family: 'Material Design Icons';
+    font-display: swap;
+} */
+
+/* ========================================
+   LUXEMBOURG THEME OVERRIDES
+   ======================================== */
+
+:root {
+    --v-border-radius-xl: 16px !important;
+    --v-layout-top: 40px !important;
+    --lux-red: #ED2939;
+    --lux-blue: #00A1DE;
+    --lux-white: #FFFFFF;
+
+    /* Font Smoothing Optimization */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Directly override the utility if it's not using the var */
+.rounded-xl {
+    border-radius: var(--v-border-radius-xl) !important;
+}
+
+/* Override start and end rounded corners to match rounded-xl (16px) */
+.rounded-s-xl,
+.v-locale--is-ltr .rounded-s-xl,
+.v-locale--is-rtl .rounded-s-xl {
+    border-start-start-radius: var(--v-border-radius-xl) !important;
+    border-end-start-radius: var(--v-border-radius-xl) !important;
+    border-top-left-radius: var(--v-border-radius-xl) !important;
+    border-bottom-left-radius: var(--v-border-radius-xl) !important;
+}
+
+.rounded-e-xl,
+.v-locale--is-ltr .rounded-e-xl,
+.v-locale--is-rtl .rounded-e-xl {
+    border-start-end-radius: var(--v-border-radius-xl) !important;
+    border-end-end-radius: var(--v-border-radius-xl) !important;
+    border-top-right-radius: var(--v-border-radius-xl) !important;
+    border-bottom-right-radius: var(--v-border-radius-xl) !important;
+}
+
+/* ========================================
+   SMOOTH TRANSITIONS
+   ======================================== */
+
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(var(--v-theme-on-surface), 0.2);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--v-theme-on-surface), 0.3);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.bg-gradient {
+    background: linear-gradient(135deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-accent))) !important;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #383838, #424242) !important;
+}
+
+/* Parallax container */
+.parallax-section {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ========================================
+   HOVER EFFECT UTILITY CLASSES
+   Apply manually to components that need hover effects
+   ======================================== */
+
+/* Neon glow hover effect - for cards and interactive elements */
+.hover-glow {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.hover-glow:hover {
+    /* Use box-shadow for glow instead of filter to avoid affecting text */
+    /* Increased blur radius to 24px and opacity to 0.6 for more visible spread */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 24px rgba(var(--v-theme-tertiary), 0.6) !important;
+    border-color: rgba(var(--v-theme-tertiary), 0.5) !important;
+}
+
+.hover-glow:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 12px rgba(var(--v-theme-tertiary), 0.3) !important;
+}
+
+/* Prevent text color changes on hover */
+.hover-glow:hover .v-card-title,
+.hover-glow:hover .v-card-text,
+.hover-glow:hover .v-card-subtitle,
+.hover-glow:hover h1,
+.hover-glow:hover h2,
+.hover-glow:hover h3,
+.hover-glow:hover h4,
+.hover-glow:hover h5,
+.hover-glow:hover h6,
+.hover-glow:hover p,
+.hover-glow:hover span {
+    color: inherit !important;
+}
+
+/* Legacy classes for backward compatibility (can be removed if not used) */
+.hover-lift,
+.hover-neon {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.hover-lift:hover,
+.hover-neon:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 20px rgba(var(--v-theme-tertiary), 0.6) !important;
+    border-color: rgba(var(--v-theme-tertiary), 0.5) !important;
+}
+
+.hover-lift:active,
+.hover-neon:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 8px rgba(var(--v-theme-tertiary), 0.3) !important;
+}

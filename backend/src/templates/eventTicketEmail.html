@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your {{eventName}} ticket</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header img {
+            max-height: 60px;
+            width: auto;
+            margin-bottom: 20px;
+        }
+
+        .header-text {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-card {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #0f172a;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .qr-section {
+            text-align: center;
+            padding: 32px 0;
+            border-top: 1px dashed #e2e8f0;
+            margin-top: 32px;
+        }
+
+        .qr-container {
+            background-color: #f8fafc;
+            padding: 24px;
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid #e2e8f0;
+        }
+
+        .qr-container img {
+            display: block;
+            width: 200px;
+            height: 200px;
+            border-radius: 8px;
+        }
+
+        .footer {
+            background-color: #f1f5f9;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer p {
+            margin: 4px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header" style="text-align: {{header.logoPosition}};">
+            {{#if header.logo}}
+            <img src="{{header.logo}}" alt="{{header.appName}} Logo">
+            {{else}}
+            <h1 class="header-text" style="color: {{header.primaryColor}};">{{header.appName}}</h1>
+            {{/if}}
+        </div>
+        <div class="content">
+            <h1
+                style="font-size: 24px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 8px; text-align: center;">
+                {{#if isGroupTicket}}Your {{eventName}} Tickets{{else}}Your {{eventName}} Ticket{{/if}}
+            </h1>
+            <p style="text-align: center; color: #64748b; margin-bottom: 32px;">Hello {{name}}, thank you for joining
+                us!</p>
+
+            <div class="section-title" style="color: {{header.primaryColor}};">📅 Event Information</div>
+            <div class="info-card">
+                <div style="margin-bottom: 12px;">
+                    <div class="info-label">Date & Time</div>
+                    <div class="info-value">{{eventDateDisplay}}</div>
+                </div>
+                <div>
+                    <div class="info-label">Location</div>
+                    <div class="info-value">{{location}}</div>
+                </div>
+            </div>
+
+            <div class="section-title" style="color: {{header.primaryColor}};">👤 {{#if isRegistrantDetails}}Registrant
+                Details{{else}}Attendee Details{{/if}}
+            </div>
+            <div class="info-card">
+                <div style="margin-bottom: 12px;">
+                    <div class="info-label">Name</div>
+                    <div class="info-value">{{name}}</div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{email}}</div>
+                </div>
+                {{#if ticketType}}
+                <div>
+                    <div class="info-label">Ticket Type</div>
+                    <div class="info-value">{{ticketType}} {{#if quantity}}<span class="badge"
+                            style="background-color: {{header.primaryColor}};">{{quantity}}
+                            x</span>{{/if}}</div>
+                </div>
+                {{/if}}
+            </div>
+
+            {{#if showTicketsSection}}
+            <div class="section-title" style="color: {{header.primaryColor}};">🎫 Tickets</div>
+            {{#each orderItems}}
+            <div
+                style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #0f172a;">{{this.ticketTitle}}</span>
+                <span style="color: #64748b; font-size: 14px;">{{this.quantity}} × {{formatCurrency this.price
+                    ../currency}}</span>
+            </div>
+            {{/each}}
+            {{/if}}
+
+            {{#if hasProducts}}
+            <div class="section-title" style="margin-top: 24px; color: {{header.primaryColor}};">📦 Products Purchased
+            </div>
+            {{#each productItems}}
+            <div
+                style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid {{../header.primaryColor}};">
+                <div style="font-weight: 600; color: #0f172a;">{{this.name}}</div>
+                <div style="color: #64748b; font-size: 14px;">{{this.quantity}} × {{formatCurrency this.price
+                    ../currency}} = {{formatCurrency this.totalPrice ../currency}}</div>
+            </div>
+            {{/each}}
+            <div
+                style="margin-top: 12px; padding: 8px 12px; background: #ecfdf5; border-radius: 6px; color: #065f46; font-size: 13px; font-weight: 600;">
+                Delivery Status: {{productStatus}}
+            </div>
+            {{/if}}
+
+            {{#if totalAmount}}
+            <div
+                style="margin-top: 32px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; color: #0f172a;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="font-size: 14px; color: #64748b;">Subtotal</td>
+                        <td align="right" style="font-weight: 600;">{{formatCurrency subtotal currency}}</td>
+                    </tr>
+                    {{#if shippingAmount}}
+                    <tr>
+                        <td style="font-size: 14px; color: #64748b; padding-top: 8px;">Shipping</td>
+                        <td align="right" style="font-weight: 600; padding-top: 8px;">{{formatCurrency shippingAmount
+                            currency}}</td>
+                    </tr>
+                    {{/if}}
+                    {{#if taxAmount}}
+                    <tr>
+                        <td style="font-size: 14px; color: #64748b; padding-top: 8px;">Tax</td>
+                        <td align="right" style="font-weight: 600; padding-top: 8px;">{{formatCurrency taxAmount
+                            currency}}</td>
+                    </tr>
+                    {{/if}}
+                    <tr>
+                        <td
+                            style="font-size: 18px; font-weight: 800; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 12px;">
+                            Total</td>
+                        <td align="right"
+                            style="font-size: 18px; font-weight: 800; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 12px; color: {{header.primaryColor}};">
+                            {{formatCurrency totalAmount currency}}</td>
+                    </tr>
+                </table>
+            </div>
+            {{/if}}
+
+            <div class="qr-section">
+                <div class="section-title" style="color: {{header.primaryColor}}; justify-content: center;">🎫 Check-in
+                    QR Code</div>
+                <div class="qr-container">
+                    <img src="cid:qrCodeMain" alt="QR Code">
+                </div>
+                <p style="margin-top: 16px; font-size: 14px; color: #ef4444; font-weight: 600;">⚠️ Important:
+                    {{groupMessage}}</p>
+            </div>
+
+            {{#if qrCodeExtras}}
+            <div class="qr-section">
+                <div class="section-title" style="color: {{header.primaryColor}}; justify-content: center;">🧧 Voucher
+                    QR Code</div>
+                {{#each extrasList}}
+                <div
+                    style="background: #f1f5f9; padding: 8px 16px; border-radius: 9999px; display: inline-block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">
+                    {{this.name}}</div>
+                {{/each}}
+                <br>
+                <div class="qr-container">
+                    <img src="cid:qrCodeExtras" alt="Voucher QR Code">
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <div class="footer">
+            <p>&copy; {{currentYear}} {{header.appName}}. All rights reserved.</p>
+            <p class="legal">This is an automated message, please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+
+</html>

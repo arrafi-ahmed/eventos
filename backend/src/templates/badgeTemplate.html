@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>{{event.name}} Badge</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        .badge {
+            width: 85mm;
+            height: 55mm;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 4mm;
+            box-sizing: border-box;
+            text-align: center;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .primary-accent {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .event-banner {
+            max-width: 80px;
+            max-height: 40px;
+            width: auto;
+            height: auto;
+            display: block;
+            margin: 0 auto 3mm;
+        }
+
+        .event-name {
+            font-size: 10pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin: 0 0 2mm;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+        }
+
+        .attendee-name {
+            font-size: 14pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 1mm;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .ticket-title {
+            font-size: 8pt;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2mm;
+        }
+
+        .contact-info {
+            font-size: 7pt;
+            color: #94a3b8;
+            margin-bottom: 2mm;
+        }
+
+        .qr-section {
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-image {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            background: white;
+        }
+
+        .footer-text {
+            font-size: 6pt;
+            color: #cbd5e1;
+            margin-top: 1mm;
+            font-weight: 600;
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+
+            .badge {
+                border: 1px solid #e2e8f0;
+                page-break-inside: avoid;
+                -webkit-print-color-adjust: exact;
+            }
+
+            @page {
+                size: 85mm 55mm;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="badge" role="presentation">
+        <div class="primary-accent" style="background-color: {{header.primaryColor}};"></div>
+
+        <div class="header">
+            {{#if eventBanner}}
+            <img alt="{{event.name}} banner" class="event-banner" src="{{eventBanner}}" />
+            {{else}}
+            <div style="font-size: 8pt; font-weight: 900; color: #cbd5e1; margin-bottom: 2mm;">{{header.appName}}</div>
+            {{/if}}
+            <div class="event-name" style="color: {{header.primaryColor}};">{{event.name}}</div>
+        </div>
+
+        <div class="attendee-details">
+            <div class="attendee-name">{{registration.name}}</div>
+            <div class="ticket-title">{{registration.ticketTitle}}</div>
+            <div class="contact-info">
+                {{registration.email}}
+                {{#if registration.rut}}<br>{{registration.rut}}{{/if}}
+            </div>
+        </div>
+
+        <div class="qr-section">
+            <img alt="Event QR Code" class="qr-image" src="data:image/png;base64,{{qrCode}}" />
+        </div>
+
+        <div class="footer-text">Powered by {{header.appName}}</div>
+    </div>
+</body>
+
+</html>

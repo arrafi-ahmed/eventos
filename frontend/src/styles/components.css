@@ -1,0 +1,365 @@
+/* ===========================================
+   COMMON COMPONENT STYLES
+   Centralized styles for reusable components
+   =========================================== */
+
+/* ===========================================
+   QUANTITY CONTROLS
+   =========================================== */
+.quantity-btn {
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 12px !important;
+}
+
+.quantity-btn:hover {
+    background: rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
+.quantity-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(var(--v-theme-onSurface));
+    min-width: 20px;
+    text-align: center;
+}
+
+.quantity-display {
+    min-width: 40px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--v-theme-on-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    background: rgb(var(--v-theme-surfaceVariant));
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid rgb(var(--v-theme-outline));
+}
+
+/* ===========================================
+   CART ITEM COMPONENTS
+   =========================================== */
+.cart-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0px;
+}
+
+.item-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 12px;
+}
+
+.item-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(var(--v-theme-onSurface));
+    margin-bottom: 4px;
+    line-height: 1.3;
+    /* Prevent title from pushing other elements too far */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.item-price {
+    font-size: 0.75rem;
+    color: rgb(var(--v-theme-onSurfaceVariant));
+    font-weight: 400;
+}
+
+.item-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.item-total {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(var(--v-theme-onSurface));
+    min-width: 85px;
+    text-align: right;
+}
+
+.remove-btn {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    border-radius: 8px !important;
+    opacity: 0.6;
+}
+
+.remove-btn:hover {
+    opacity: 1;
+    background: rgba(var(--v-theme-error), 0.1) !important;
+    color: rgb(var(--v-theme-error)) !important;
+}
+
+.item-divider {
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgb(var(--v-theme-outline)) 50%,
+            transparent 100%);
+    margin: 0;
+}
+
+/* ===========================================
+   CART DIALOG COMPONENTS
+   =========================================== */
+.modern-cart-dialog {
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.cart-header {
+    background: linear-gradient(135deg,
+            rgb(var(--v-theme-primary)) 0%,
+            rgb(var(--v-theme-accent)) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.cart-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.cart-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px);
+}
+
+.close-btn:hover {
+    background: rgba(var(--v-theme-on-primary), 0.2) !important;
+}
+
+.empty-cart-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,
+            rgb(var(--v-theme-surfaceVariant)) 0%,
+            rgb(var(--v-theme-outline)) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.cart-items-list {
+    background: rgb(var(--v-theme-surface));
+}
+
+.cart-summary {
+    background: linear-gradient(135deg,
+            rgb(var(--v-theme-surfaceVariant)) 0%,
+            rgb(var(--v-theme-surface)) 100%);
+    border-top: 1px solid rgb(var(--v-theme-outline));
+    padding: 20px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.summary-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgb(var(--v-theme-onSurface));
+}
+
+.summary-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgb(var(--v-theme-onSurface));
+}
+
+.checkout-btn {
+    border-radius: 12px !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+}
+
+.continue-shopping-btn {
+    border-radius: 12px !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+}
+
+/* ===========================================
+   CHECKOUT BAR COMPONENTS
+   =========================================== */
+.quick-continue-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-accent)) 100%);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    padding: 16px 0;
+    backdrop-filter: blur(10px);
+}
+
+.continue-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.continue-btn:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.review-btn {
+    background: transparent !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+.review-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ===========================================
+   LAYOUT SECTIONS
+   =========================================== */
+.section {
+    padding: 40px 0;
+    position: relative;
+}
+
+.section-fade {
+    animation: fadeIn 1.2s cubic-bezier(0.4, 2, 0.6, 1);
+}
+
+.header-section {
+    background: rgba(var(--v-theme-surface-rgb), 0.5);
+    border-bottom: 1px solid rgba(var(--v-theme-outline-rgb), 0.12);
+}
+
+.content-section {
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--v-theme-surface-rgb), 0.3) 100%);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===========================================
+   UTILITY CLASSES
+   =========================================== */
+.gap-2 {
+    gap: 8px;
+}
+
+.text-shadow {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.hero-content-vertical-center {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===========================================
+   RESPONSIVE ADJUSTMENTS
+   =========================================== */
+@media (max-width: 768px) {
+    .sticky-cart {
+        position: static;
+        margin-top: 20px;
+    }
+
+    .cart-items {
+        max-height: 200px;
+    }
+
+    .ticket-card {
+        min-height: 160px;
+    }
+}
+
+/* ===========================================
+   MODERN CARD COMPONENT
+   =========================================== */
+.modern-card {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    background: rgb(var(--v-theme-surface));
+}
+
+/* ===========================================
+   PAGE TITLE WRAPPER
+   Consistent spacing for PageTitle component
+   =========================================== */
+.page-title-wrapper,
+.page-title-wrapper-compact {
+    margin-top: 8px;
+    /* my-2 */
+    margin-bottom: 8px;
+    /* my-2 */
+}
+
+@media (min-width: 960px) {
+    .page-title-wrapper {
+        margin-top: 16px;
+        /* my-md-4 */
+        margin-bottom: 16px;
+        /* my-md-4 */
+    }
+
+    .page-title-wrapper-compact {
+        margin-top: 16px;
+        /* my-md-4 */
+        margin-bottom: 8px;
+        /* keep compact bottom tighter */
+    }
+}

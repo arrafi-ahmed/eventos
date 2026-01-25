@@ -1,0 +1,36 @@
+.DS_Store
+node_modules
+frontend/dist
+
+# Ignore all files in backend/public subdirectories
+backend/public/*/*
+
+# Allow .gitkeep files to track empty directories
+!backend/public/*/.gitkeep
+
+# env files
+.env
+.env.development
+**/.env.production
+
+# skip ignoring production env as its used in build on prod server
+#!frontend/.env.production
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Documentation directory
+docs/
+

@@ -1,0 +1,23 @@
+ALTER TABLE temp_registration
+ADD COLUMN IF NOT EXISTS selected_products JSONB;
+
+ALTER TABLE orders
+CHANGE COLUMN items items_ticket JSONB;
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS items_product JSONB;
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS product_status VARCHAR(20) NOT NULL DEFAULT 'pending';
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS shipping_cost INT DEFAULT 0;
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS shipping_address JSONB;
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS shipping_type VARCHAR(20) NOT NULL DEFAULT 'pickup';
+
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS tax_amount INT DEFAULT 0;

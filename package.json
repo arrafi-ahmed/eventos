@@ -1,0 +1,15 @@
+{
+  "name": "event-ticketing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "in": "npm i && npm in --prefix frontend && npm in --prefix backend",
+    "up": "npm update && npm up --prefix frontend && npm up --prefix backend",
+    "dev": "concurrently --names \"frontend,backend\" \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "setup": "npm run in && npm run dev",
+    "upgrade": "npm run up && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
