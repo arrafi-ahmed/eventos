@@ -67,13 +67,20 @@
 
   // Get ticket information for a specific attendee
   function getAttendeeTicket (attendee) {
-    if (!tempRegistration.value?.selectedTickets || !attendee.ticketId) {
+    // Favor the snapshot title directly if available
+    if (attendee.ticket?.title) {
+      return attendee.ticket;
+    }
+
+    if (!tempRegistration.value?.selectedTickets || (!attendee.ticketId && !attendee.ticket?.id)) {
       return null
     }
 
-    // Find the ticket that matches this attendee's ticketId
+    const tid = attendee.ticket?.id || attendee.ticketId;
+
+    // Find the ticket that matches this attendee's ticket id
     return tempRegistration.value.selectedTickets.find(
-      ticket => ticket.ticketId === attendee.ticketId,
+      ticket => (ticket.ticketId || ticket.id) === tid,
     )
   }
 
@@ -82,44 +89,42 @@
       isLoading.value = true
       error.value = null
 
-      // Handle free registration (registration_id + attendee_ids + qr_uuids) or paid registration (session_id)
-      if (registrationId.value) {
-        const attendeeIds = route.query.attendee_ids?.split(',') || []
-        const qrUuids = route.query.qr_uuids?.split(',') || []
+        // 1. Check Router State (Free / Instant Flow)
+        // Access history.state directly to get the data passed via router.push
+        const stateData = window.history.state?.registrationData;
+        
+        if (stateData) {
+            console.log('[Success] Found registration data in Router State. Hydrating directly.');
+            
+            // Hydrate simple properties
+            const { attendees, order, registration, event } = stateData;
+            
+            // We need to construct 'selectedTickets' from attendees for the UI
+            // The backend returns attendees with ticket info
+            const selectedTickets = (attendees || []).map(attendee => ({
+                ticketId: attendee.ticket?.id || attendee.ticketId,
+                title: attendee.ticket?.title || attendee.ticketTitle || 'Unknown Ticket',
+                price: attendee.price || 0,
+                quantity: 1
+            }));
 
-        // For free registrations, we just need the registrationId
-        const response = await $axios.get(`/registration/getFreeRegistrationConfirmation`, {
-          params: {
-            registrationId: registrationId.value,
-          },
-          headers: { 'X-Suppress-Toast': 'true' },
-        })
-
-        if (response.data.payload) {
-          const payload = response.data.payload
-          const attendees = payload.attendees || []
-          
-          // If URL params exist, optionally validate them, otherwise trust backend
-          const validAttendees = attendees // Trust backend by default
-
-          // Transform valid attendees to selectedTickets format
-          const selectedTickets = validAttendees.map(attendee => ({
-            ticketId: attendee.ticketId,
-            title: attendee.ticketTitle || 'Unknown Ticket',
-            price: attendee.price || 0,
-            quantity: 1,
-          }))
-
-          tempRegistration.value = {
-            attendees: validAttendees,
-            selectedTickets: selectedTickets,
-            orders: payload.order,
-            registration: payload.registration,
-            event: payload.event,
-            eventId: payload.registration?.eventId,
-          }
-        }
-      } else if (sessionId.value) {
+            tempRegistration.value = {
+                attendees: attendees || [],
+                selectedTickets: selectedTickets,
+                orders: order,
+                registration: registration,
+                event: event,
+                eventId: registration?.eventId,
+                // Add any other fields if needed to match what getTempRegistrationBySessionId returns
+            };
+            
+            // SECURITY: Clear the sensitive data from history state immediately
+            // so it doesn't persist on reload
+            const cleanState = { ...window.history.state };
+            delete cleanState.registrationData;
+            window.history.replaceState(cleanState, '');
+            
+        } else if (sessionId.value) {
         // Fallback: check localStorage if session_id not in URL
         if (!sessionId.value) {
           const storedSessionId = localStorage.getItem('tempSessionId')
@@ -229,31 +234,74 @@
   })
 
   // Derive all purchased items (tickets + products) from selectedTickets and selectedProducts
+  // Derive all purchased items (tickets + products) from order details or fallback to selectedTickets
   const purchasedItems = computed(() => {
     const allItems = []
 
-    // Get tickets from selectedTickets
-    const tickets = tempRegistration.value?.selectedTickets || []
-    for (const item of tickets) {
-      allItems.push({
-        id: item.ticketId,
-        name: item.title,
-        price: Number(item.price || 0),
-        quantity: Number(item.quantity || 1),
-        ticketId: item.ticketId,
-      })
+    // Normalize order object access (support both 'orders' and 'order' keys)
+    const orderObj = tempRegistration.value?.orders || tempRegistration.value?.order
+
+    // 1. Try to get tickets from Order (Primary Source of Truth)
+    const orderTickets = orderObj?.itemsTicket || orderObj?.items
+    
+    if (orderTickets && Array.isArray(orderTickets) && orderTickets.length > 0) {
+      for (const item of orderTickets) {
+        allItems.push({
+          id: item.ticketId || item.id,
+          name: item.title || item.name || item.ticketTitle || 'Ticket',
+          price: Number(item.price || 0),
+          quantity: Number(item.quantity || 1),
+          ticketId: item.ticketId || item.id,
+        })
+      }
+    } else {
+      // 2. Fallback: Get tickets from selectedTickets (Hydrated from attendees)
+      // We aggregate these to prevent multiple "1x Ticket" rows for same type
+      const tickets = tempRegistration.value?.selectedTickets || []
+      const aggregated = {}
+      
+      for (const item of tickets) {
+        const id = item.ticketId || item.id
+        if (!aggregated[id]) {
+          aggregated[id] = {
+             id: id,
+             name: item.title,
+             price: Number(item.price || 0),
+             quantity: 0,
+             ticketId: id
+          }
+        }
+        aggregated[id].quantity += Number(item.quantity || 1)
+      }
+      
+      allItems.push(...Object.values(aggregated))
     }
 
-    // Get products from selectedProducts
-    const products = tempRegistration.value?.selectedProducts || []
-    for (const item of products) {
-      allItems.push({
-        id: item.productId || item.id,
-        name: item.name || item.title, // Use name for products
-        price: Number(item.price || 0),
-        quantity: Number(item.quantity || 1),
-        productId: item.productId || item.id,
-      })
+    // 3. Get products - prioritize order items
+    const orderProducts = orderObj?.itemsProduct
+    
+    if (orderProducts && Array.isArray(orderProducts) && orderProducts.length > 0) {
+      for (const item of orderProducts) {
+        allItems.push({
+          id: item.productId || item.id,
+          name: item.name || item.title || 'Product',
+          price: Number(item.price || 0),
+          quantity: Number(item.quantity || 1),
+          productId: item.productId || item.id,
+        })
+      }
+    } else {
+      // Fallback to selectedProducts
+      const products = tempRegistration.value?.selectedProducts || []
+      for (const item of products) {
+        allItems.push({
+          id: item.productId || item.id,
+          name: item.name || item.title,
+          price: Number(item.price || 0),
+          quantity: Number(item.quantity || 1),
+          productId: item.productId || item.id,
+        })
+      }
     }
 
     return allItems
@@ -277,10 +325,13 @@
     return purchasedItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   })
 
+  // Helper to safely get order for template
+  const orderRef = computed(() => tempRegistration.value?.orders || tempRegistration.value?.order || {})
+
   // Calculate shipping amount
   const shippingAmount = computed(() => {
     // Check if shipping fee exists in order data
-    const order = tempRegistration.value?.orders
+    const order = orderRef.value
     if (order?.shippingCost && order.shippingCost > 0) {
       return order.shippingCost
     }
@@ -288,7 +339,7 @@
   })
 
   const discountAmount = computed(() => {
-    return tempRegistration.value?.orders?.discountAmount || 0
+    return orderRef.value?.discountAmount || 0
   })
 
   // Calculate tax amount
@@ -296,21 +347,21 @@
     // No tax on free orders
     if (subtotalAmount.value === 0) return 0
 
-    const total = tempRegistration.value?.orders?.totalAmount || 0
+    const total = orderRef.value?.totalAmount || 0
     const shipping = shippingAmount.value
     const discount = discountAmount.value
     // Back-calculate tax from total if available, else derive?
     // Actually, taxAmount is usually provided or derived.
     // If we trust total, then tax = total - (subtotal - discount + shipping)
     // Let's use the stored tax from order if available, else calc
-    return tempRegistration.value?.orders?.taxAmount ?? (total - (subtotalAmount.value - discount + shipping))
+    return orderRef.value?.taxAmount ?? (total - (subtotalAmount.value - discount + shipping))
   })
 
   // Calculate total amount
   const totalAmount = computed(() => {
     // If we have an order total, use it
-    if (tempRegistration.value?.orders?.totalAmount) {
-      return tempRegistration.value.orders.totalAmount
+    if (orderRef.value?.totalAmount) {
+      return orderRef.value.totalAmount
     }
     return subtotalAmount.value - discountAmount.value + taxAmount.value + shippingAmount.value
   })
@@ -346,7 +397,13 @@
           <v-icon class="mb-4" color="error" size="48">mdi-alert-circle-outline</v-icon>
           <h3 class="text-h5 font-weight-bold mb-2">Something went wrong</h3>
           <p class="text-body-1 text-medium-emphasis mb-6">{{ error }}</p>
-          <v-btn color="primary" variant="flat" @click="retryFetch">
+          <v-btn 
+            color="primary" 
+            :variant="variant" 
+            :rounded="rounded"
+            :size="size"
+            @click="retryFetch"
+          >
             Try Again
           </v-btn>
         </v-card>
@@ -388,7 +445,7 @@
               :qr-uuid="attendee.qrUuid"
               :registration-id="registrationId || attendee.registrationId"
               :start-date="tempRegistration.event?.startDatetime || tempRegistration.event?.startDate || tempRegistration.event?.start_datetime"
-              :ticket-title="getAttendeeTicket(attendee)?.title || 'Event Entry'"
+              :ticket-title="attendee.ticket?.title || getAttendeeTicket(attendee)?.title || 'Event Entry'"
             />
           </div>
 
@@ -401,7 +458,7 @@
           <v-card :rounded="rounded" variant="flat" class="bg-surface-variant pa-5 mb-8">
             <!-- Order Meta -->
             <div class="d-flex justify-space-between mb-3 text-caption">
-              <span class="text-medium-emphasis">Order #{{ tempRegistration.orders.orderNumber }}</span>
+              <span class="text-medium-emphasis">Order #{{ orderRef.orderNumber }}</span>
               <span class="font-weight-bold">{{ new Date().toLocaleDateString() }}</span>
             </div>
 
@@ -410,7 +467,7 @@
             <!-- Items -->
             <div v-for="(item, idx) in purchasedItems" :key="idx" class="d-flex justify-space-between mb-2">
               <div class="d-flex align-center">
-                <span class="font-weight-medium text-body-2 mr-2">{{ item.quantity }}x</span>
+                <span class="font-weight-medium text-body-2 mr-2">{{ item.quantity }} x</span>
                 <span class="text-body-2 text-medium-emphasis text-truncate" style="max-width: 150px;">
                   {{ item.name }}
                 </span>

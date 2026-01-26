@@ -38,7 +38,7 @@ exports.generateTicketPdf = async ({ attendee, event, organization }) => {
             attendeeName: `${attendee.firstName} ${attendee.lastName}`,
             attendeeEmail: attendee.email || attendee.phone || '',
             isEmail: !!attendee.email,
-            ticketTitle: attendee.ticketTitle || 'General Admission',
+            ticketTitle: attendee.ticket?.title || attendee.ticketTitle || 'General Admission',
             qrCode: qrCodeWithPrefix,
             ticketUuid: (attendee.qrUuid || 'N/A').split('-')[0].toUpperCase(),
         });

@@ -177,9 +177,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, details of all attendees will be saved. When disabled, only the primary attendee (form filler) details will be saved."
+                hint="When enabled, you collect name and email for every attendee. When disabled, only the lead attendee's information is required (Bulk Registration)."
                 inset
-                label="Save Details of All Attendees"
+                label="Collect Individual Attendee Details"
                 persistent-hint
               />
               <v-divider class="mb-6" />

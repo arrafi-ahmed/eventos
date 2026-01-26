@@ -1,8 +1,8 @@
 const CustomError = require("../model/CustomError");
-const {query} = require("../db");
+const { query } = require("../db");
 
 // Get product orders for an event with pagination
-exports.getEventProductOrders = async ({eventId, page, limit, searchKeyword, fetchTotalCount = false}) => {
+exports.getEventProductOrders = async ({ eventId, page, limit, searchKeyword, fetchTotalCount = false }) => {
     try {
         if (!eventId) {
             throw new CustomError("Event ID is required", 400);
@@ -137,7 +137,7 @@ exports.getEventProductOrders = async ({eventId, page, limit, searchKeyword, fet
 };
 
 // Get detailed product order information
-exports.getProductOrderDetails = async ({orderId}) => {
+exports.getProductOrderDetails = async ({ orderId }) => {
     try {
         if (!orderId) {
             throw new CustomError("Order ID is required", 400);
@@ -188,12 +188,11 @@ exports.getProductOrderDetails = async ({orderId}) => {
                    a.email,
                    a.phone,
                    a.is_primary,
-                   a.ticket_id,
+                   a.ticket,
                    a.qr_uuid,
-                   t.title as ticket_title,
-                   t.price as ticket_price
+                   a.ticket->>'title' as ticket_title,
+                   (a.ticket->>'price')::numeric as ticket_price
             FROM attendees a
-                     LEFT JOIN ticket t ON a.ticket_id = t.id
             WHERE a.registration_id = $1
             ORDER BY a.is_primary DESC, a.created_at ASC
         `;
@@ -252,7 +251,7 @@ exports.getProductOrderDetails = async ({orderId}) => {
                 email: attendee.email,
                 phone: attendee.phone,
                 isPrimary: attendee.is_primary,
-                ticketId: attendee.ticket_id,
+                ticket: attendee.ticket,
                 qrUuid: attendee.qr_uuid,
                 ticketTitle: attendee.ticket_title,
                 ticketPrice: attendee.ticket_price
@@ -277,7 +276,7 @@ exports.getProductOrderDetails = async ({orderId}) => {
 };
 
 // Update product order status
-exports.updateProductOrderStatus = async ({orderId, productStatus}) => {
+exports.updateProductOrderStatus = async ({ orderId, productStatus }) => {
     try {
         if (!orderId) {
             throw new CustomError("Order ID is required", 400);

@@ -432,9 +432,9 @@
                     v-model="config.saveAllAttendeesDetails"
                     color="primary"
                     hide-details="auto"
-                    hint="When enabled, details of all attendees will be saved. When disabled, only the primary attendee (form filler) details will be saved."
+                    hint="When enabled, you collect details for every seat. When disabled, only the lead attendee information is saved (Bulk Registration)."
                     inset
-                    label="Save Details of All Attendees"
+                    label="Collect Individual Attendee Details"
                     persistent-hint
                   />
                 </div>

@@ -203,9 +203,40 @@
       const returnUrl = `${baseUrl}/${route.params.slug}/success`
       const cancelUrl = `${baseUrl}/payment/cancel?slug=${route.params.slug}`
 
+      // Refactored: Map ticket object { id, title } to attendee based on scenarios
+      const enrichedAttendees = attendees.value.map(attendee => {
+           let ticketSnapshot = {};
+           const saveDetails = event.value?.config?.saveAllAttendeesDetails || event.value?.config?.save_details || false;
+           
+           const selectedTicket = selectedTickets.value.find(t => t.ticketId === attendee.ticketId) 
+               || (attendees.value.length === 1 ? selectedTickets.value[0] : {}) 
+               || {};
+           
+           // Scenario A: Single Registration (No Details) -> !saveDetails && count == 1
+           if (!saveDetails && attendees.value.length === 1) {
+              ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
+           } 
+           // Scenario B: Bulk Registration (No Details) -> !saveDetails && count > 1
+           else if (!saveDetails && attendees.value.length > 1) {
+             ticketSnapshot = { id: selectedTicket.ticketId, title: 'Group Ticket' };
+           }
+           // Scenario C: Detailed Registration -> saveDetails == true
+           else {
+             ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
+           }
+
+           const newAttendee = { ...attendee };
+           delete newAttendee.ticketId; // Remove legacy ID
+           
+           return {
+             ...newAttendee,
+             ticket: ticketSnapshot
+           };
+      });
+
       const requestData = {
-        gateway: selectedPaymentMethod.value, // Use selected payment method
-        attendees: attendees.value,
+        gateway: selectedPaymentMethod.value,
+        attendees: enrichedAttendees,
         selectedTickets: selectedTickets.value,
         selectedProducts: selectedProducts.value,
         registration: registration.value,
@@ -213,7 +244,7 @@
         sessionId: sessionId.value || undefined,
         returnUrl,
         cancelUrl,
-        promoCode: appliedPromoCodeDetails.value?.promoCode // LATE INIT: Pass valid code to be applied at creation
+        promoCode: appliedPromoCodeDetails.value?.promoCode 
       }
 
       const res = await $axios.post('/payment/init', requestData)
@@ -261,27 +292,59 @@
   async function handleFreeRegistration () {
     try {
       isProcessingPayment.value = true
-      const registrationData = {
-        attendees: attendees.value,
-        selectedTickets: selectedTickets.value,
-        selectedProducts: selectedProducts.value || [],
-        registration: {
-          ...registration.value,
-          userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          timezoneOffset: new Date().getTimezoneOffset(),
-        },
-        eventId: event.value.id,
-        sessionId: sessionId.value || undefined,
-      }
+        // Refactored: Map ticket object { id, title } to attendee based on scenarios
+        const enrichedAttendees = attendees.value.map(attendee => {
+           let ticketSnapshot = {};
+           const saveDetails = event.value?.config?.saveAllAttendeesDetails || event.value?.config?.save_details || false;
+           
+           const selectedTicket = selectedTickets.value.find(t => t.ticketId === attendee.ticketId)
+               || (attendees.value.length === 1 ? selectedTickets.value[0] : {})
+               || {};
+
+           // Scenario A: Single Registration (No Details) -> !saveDetails && count == 1
+           if (!saveDetails && attendees.value.length === 1) {
+              ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
+           } 
+           // Scenario B: Bulk Registration (No Details) -> !saveDetails && count > 1
+           else if (!saveDetails && attendees.value.length > 1) {
+             ticketSnapshot = { id: selectedTicket.ticketId, title: 'Group Ticket' };
+           }
+           // Scenario C: Detailed Registration -> saveDetails == true
+           else {
+             ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
+           }
+
+           const newAttendee = { ...attendee };
+           delete newAttendee.ticketId; // Remove legacy ID
+
+           return {
+             ...newAttendee,
+             ticket: ticketSnapshot
+           };
+        });
+
+        const registrationData = {
+          attendees: enrichedAttendees,
+          selectedTickets: selectedTickets.value,
+          selectedProducts: selectedProducts.value || [],
+          registration: {
+            ...registration.value,
+            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset(),
+          },
+          eventId: event.value.id,
+          sessionId: sessionId.value || undefined,
+        }
 
       const res = await $axios.post('/registration/complete-free-registration', registrationData)
       if (res.data.payload?.registrationId) {
-        store.dispatch('checkout/clearCheckout')
+        store.dispatch('checkout/clearCheckout');
+        
         router.push({
           name: 'event-register-success-slug',
           params: { slug: route.params.slug },
-          query: { registrationId: res.data.payload.registrationId },
-        })
+          state: { registrationData: res.data.payload }
+        });
       }
     } catch (error) {
       console.error('Free registration failed:', error)

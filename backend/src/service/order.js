@@ -149,7 +149,7 @@ exports.getOrderWithItems = async ({ orderId }) => {
                                                'lastName', a.last_name,
                                                'email', a.email,
                                                'phone', a.phone,
-                                               'ticketId', a.ticket_id,
+                                               'ticket', a.ticket,
                                                'qrUuid', a.qr_uuid,
                                                'isPrimary', a.is_primary
                                        )
@@ -220,7 +220,7 @@ exports.updatePaymentStatusWithStockUpdate = async ({
 
         for (const item of orderWithItems.items) {
             await ticketService.updateStock({
-                ticketId: item.ticketId,
+                ticketId: item.ticket?.id,
                 quantity: item.quantity,
                 salesChannel: updatedOrder.salesChannel || "online"
             });
@@ -324,7 +324,7 @@ exports.getOrdersByEmail = async (email) => {
                             'lastName', a.last_name,
                             'email', a.email,
                             'qrUuid', a.qr_uuid,
-                            'ticketId', a.ticket_id
+                            'ticket', a.ticket
                         )
                     )
                     FROM attendees a

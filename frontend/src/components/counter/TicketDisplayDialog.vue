@@ -143,7 +143,7 @@
               :qr-uuid="attendee.qrUuid"
               :registration-id="saleData?.registrationId"
               :start-date="event?.startDatetime || event?.startDate || event?.start_datetime"
-              :ticket-title="attendee.ticketTitle || 'Event Entry'"
+              :ticket-title="attendee.ticket?.title || attendee.ticketTitle || 'Event Entry'"
             />
           </div>
         </div>

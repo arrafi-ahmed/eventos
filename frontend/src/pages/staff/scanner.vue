@@ -389,7 +389,7 @@
               <div class="tickets-info">
                 <div v-for="(item, idx) in lastScannedAttendee.items" :key="'scanned-item-'+idx" class="d-flex justify-space-between align-center mb-1">
                   <div class="text-caption font-weight-medium text-truncate mr-2">
-                    {{ item.title || item.name || item.ticketTitle }}
+                    {{ item.ticket?.title || item.title || item.name || item.ticketTitle }}
                   </div>
                   <v-chip class="font-weight-bold" color="primary" size="x-small" variant="tonal">
                     x{{ item.quantity || 1 }}
@@ -478,7 +478,7 @@
                             <div class="text-h5 font-weight-black text-success line-height-1 mb-1">CHECKED IN</div>
                             <template v-if="latestResult.attendee">
                               <div class="text-h6 font-weight-bold text-high-emphasis">{{ latestResult.attendee.firstName }} {{ latestResult.attendee.lastName }}</div>
-                              <div class="text-caption font-weight-medium text-medium-emphasis">{{ latestResult.attendee.ticketTitle }}</div>
+                              <div class="text-caption font-weight-medium text-medium-emphasis">{{ latestResult.attendee.ticket?.title || latestResult.attendee.ticketTitle }}</div>
                             </template>
                           </div>
 
@@ -657,7 +657,7 @@
                 <v-icon class="mr-3" color="primary">mdi-ticket-account</v-icon>
                 <div>
                   <div class="text-subtitle-2 font-weight-bold">
-                    {{ item.title || item.name || item.ticketTitle || item.ticket_title || getTicketTitle(item.ticketId) || 'Ticket' }}
+                    {{ item.ticket?.title || item.title || item.name || item.ticketTitle || item.ticket_title || getTicketTitle(item.ticketId) || 'Ticket' }}
                     <span v-if="item.quantity >= 1" class="text-caption ml-1">x{{ item.quantity }}</span>
                   </div>
                   <div class="text-caption">Price: {{ item.price > 0 ? formatPrice(item.price) : 'Free' }}</div>
@@ -668,7 +668,7 @@
             <div v-else class="d-flex align-center">
               <v-icon class="mr-3" color="primary">mdi-ticket-account</v-icon>
               <div>
-                <div class="text-subtitle-2 font-weight-bold">{{ selectedAttendee.ticketTitle || selectedAttendee.ticket_title || 'Ticket' }}</div>
+                <div class="text-subtitle-2 font-weight-bold">{{ selectedAttendee.ticket?.title || selectedAttendee.ticketTitle || selectedAttendee.ticket_title || 'Ticket' }}</div>
                 <div class="text-caption">ID: {{ selectedAttendee.ticketId }}</div>
               </div>
             </div>
@@ -713,7 +713,7 @@
             </v-avatar>
             <div>
               <div class="text-h6 font-weight-bold">{{ selectedAttendee.firstName }} {{ selectedAttendee.lastName }}</div>
-              <div class="text-body-2 text-grey">{{ selectedAttendee.ticketTitle }}</div>
+               <div class="text-body-2 text-grey">{{ selectedAttendee.ticket?.title || selectedAttendee.ticketTitle }}</div>
             </div>
           </div>
 

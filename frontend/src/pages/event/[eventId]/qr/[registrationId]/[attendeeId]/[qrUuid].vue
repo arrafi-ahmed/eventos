@@ -78,7 +78,7 @@
           <div v-if="!loading && attendee" class="mb-6">
             <h2 class="text-h5 font-weight-bold">{{ attendee.firstName }} {{ attendee.lastName }}</h2>
             <v-chip class="mt-2 font-weight-bold" color="primary" size="small" variant="flat">
-              {{ attendee.ticketTitle || 'General Admission' }}
+              {{ attendee.ticket?.title || attendee.ticketTitle || 'General Admission' }}
             </v-chip>
           </div>
 

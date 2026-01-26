@@ -2,7 +2,7 @@
  * Attendee model class
  */
 export class Attendee {
-  constructor (data = {}) {
+  constructor(data = {}) {
     this.id = data.id || null
     this.registrationId = data.registrationId || null
     this.isPrimary = data.isPrimary || false
@@ -10,8 +10,7 @@ export class Attendee {
     this.lastName = data.lastName || ''
     this.email = data.email || ''
     this.phone = data.phone || null
-    this.ticketId = data.ticketId || null
-    this.ticketTitle = data.ticketTitle || null
+    this.ticket = data.ticket || null
     this.qrUuid = data.qrUuid || null
     this.createdAt = data.createdAt || null
     this.updatedAt = data.updatedAt || null
@@ -20,14 +19,14 @@ export class Attendee {
   /**
    * Get full name
    */
-  getFullName () {
+  getFullName() {
     return `${this.firstName} ${this.lastName}`.trim()
   }
 
   /**
    * Get display name (first name + last initial)
    */
-  getDisplayName () {
+  getDisplayName() {
     if (!this.lastName) {
       return this.firstName
     }
@@ -37,35 +36,35 @@ export class Attendee {
   /**
    * Check if attendee is primary
    */
-  isPrimary () {
+  isPrimary() {
     return this.isPrimary === true
   }
 
   /**
    * Check if attendee has a ticket
    */
-  hasTicket () {
-    return this.ticketId !== null
+  hasTicket() {
+    return this.ticket !== null
   }
 
   /**
    * Check if attendee has phone number
    */
-  hasPhone () {
+  hasPhone() {
     return this.phone && this.phone.trim().length > 0
   }
 
   /**
    * Check if attendee has QR code
    */
-  hasQrCode () {
+  hasQrCode() {
     return this.qrUuid && this.qrUuid.trim().length > 0
   }
 
   /**
    * Generate a simple QR code identifier
    */
-  generateQrIdentifier () {
+  generateQrIdentifier() {
     if (this.qrUuid) {
       return this.qrUuid
     }
@@ -79,7 +78,7 @@ export class Attendee {
   /**
    * Validates the attendee data
    */
-  validate () {
+  validate() {
     const errors = []
 
     if (!this.registrationId) {
@@ -131,7 +130,7 @@ export class Attendee {
   /**
    * Simple email validation
    */
-  isValidEmail (email) {
+  isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
@@ -139,7 +138,7 @@ export class Attendee {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON () {
+  toJSON() {
     return {
       id: this.id,
       registrationId: this.registrationId,
@@ -148,7 +147,7 @@ export class Attendee {
       lastName: this.lastName,
       email: this.email,
       phone: this.phone,
-      ticketId: this.ticketId,
+      ticket: this.ticket,
       qrUuid: this.qrUuid,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

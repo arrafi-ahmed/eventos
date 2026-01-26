@@ -102,7 +102,7 @@ CREATE TABLE attendees
     last_name       VARCHAR(255)        NOT NULL,
     email           VARCHAR(255)        NOT NULL,
     phone           VARCHAR(50),
-    ticket_id       INT REFERENCES ticket (id) ON DELETE CASCADE,
+    ticket          JSONB,
     qr_uuid         VARCHAR(255) UNIQUE NOT NULL,
     created_at      TIMESTAMP DEFAULT NOW(),
     updated_at      TIMESTAMP DEFAULT NOW()

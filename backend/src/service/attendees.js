@@ -16,14 +16,14 @@ exports.createAttendees = async ({ registrationId, attendees }) => {
     // Build batch insert query
     const values = attendeesWithQr
         .map((attendee, index) => {
-            const offset = index * 9; // 8 columns per attendee
+            const offset = index * 9; // 9 columns per attendee
             return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`;
         })
         .join(", ");
 
     const sql = `
-        INSERT INTO attendees (registration_id, is_primary, first_name, last_name, email, phone, ticket_id, qr_uuid,
-                               session_id)
+        INSERT INTO attendees (registration_id, is_primary, first_name, last_name, email, phone, qr_uuid,
+                               session_id, ticket)
         VALUES ${values} RETURNING *;`;
 
     // Flatten the values array for the query
@@ -34,9 +34,10 @@ exports.createAttendees = async ({ registrationId, attendees }) => {
         attendee.lastName,
         attendee.email,
         attendee.phone,
-        attendee.ticketId,
+        // attendee.ticketId is removed
         attendee.qrUuid,
         attendee.sessionId,
+        attendee.ticket // ticket JSONB
     ]);
 
     const result = await query(sql, queryValues);
@@ -63,11 +64,10 @@ exports.getAttendeeByIdAndQrUuid = async ({ attendeeId, qrUuid }) => {
                e.organization_id,
                r.status as registration_status,
                r.user_timezone,
-               t.title  as ticket_title
+               a.ticket->>'title' as ticket_title
         FROM attendees a
                  JOIN registration r ON a.registration_id = r.id
                  JOIN event e ON r.event_id = e.id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
         WHERE a.id = $1
           AND a.qr_uuid = $2
     `;
@@ -85,11 +85,10 @@ exports.getAttendeeByIdRegistrationAndQrUuid = async ({
         SELECT a.*,
                r.event_id,
                r.status     as registration_status,
-               t.title      as ticket_title,
+               a.ticket->>'title' as ticket_title,
                r.created_at as registration_date
         FROM attendees a
                  JOIN registration r ON a.registration_id = r.id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
         WHERE a.registration_id = $1
           AND a.id = $2
           AND a.qr_uuid = $3
@@ -100,9 +99,8 @@ exports.getAttendeeByIdRegistrationAndQrUuid = async ({
 
 exports.getAttendeesByRegistrationId = async ({ registrationId }) => {
     const sql = `
-        SELECT a.*, t.title as ticket_title
+        SELECT a.*, a.ticket->>'title' as ticket_title
         FROM attendees a
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
         WHERE a.registration_id = $1
         ORDER BY a.is_primary DESC, a.id ASC;`;
     const result = await query(sql, [registrationId]);
@@ -121,7 +119,7 @@ exports.getRegistrationWithAttendees = async ({ registrationId }) => {
                                        'lastName', a.last_name,
                                        'email', a.email,
                                        'phone', a.phone,
-                                       'ticketId', a.ticket_id,
+                                       'ticket', a.ticket,
                                        'qrUuid', a.qr_uuid,
                                        'isCheckedIn', CASE WHEN c.id IS NOT NULL THEN true ELSE false END,
                                        'checkedInAt', c.created_at

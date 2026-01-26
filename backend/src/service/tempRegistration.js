@@ -242,7 +242,7 @@ exports.getTempRegistrationWAttendees = async (sessionId) => {
                                'lastName', a.last_name,
                                'email', a.email,
                                'phone', a.phone,
-                               'ticketId', a.ticket_id,
+                               'ticket', a.ticket,
                                'qrUuid', a.qr_uuid,
                                'createdAt', a.created_at,
                                'updatedAt', a.updated_at
@@ -396,16 +396,15 @@ exports.getTempRegistrationBySessionId = async (sessionId) => {
                    a.last_name,
                    a.email,
                    a.phone,
-                   a.ticket_id,
+                   a.ticket,
                    a.qr_uuid,
                    a.is_primary,
                    a.created_at as attendee_created_at,
                    a.updated_at as attendee_updated_at,
-                   t.title      as ticket_title,
-                   t.price      as ticket_price
+                   a.ticket->>'title' as ticket_title,
+                   (a.ticket->>'price')::numeric as ticket_price
             FROM registration r
                      INNER JOIN attendees a ON r.id = a.registration_id
-                     LEFT JOIN ticket t ON a.ticket_id = t.id
             WHERE a.email = $1
               AND r.event_id = $2
             ORDER BY r.created_at DESC, a.is_primary DESC
@@ -438,9 +437,9 @@ exports.getTempRegistrationBySessionId = async (sessionId) => {
                 lastName: row.lastName,
                 email: row.email,
                 phone: row.phone,
-                ticketId: row.ticketId,
                 ticketTitle: row.ticketTitle,
                 ticketPrice: row.ticketPrice,
+                ticket: row.ticket,
                 qrUuid: row.qrUuid,
                 isPrimary: row.isPrimary,
                 createdAt: row.attendeeCreatedAt,

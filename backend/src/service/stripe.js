@@ -214,7 +214,7 @@ exports.getRegistrationFromPaymentIntentMetadata = async (paymentIntentId) => {
                     lastName: attendee.last_name,
                     email: attendee.email,
                     phone: attendee.phone,
-                    ticketId: attendee.ticket_id,
+                    ticket: attendee.ticket,
                     qrUuid: attendee.qr_uuid,
                 })),
                 orderId: orderResult.id,

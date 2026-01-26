@@ -274,8 +274,8 @@ exports.defaultSave = async ({ payload }) => {
             email: attendee.email || "",
             phone: attendee.phone || "",
             isPrimary: attendee.isPrimary || false,
-            ticketId: attendee.ticketId || null,
-            ticketTitle: attendee.ticketTitle || null,
+            ticketId: attendee.ticket?.id || attendee.ticketId || null,
+            ticketTitle: attendee.ticket?.title || attendee.ticketTitle || null,
         }));
     }
 
@@ -348,8 +348,8 @@ exports.getRegistration = async ({ registrationId, qrUuid, isLoggedIn }) => {
                                    'lastName', a.last_name,
                                    'email', a.email,
                                    'phone', a.phone,
-                                   'ticketId', a.ticket_id,
-                                   'ticketTitle', t.title,
+                                   'ticket', a.ticket,
+                                   'ticketTitle', a.ticket->>'title',
                                    'qrUuid', a.qr_uuid,
                                    'isPrimary', a.is_primary,
                                    'createdAt', a.created_at,
@@ -358,7 +358,6 @@ exports.getRegistration = async ({ registrationId, qrUuid, isLoggedIn }) => {
                    )                                             as attendees
             FROM registration r
                      LEFT JOIN attendees a ON r.id = a.registration_id
-                     LEFT JOIN ticket t ON a.ticket_id = t.id
             WHERE r.id = $1
               AND a.qr_uuid = $2
             GROUP BY r.id
@@ -379,8 +378,8 @@ exports.getRegistration = async ({ registrationId, qrUuid, isLoggedIn }) => {
                                    'lastName', a.last_name,
                                    'email', a.email,
                                    'phone', a.phone,
-                                   'ticketId', a.ticket_id,
-                                   'ticketTitle', t.title,
+                                   'ticket', a.ticket,
+                                   'ticketTitle', a.ticket->>'title',
                                    'qrUuid', a.qr_uuid,
                                    'isPrimary', a.is_primary,
                                    'createdAt', a.created_at,
@@ -389,7 +388,6 @@ exports.getRegistration = async ({ registrationId, qrUuid, isLoggedIn }) => {
                    )                                             as attendees
             FROM registration r
                      LEFT JOIN attendees a ON r.id = a.registration_id
-                     LEFT JOIN ticket t ON a.ticket_id = t.id
             WHERE r.id = $1
             GROUP BY r.id
         `;
@@ -416,8 +414,8 @@ exports.getRegistrationByEmail = async ({ email, eventId }) => {
                                'lastName', a.last_name,
                                'email', a.email,
                                'phone', a.phone,
-                               'ticketId', a.ticket_id,
-                               'ticketTitle', t.title,
+                               'ticket', a.ticket,
+                               'ticketTitle', a.ticket->>'title',
                                'qrUuid', a.qr_uuid,
                                'isPrimary', a.is_primary,
                                'createdAt', a.created_at,
@@ -426,7 +424,6 @@ exports.getRegistrationByEmail = async ({ email, eventId }) => {
                ) as attendees
         FROM registration r
                  LEFT JOIN attendees a ON r.id = a.registration_id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
         WHERE a.email = $1
           AND r.event_id = $2
         GROUP BY r.id
@@ -457,8 +454,8 @@ exports.getRegistrationWEventWExtrasPurchase = async ({ registrationId }) => {
                                                        'lastName', a.last_name,
                                                        'email', a.email,
                                                        'phone', a.phone,
-                                                       'ticketId', a.ticket_id,
-                                                       'ticketTitle', t.title,
+                                                       'ticket', a.ticket,
+                                                       'ticketTitle', a.ticket->>'title',
                                                        'qrUuid', a.qr_uuid,
                                                        'isPrimary', a.is_primary,
                                                        'createdAt', a.created_at,
@@ -466,7 +463,6 @@ exports.getRegistrationWEventWExtrasPurchase = async ({ registrationId }) => {
                                                )
                                        )
                                 FROM attendees a
-                                         LEFT JOIN ticket t ON a.ticket_id = t.id
                                 WHERE a.registration_id = r.id), '[]' ::jsonb
                                     )
                )                 AS registration,
@@ -516,9 +512,8 @@ exports.getRegistrationWithAttendees = async ({ registrationId }) => {
 
     // Get attendees with ticket info
     const attendeesSql = `
-        SELECT a.*
+        SELECT a.*, a.ticket->>'title' as ticket_title
         FROM attendees a
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
         WHERE a.registration_id = $1
         ORDER BY a.is_primary DESC, a.id ASC;`;
     const attendeesResult = await query(attendeesSql, [registrationId]);
@@ -569,10 +564,9 @@ exports.getAttendees = async ({
                a.id         as attendee_id,
                a.first_name,
                a.last_name,
-               a.email,
+                a.email,
                a.phone,
-               a.ticket_id,
-               t.title      as ticket_title,
+               a.ticket->>'title' as ticket_title,
                a.qr_uuid,
                a.is_primary,
                a.created_at as attendee_created_at,
@@ -580,12 +574,12 @@ exports.getAttendees = async ({
                c.id         as checkin_id,
                c.created_at as checkin_time,
                CASE 
-                   WHEN a.ticket_id IS NOT NULL THEN 
+                   WHEN (a.ticket->>'id') IS NOT NULL THEN 
                        jsonb_build_array(
                            jsonb_build_object(
-                               'ticketId', a.ticket_id,
-                               'title', t.title,
-                               'price', t.price,
+                               'ticketId', (a.ticket->>'id')::int,
+                               'title', a.ticket->>'title',
+                               'price', (a.ticket->>'price')::numeric,
                                'quantity', 1
                            )
                        )
@@ -593,7 +587,6 @@ exports.getAttendees = async ({
                END as items
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
                  LEFT JOIN orders o ON r.id = o.registration_id
         WHERE r.event_id = $1
@@ -680,8 +673,7 @@ exports.searchAttendees = async ({
                a.last_name,
                a.email,
                a.phone,
-               a.ticket_id,
-               t.title      as ticket_title,
+               a.ticket->>'title' as ticket_title,
                a.qr_uuid,
                a.is_primary,
                a.created_at as attendee_created_at,
@@ -689,12 +681,12 @@ exports.searchAttendees = async ({
                c.id         as checkin_id,
                c.created_at as checkin_time,
                CASE 
-                   WHEN a.ticket_id IS NOT NULL THEN 
+                   WHEN (a.ticket->>'id') IS NOT NULL THEN 
                        jsonb_build_array(
                            jsonb_build_object(
-                               'ticketId', a.ticket_id,
-                               'title', t.title,
-                               'price', t.price,
+                               'ticketId', (a.ticket->>'id')::int,
+                               'title', a.ticket->>'title',
+                               'price', (a.ticket->>'price')::numeric,
                                'quantity', 1
                            )
                        )
@@ -702,7 +694,6 @@ exports.searchAttendees = async ({
                END as items
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
                  LEFT JOIN orders o ON r.id = o.registration_id
         WHERE r.event_id = $1
@@ -1024,6 +1015,9 @@ exports.completeFreeRegistration = async ({ payload }) => {
                 itemsProduct: selectedProducts || [],
                 registrationId: savedRegistration.id,
                 eventId,
+                itemsProduct: selectedProducts || [],
+                registrationId: savedRegistration.id,
+                eventId,
                 paymentMethod: isPromoFree ? "free" : "free", // Logic: if promo made it free, it's still free.
             },
         });
@@ -1076,11 +1070,23 @@ exports.completeFreeRegistration = async ({ payload }) => {
             // Don't fail the registration if email fails
         }
 
+        // Enrich attendees with ticket details for the frontend success page state
+        const enrichedAttendees = savedAttendees.map(attendee => {
+            return {
+                ...attendee,
+                ticketTitle: attendee.ticket?.title || 'Unknown Ticket',
+                price: attendee.ticket?.price || 0,
+                // Ensure field names match what success.vue expects
+            };
+        });
+
         return {
             registrationId: savedRegistration.id,
             orderId: savedOrder.id,
-            attendees: savedAttendees,
-            order: savedOrder, // Include the complete order data
+            attendees: enrichedAttendees,
+            order: savedOrder,
+            event: event, // Include full event data
+            registration: savedRegistration,
             status: true,
         };
     } catch (error) {
@@ -1123,21 +1129,16 @@ exports.getFreeRegistrationConfirmation = async ({ registrationId }) => {
         }
 
         // 4. Get ticket details for attendees
-        const attendeesWithTickets = await Promise.all(
-            registration.attendees.map(async (attendee) => {
-                if (attendee.ticketId) {
-                    const ticket = await ticketService.getTicketById({
-                        ticketId: attendee.ticketId,
-                    });
-                    return {
-                        ...attendee,
-                        ticketTitle: ticket?.title || "Unknown Ticket",
-                        price: ticket?.price || 0,
-                    };
-                }
-                return attendee;
-            }),
-        );
+        const attendeesWithTickets = registration.attendees.map((attendee) => {
+            if (attendee.ticket) {
+                return {
+                    ...attendee,
+                    ticketTitle: attendee.ticket.title || "Unknown Ticket",
+                    price: attendee.ticket.price || 0,
+                };
+            }
+            return attendee;
+        });
 
         // 5. Return complete data structure
         return {
@@ -1233,10 +1234,24 @@ exports.completeCounterSale = async ({ payload, currentUser }) => {
         });
 
         // 2. Create attendees
-        const attendeesWithRegistrationId = attendees.map((attendee) => ({
-            ...attendee,
-            registrationId: savedRegistration.id,
-        }));
+        const attendeesWithRegistrationId = attendees.map((attendee, index) => {
+            const attendeeData = {
+                ...attendee,
+                registrationId: savedRegistration.id,
+            };
+
+            // For counter sales, if attendee has no ticket snapshot, assign from selectedTickets
+            if (!attendeeData.ticket && selectedTickets && selectedTickets.length > 0) {
+                // Map to the corresponding ticket in selectedTickets if possible, else take the first one
+                const ticketSnapshot = selectedTickets[index] || selectedTickets[0];
+                attendeeData.ticket = {
+                    id: ticketSnapshot.ticketId,
+                    title: ticketSnapshot.title,
+                    price: ticketSnapshot.price
+                };
+            }
+            return attendeeData;
+        });
 
         const savedAttendees = await attendeesService.createAttendees({
             registrationId: savedRegistration.id,

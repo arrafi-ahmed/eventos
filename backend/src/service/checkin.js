@@ -139,8 +139,8 @@ exports.validateQrCode = async ({ registrationId, attendeeId, qrUuid, eventId })
                a.last_name,
                a.email,
                a.phone,
-               t.title                                             AS ticket_title,
-               t.id                                                AS ticket_id,
+               a.ticket->>'title'                                  AS ticket_title,
+               (a.ticket->>'id')::int                              AS ticket_id,
                r.id                                                AS registration_id,
                a.qr_uuid,
                r.status                                            AS registration_status,
@@ -148,7 +148,6 @@ exports.validateQrCode = async ({ registrationId, attendeeId, qrUuid, eventId })
                (CASE WHEN c.attendee_id IS NULL THEN 0 ELSE 1 END) AS is_checked_in
         FROM attendees a
                  JOIN registration r ON a.registration_id = r.id
-                 LEFT JOIN ticket t ON a.ticket_id = t.id
                  LEFT JOIN checkin c ON c.attendee_id = a.id
         WHERE r.id = $1
           AND r.event_id = $2

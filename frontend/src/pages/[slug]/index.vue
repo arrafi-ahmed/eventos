@@ -44,16 +44,18 @@
     const formattedDate = formatEventDateDisplay({ event: event.value, eventConfig: event.value?.config })
     return `${formattedDate} @ ${loc}.`
   })
-
+  //TODO: reset to null
   const attendeeInit = ref({
-    firstName: null,
-    lastName: null,
-    email: null,
-    phone: null,
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'raf.utb@gmail.com',
+    phone: '+221771234567',
     isPrimary: true,
   })
   const registrationInit = ref({
-    organization: null,
+    organization: 'Org',
+    sector: 'Sector',
+    expectation: 'Expectation',
     sector: null,
     expectation: null,
   })

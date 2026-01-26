@@ -103,8 +103,9 @@
   ]
 
   // Get ticket price for individual tickets
-  function getTicketPrice (ticketId) {
-    const ticket = tickets.value.find(t => t.id === ticketId)
+  function getTicketPrice (attendee) {
+    if (attendee.ticket && attendee.ticket.price !== undefined) return attendee.ticket.price
+    const ticket = tickets.value.find(t => t.id === attendee.ticketId)
     return ticket ? ticket.price : null
   }
 
@@ -122,6 +123,7 @@
     phone: '',
     ticketId: null,
     ticketTitle: '',
+    ticket: null, // Add ticket snapshot to init
     qrUuid: '',
     isPrimary: false,
     attendeeCreatedAt: null,
@@ -281,6 +283,7 @@
   }
 
   function getTicketTitle (attendee) {
+    if (attendee.ticket?.title) return attendee.ticket.title
     if (attendee.ticketTitle) return attendee.ticketTitle
     const ticket = tickets.value.find(t => t.id === attendee.ticketId)
     return ticket ? ticket.title || ticket.name : '-'
@@ -590,7 +593,7 @@
                 <div class="d-flex align-center">
                   <v-icon class="mr-3" icon="mdi-ticket-confirmation" />
                   <div>
-                    <div class="text-subtitle-1 font-weight-bold">{{ ticket.title || '-' }}</div>
+                    <div class="text-subtitle-1 font-weight-bold">{{ ticket.ticket?.title || ticket.title || '-' }}</div>
                     <div class="text-caption">Qty: {{ ticket.quantity }} • {{ formatPrice(ticket.price) }} each</div>
                   </div>
                 </div>
@@ -606,7 +609,7 @@
               <div class="d-flex align-center">
                 <v-icon class="mr-3" icon="mdi-ticket-confirmation" />
                 <div>
-                  <div class="text-subtitle-1 font-weight-bold">{{ editingAttendee.ticketTitle || 'Unknown Ticket' }}</div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ editingAttendee.ticket?.title || editingAttendee.ticketTitle || 'Unknown Ticket' }}</div>
                   <div class="text-caption">Ticket ID: {{ editingAttendee.ticketId }}</div>
                 </div>
               </div>
