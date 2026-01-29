@@ -104,6 +104,7 @@ CREATE TABLE attendees
     phone           VARCHAR(50),
     ticket          JSONB,
     qr_uuid         VARCHAR(255) UNIQUE NOT NULL,
+    order_id        INT                 REFERENCES orders(id) ON DELETE SET NULL,
     created_at      TIMESTAMP DEFAULT NOW(),
     updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -172,6 +173,7 @@ CREATE TABLE orders
     ticket_counter_id        INT                REFERENCES ticket_counter(id),
     cash_session_id          INT                REFERENCES cash_session(id),
     payment_method           VARCHAR(20)        DEFAULT 'card' CHECK (payment_method IN ('cash', 'card', 'free', 'orange_money')),
+    session_id               VARCHAR(255),
     created_at               TIMESTAMP                   DEFAULT NOW(),
     updated_at               TIMESTAMP                   DEFAULT NOW()
 );
@@ -522,6 +524,8 @@ CREATE INDEX idx_cash_session_event_id ON cash_session (event_id);
 CREATE INDEX idx_promo_code_event_id ON promo_code (event_id);
 CREATE INDEX idx_event_staff_event_id ON event_staff (event_id);
 CREATE INDEX idx_event_staff_user_id ON event_staff (user_id);
+CREATE INDEX IF NOT EXISTS idx_attendees_order_id ON attendees(order_id);
+CREATE INDEX IF NOT EXISTS idx_orders_session_id ON orders(session_id);
 
 CREATE INDEX idx_event_visitor_event_id ON event_visitor(event_id);
 CREATE INDEX idx_event_visitor_email ON event_visitor(email);
