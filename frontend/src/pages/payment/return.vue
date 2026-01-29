@@ -105,8 +105,6 @@ onMounted(async () => {
     orderId = sessionStorage.getItem('om_pending_order_id')
   }
   
-  console.log('[Payment Return] Extracted order_id:', orderId)
-  
   if (!orderId) {
     loading.value = false
     error.value = true
@@ -124,7 +122,6 @@ onMounted(async () => {
 
   while (attempt < MAX_RETRIES && !verified) {
     if (attempt > 0) {
-      console.log(`[Payment Return] Retry attempt ${attempt} for order: ${orderId}...`)
       // Wait for the delay
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
     }

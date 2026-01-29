@@ -319,7 +319,13 @@
       .dispatch('event/setAssignedEvents', { role: 60 })
       .then(data => {
         events.value = data
-        if (events.value.length === 1) {
+        
+        // 1. Select event from query param if provided
+        if (route.query.eventId) {
+          selectedEventId.value = parseInt(route.query.eventId)
+        }
+        // 2. Otherwise select first event if only one available
+        else if (events.value.length === 1) {
           selectedEventId.value = events.value[0].id
         }
       })

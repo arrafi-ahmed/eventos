@@ -1,7 +1,6 @@
 <script setup>
   import QRCodeVue3 from 'qrcode-vue3'
-  import { computed, ref } from 'vue'
-  import $axios from '@/plugins/axios'
+  import { computed } from 'vue'
   import { generateQrData } from '@/utils'
 
   const props = defineProps({
@@ -51,29 +50,6 @@
       qrUuid: props.qrUuid,
     })
   })
-
-  const isDownloading = ref(false)
-
-  async function downloadTicket () {
-    try {
-      isDownloading.value = true
-      const response = await $axios.get(`/registration/download-ticket/${props.attendee.id}/${props.qrUuid}`, {
-        responseType: 'blob',
-      })
-
-      const blob = new Blob([response.data], { type: 'application/pdf' })
-      const link = document.createElement('a')
-      link.href = window.URL.createObjectURL(blob)
-      link.download = `ticket-${props.qrUuid.split('-')[0]}.pdf`
-      document.body.append(link)
-      link.click()
-      link.remove()
-    } catch (error) {
-      console.error('Download failed:', error)
-    } finally {
-      isDownloading.value = false
-    }
-  }
 </script>
 
 <template>
@@ -150,21 +126,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Download Button outside the ticket container -->
-    <div class="d-flex justify-center mt-4">
-      <v-btn
-        class="font-weight-bold px-8 rounded-pill"
-        color="primary"
-        :loading="isDownloading"
-        prepend-icon="mdi-download-outline"
-        size="default"
-        variant="flat"
-        @click="downloadTicket"
-      >
-        Download Ticket
-      </v-btn>
     </div>
   </div>
 </template>

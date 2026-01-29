@@ -23,7 +23,7 @@ exports.createAttendees = async ({ registrationId, attendees }) => {
 
     const sql = `
         INSERT INTO attendees (registration_id, is_primary, first_name, last_name, email, phone, qr_uuid,
-                               session_id, ticket)
+                               ticket, order_id)
         VALUES ${values} RETURNING *;`;
 
     // Flatten the values array for the query
@@ -34,10 +34,9 @@ exports.createAttendees = async ({ registrationId, attendees }) => {
         attendee.lastName,
         attendee.email,
         attendee.phone,
-        // attendee.ticketId is removed
         attendee.qrUuid,
-        attendee.sessionId,
-        attendee.ticket // ticket JSONB
+        attendee.ticket, // ticket JSONB
+        attendee.orderId || null
     ]);
 
     const result = await query(sql, queryValues);

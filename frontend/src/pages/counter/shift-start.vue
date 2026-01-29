@@ -78,8 +78,12 @@
         events.value = fetchedEvents || []
         ticketCounters.value = fetchedCounters.filter(c => c.isActive) || []
 
-        // Select first event if only one available
-        if (events.value.length === 1) {
+        // 1. Select event from query param if provided
+        if (route.query.eventId) {
+          shiftData.value.eventId = parseInt(route.query.eventId)
+        }
+        // 2. Otherwise select first event if only one available
+        else if (events.value.length === 1) {
           shiftData.value.eventId = events.value[0].id
         }
       })

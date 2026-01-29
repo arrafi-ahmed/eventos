@@ -137,18 +137,19 @@ class PaymentService {
 
                 // Update totals
                 taxAmount = newTax;
-                totalAmount = netSubtotal + newTax; // + shipping if we had it here, but initPayment receives products/tickets only usually. 
-                // Note: Shipping is strictly products logic in frontend, backend implies it in subtotal or needs explicit shipping param?
-                // Checking code: subtotal is just tickets+products. Shipping is NOT added in initiatePayment currently? 
-                // Wait, checkout.vue sends selectedProducts. Does backend calc shipping?
-                // Checking backend again... initiatePayment calculates subtotal from items. It does NOT seem to add shipping fee in the lines I see.
-                // If frontend sends total to initiatePayment?? No, initiatePayment calculates totalAmount itself (line 94).
-                // ISSUE: Backend initiatePayment seems to currently IGNORE shipping fee from event config?
-                // I will assume for now I should just apply the promo math correctly.
-                // UPDATE: If subtotal > 0, totalAmount = subtotal + tax. 
-
+                totalAmount = netSubtotal + newTax;
                 promoCodeApplied = params.promoCode;
             }
+        }
+
+        // 4c. Calculate Shipping (if products are present and delivery selected)
+        let shippingAmount = 0;
+        const shippingOption = params.shippingOption || 'pickup';
+        if (selectedProducts?.length > 0 && shippingOption === 'delivery') {
+            const fee = event.config?.shippingFee || 0;
+            const ratio = getCurrencyMinorUnitRatio(event.currency.toLowerCase());
+            shippingAmount = Math.round(fee * ratio);
+            totalAmount += shippingAmount;
         }
 
         // 5. Generate Session & Order
@@ -160,6 +161,25 @@ class PaymentService {
             ...a,
             qrUuid: a.qrUuid || uuidv4()
         }));
+
+        // 5c. Idempotency Check: Reuse existing session if gateway and amount match
+        if (providedSessionId) {
+            const existingTemp = await tempRegistrationService.getTempRegistration(providedSessionId, true);
+            if (existingTemp && existingTemp.orders) {
+                const existingGateway = existingTemp.orders.gateway;
+                const existingAmount = existingTemp.orders.totalAmount || existingTemp.orders.total_amount;
+
+                if (existingGateway === gateway && Number(existingAmount) === totalAmount) {
+                    // Reuse the existing transaction data
+                    return {
+                        ...existingTemp.orders.gatewayMetadata,
+                        transactionId: existingTemp.orders.gatewayTransactionId || existingTemp.orders.gateway_transaction_id,
+                        sessionId: providedSessionId,
+                        totalAmount
+                    };
+                }
+            }
+        }
 
         // 6. Invoke Dispatcher (to Gateway)
         let action = {};
@@ -202,9 +222,11 @@ class PaymentService {
                 paymentStatus: "pending",
                 subtotal,
                 taxAmount,
+                shippingAmount,
                 discountAmount,
                 promoCode: promoCodeApplied,
                 eventId: registration.eventId,
+                shippingOption,
                 // STANDARD: Store gateway info explicitly
                 gateway: gateway,
                 gatewayTransactionId: action.transactionId,
@@ -242,27 +264,28 @@ class PaymentService {
         }
 
         try {
-            // 0. Double Idempotency Check
-            // 0a. Check for existing order
+            // 0. Robust Pre-emptive Idempotency Check
+            // We check for both existing order and existing attendees linked to this session.
             const existingOrder = await orderService.getOrderByGatewayTransactionId({
                 gatewayTransactionId: transactionId,
                 paymentGateway: gateway
             });
 
-            // 0b. Check for existing attendees for this session
             const sessionAttendees = await attendeesService.getAttendeesBySessionId(sessionId);
 
             if (existingOrder || (sessionAttendees && sessionAttendees.length > 0)) {
-                console.log(`[Payment Service] Transaction ${transactionId} or Session ${sessionId} already processed.`);
 
-                const regId = existingOrder ? existingOrder.registrationId : sessionAttendees[0].registration_id;
-                const registration = await registrationService.getRegistrationById(regId);
+                const regId = existingOrder ? existingOrder.registrationId : sessionAttendees[0].registrationId;
+                const registration = await registrationService.getRegistrationById({ registrationId: regId });
                 const attendees = await attendeesService.getAttendeesByRegistrationId({ registrationId: regId });
+
+                // Fetch the actual order to ensure we have the correct orderNumber/orderId
+                const finalOrder = existingOrder || await orderService.getOrderByRegistrationId({ registrationId: regId });
 
                 return {
                     registrationId: regId,
-                    orderId: existingOrder ? existingOrder.id : null,
-                    orderNumber: existingOrder ? existingOrder.orderNumber : null,
+                    orderId: finalOrder ? finalOrder.id : null,
+                    orderNumber: finalOrder ? finalOrder.orderNumber : null,
                     attendees,
                     eventId: registration.eventId,
                     alreadyFinalized: true
@@ -293,19 +316,7 @@ class PaymentService {
                 status: true // Mark as paid
             });
 
-            // 4. Create Attendees (linked to session for success page retrieval)
-            const attendeesToCreate = sessionData.attendees.map(a => ({
-                ...a,
-                registrationId: registrationResult.id,
-                sessionId: sessionId
-            }));
-
-            const savedAttendees = await attendeesService.createAttendees({
-                registrationId: registrationResult.id,
-                attendees: attendeesToCreate
-            });
-
-            // 5. Create Order record (High Fidelity mapping)
+            // 4. Create Order record (High Fidelity mapping)
             const orderNumber = sessionData.orders?.orderNumber || sessionData.orders?.order_number || orderService.generateOrderNumber();
 
             // Explicit separate tickets/products from Blueprint
@@ -313,7 +324,7 @@ class PaymentService {
             const itemsProduct = sessionData.selectedProducts || [];
 
             // Build gateway-specific metadata
-            const gatewayMetadata = {};
+            const gatewayMetadata = { sessionId: sessionId }; // Always include sessionId for traceability
             if (gateway === 'stripe') {
                 gatewayMetadata.payment_intent_id = transactionId;
                 if (paymentData.metadata) Object.assign(gatewayMetadata, paymentData.metadata);
@@ -343,7 +354,21 @@ class PaymentService {
                     shippingCost: paymentData.shippingCost || sessionData.orders?.shippingCost || sessionData.orders?.shipping_cost || 0,
                     shippingAddress: paymentData.shippingAddress || sessionData.orders?.shippingAddress || sessionData.orders?.shipping_address || null,
                     shippingType: paymentData.shippingType || sessionData.orders?.shippingType || sessionData.orders?.shipping_type || 'pickup',
+                    sessionId: sessionId // Use full indexed column
                 },
+            });
+
+            // 5. Create Attendees (linked to session and ORDER)
+            const attendeesToCreate = sessionData.attendees.map(a => ({
+                ...a,
+                registrationId: registrationResult.id,
+                sessionId: sessionId,
+                orderId: orderResult.id
+            }));
+
+            const savedAttendees = await attendeesService.createAttendees({
+                registrationId: registrationResult.id,
+                attendees: attendeesToCreate
             });
 
             // 6. Stock Updates (Channel Optimized)
@@ -377,17 +402,26 @@ class PaymentService {
             // 8. Emails (Batch)
             emailService.sendTicketsByRegistrationId({
                 registrationId: registrationResult.id,
+                orderId: orderResult.id
             }).catch(e => console.error(`Email batch failed for registration ${registrationResult.id}:`, e));
 
-            // 9. Cleanup temp registration (DEFERRED)
-            // Relies on daily cronjob to preserve Success page retrieval window.
+            // 9. Cleanup temp registration (IMMEDIATE)
+            try {
+                const tempRegistrationService = require("./tempRegistration");
+                await tempRegistrationService.deleteTempRegistration(sessionId);
+            } catch (e) {
+                console.warn(`[PaymentService] Temp registration cleanup failed for ${sessionId}:`, e.message);
+            }
 
             return {
                 registrationId: registrationResult.id,
                 orderId: orderResult.id,
                 orderNumber,
                 attendees: savedAttendees,
-                eventId: sessionData.eventId
+                eventId: sessionData.eventId,
+                order: orderResult,
+                event: event,
+                registration: registrationResult
             };
 
         } catch (error) {
@@ -554,29 +588,63 @@ class PaymentService {
      */
     async verifyAndFinalize(sessionId) {
         try {
-            // 1. Get Temp Registration
-            const tempReg = await tempRegistrationService.getTempRegistration(sessionId);
-            if (!tempReg) return false;
+            // 0. CHECK PERMANENT RECORDS FIRST (Source of Truth Pivot)
+            // If the order already exists, then we are done. We don't need the temp table anymore.
+            const existingOrders = await orderService.getOrdersBySessionId(sessionId);
+            const permanentOrder = existingOrders && existingOrders.length > 0 ? existingOrders[0] : null;
+
+            if (permanentOrder && permanentOrder.paymentStatus === 'paid') {
+                // Get current registration and attendees to reflect manual changes (like deletions)
+                const registration = await registrationService.getRegistrationById({ registrationId: permanentOrder.registrationId });
+
+                // If registration is gone, the record is considered 'deleted' (manually by admin or system)
+                if (!registration) {
+                    return { paid: false, status: 'deleted' };
+                }
+
+                const attendees = await attendeesService.getAttendeesByRegistrationId({ registrationId: permanentOrder.registrationId });
+                const event = await eventService.getEventById({ eventId: permanentOrder.eventId });
+
+                return {
+                    paid: true,
+                    status: 'paid',
+                    registration,
+                    order: permanentOrder,
+                    attendees,
+                    event
+                };
+            }
+
+            // 1. Get Temp Registration (Blueprint)
+            const tempReg = await tempRegistrationService.getTempRegistration(sessionId, true);
+            if (!tempReg) {
+                // If no temp reg AND no permanent order, it's genuinely gone or expired
+                return { paid: false, status: 'expired' };
+            }
 
             const orders = tempReg.orders || {};
-            // If check status is pending/missing
-            if (orders.paymentStatus === 'paid') return true;
-            if (orders.paymentStatus === 'failed') return false;
 
-            // 2. Determine Gateway - GENERIC APPROACH
+            // If already marked paid in session (but for some reason check above failed - safety net)
+            if (orders.paymentStatus === 'paid') {
+                const fullData = await tempRegistrationService.getTempRegistrationWAttendees(sessionId);
+                return { paid: true, status: 'paid', ...fullData };
+            }
+
+            if (orders.paymentStatus === 'failed' || orders.paymentStatus === 'cancelled') {
+                return { paid: false, status: orders.paymentStatus, ...tempReg };
+            }
+
+            // 2. Determine Gateway
             let gateway = orders.gateway;
             let transactionId = orders.gatewayTransactionId;
             let extraParams = orders.gatewayMetadata || {};
 
-            // Fallback for legacy sessions (before we standardized storage)
+            // Fallback for legacy sessions
             if (!gateway) {
                 if (orders.omPayToken || orders.om_pay_token) {
                     gateway = 'orange_money';
                     transactionId = orders.omTransactionId || orders.om_transaction_id;
-                    extraParams = {
-                        amount: orders.totalAmount || orders.total_amount,
-                        payToken: orders.omPayToken || orders.om_pay_token
-                    };
+                    extraParams = { amount: orders.totalAmount, payToken: orders.omPayToken };
                 } else if (orders.paymentIntentId) {
                     gateway = 'stripe';
                     transactionId = orders.paymentIntentId;
@@ -584,18 +652,11 @@ class PaymentService {
             }
 
             if (!gateway || !transactionId) {
-                console.warn(`[PaymentService] Could not identify gateway for verification: ${sessionId}`);
-                return false;
+                return { paid: false, status: 'pending', ...tempReg };
             }
 
-            console.log(`[PaymentService] Proactively verifying ${gateway} payment for session ${sessionId}...`);
-
             // 3. Call Dispatcher
-            // Now strictly generic: verifyPayment(gateway, txnId, params)
-            // Adapters must be robust enough to handle the params passed in gatewayMetadata
             const adapter = PaymentDispatcher.getAdapter(gateway);
-
-            // Ensure amount is passed if not in metadata, as adapters often need it
             if (!extraParams.amount) {
                 extraParams.amount = orders.totalAmount || orders.total_amount;
             }
@@ -604,22 +665,41 @@ class PaymentService {
 
             // 4. Finalize if paid
             if (verifyResult.status === 'paid') {
-                console.log(`[PaymentService] Gateway confirmed payment! Finalizing...`);
+                // Update temp registration status BEFORE finalization (which deletes it)
+                // This ensures that even if finalization takes a second, concurrent polls see 'paid'
+                try {
+                    await tempRegistrationService.updateTempRegistration(sessionId, {
+                        orders: { ...orders, paymentStatus: 'paid' }
+                    });
+                } catch (e) {
+                    console.warn("[PaymentService] Failed to update temp status (data might already be finalized by webhook)", e.message);
+                }
 
-                await this.finalizePayment({
+                const result = await this.finalizePayment({
                     transactionId: verifyResult.transactionId,
                     metadata: { sessionId, ...verifyResult.metadata },
                     gateway: gateway,
                     amount: verifyResult.amount,
                     rawResponse: verifyResult.metadata
                 });
-                return true;
+
+                const registration = await registrationService.getRegistrationById({ registrationId: result.registrationId });
+                const event = await eventService.getEventById({ eventId: registration.eventId });
+
+                return {
+                    paid: true,
+                    status: 'paid',
+                    registration,
+                    order: result.order || result,
+                    attendees: result.attendees,
+                    event
+                };
             }
 
-            return false;
+            return { paid: false, status: verifyResult?.status || 'pending', ...tempReg };
         } catch (error) {
             console.error(`[PaymentService] verification failed: ${error.message}`);
-            return false;
+            return { paid: false, error: error.message, status: 'error' };
         }
     }
 }

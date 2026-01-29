@@ -15,6 +15,7 @@ const stripeService = require("./stripe");
 const eventVisitorService = require("./eventVisitor");
 const { isGroupTicket } = require("../utils/ticket");
 const pdfService = require("./pdf");
+const promoCodeService = require("./promoCode");
 
 // Cleanup expired temporary registration data
 exports.cleanupExpiredTempData = async () => {
@@ -588,7 +589,7 @@ exports.getAttendees = async ({
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
-                 LEFT JOIN orders o ON r.id = o.registration_id
+                 LEFT JOIN orders o ON a.order_id = o.id
         WHERE r.event_id = $1
           AND r.status = true
         ORDER BY 
@@ -853,9 +854,11 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
             if (!isFormQuestion) {
                 const value = additionalFields[key];
                 if (value && (typeof value === "string" || typeof value === "number")) {
-                    // Check if column already exists
+                    // Check if column already exists safely by checking keys
                     const colKey = `additional_${key}`;
-                    if (!worksheet.getColumn(colKey).header) {
+                    const columnExists = worksheet.columns.some(col => col.key === colKey);
+
+                    if (!columnExists) {
                         const currentCols = worksheet.columns;
                         currentCols.push({ header: key, key: colKey, width: 25 });
                         worksheet.columns = currentCols;
@@ -915,40 +918,28 @@ exports.initRegistration = async (payload) => {
 };
 
 // Complete free registration (no payment required)
+// Complete free registration (no payment required)
 exports.completeFreeRegistration = async ({ payload }) => {
-    const { attendees, selectedTickets, selectedProducts, registration, eventId, sessionId: providedSessionId } = payload;
+    const { sessionId: providedSessionId } = payload;
 
-    if (!attendees || !Array.isArray(attendees) || attendees.length === 0) {
-        throw new CustomError("Attendees are required", 400);
+    if (!providedSessionId) {
+        throw new CustomError("Session ID is required", 400);
     }
 
-    if (
-        !selectedTickets ||
-        !Array.isArray(selectedTickets) ||
-        selectedTickets.length === 0
-    ) {
-        throw new CustomError("Selected tickets are required", 400);
+    const tempRegistrationService = require("./tempRegistration");
+    const sessionData = await tempRegistrationService.getTempRegistration(providedSessionId);
+
+    if (!sessionData) {
+        throw new CustomError("Registration session not found or expired", 404);
     }
 
-    if (!eventId) {
-        throw new CustomError("Event ID is required", 400);
-    }
+    // Extract data from session
+    const { attendees, selectedTickets, selectedProducts, registration, eventId, orders } = sessionData;
 
-    let sessionData = null;
-    if (providedSessionId) {
-        const tempRegistrationService = require("./tempRegistration");
-        sessionData = await tempRegistrationService.getTempRegistration(providedSessionId);
-    }
-
-    // Verify all tickets are free, OR it's a promo-discounted free order
-    const hasPaidTickets = selectedTickets.some((ticket) => ticket.price > 0);
-    const isPromoFree = sessionData?.orders?.total_amount === 0;
-
-    if (hasPaidTickets && !isPromoFree) {
-        throw new CustomError(
-            "Cannot process free registration with paid tickets",
-            400,
-        );
+    // Verify total is actually 0 (validated during init phase)
+    const totalAmount = Number(orders?.totalAmount || orders?.total_amount || 0);
+    if (totalAmount > 0) {
+        throw new CustomError("Payment is required for this registration", 400);
     }
 
     // Check for duplicate email registrations for this event
@@ -967,8 +958,7 @@ exports.completeFreeRegistration = async ({ payload }) => {
     }
 
     try {
-        // Note: temp_registration should already be saved on checkout page mount
-        const sessionId = providedSessionId || generateSessionId();
+        const sessionId = providedSessionId;
 
         // 1. Create registration record
         const savedRegistration = await exports.save({
@@ -979,10 +969,35 @@ exports.completeFreeRegistration = async ({ payload }) => {
             timezoneOffset: registration?.timezoneOffset,
         });
 
-        // 2. Create attendees
+        // 2. Get event data to access currency
+        const event = await eventService.getEventById({ eventId });
+        if (!event) {
+            throw new CustomError("Event not found", 404);
+        }
+
+        // 3. Create order record for free registration
+        const savedOrder = await orderService.save({
+            payload: {
+                ...(orders || {}),
+                orderNumber: orders?.orderNumber || orders?.order_number || orderService.generateOrderNumber(),
+                totalAmount: 0,
+                currency: event.currency,
+                paymentStatus: "paid", // Free orders are immediately paid (already validated as 0)
+                itemsTicket: selectedTickets,
+                itemsProduct: selectedProducts || [],
+                registrationId: savedRegistration.id,
+                eventId,
+                paymentMethod: "free",
+                sessionId: sessionId
+            },
+        });
+
+        // 4. Create attendees (linked to registration AND order)
         const attendeesWithRegistrationId = attendees.map((attendee) => ({
             ...attendee,
             registrationId: savedRegistration.id,
+            sessionId: sessionId,
+            orderId: savedOrder.id
         }));
 
         const savedAttendees = await attendeesService.createAttendees({
@@ -990,39 +1005,7 @@ exports.completeFreeRegistration = async ({ payload }) => {
             attendees: attendeesWithRegistrationId,
         });
 
-        // 3. Create order record for free registration
-        const totalAmount = isPromoFree ? 0 : selectedTickets.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0,
-        );
-
-        // Get event data to access currency
-        const event = await eventService.getEventById({ eventId });
-        if (!event) {
-            throw new CustomError("Event not found", 404);
-        }
-
-        const savedOrder = await orderService.save({
-            payload: {
-                ...(sessionData?.orders || {}),
-                orderNumber: sessionData?.orders?.order_number || orderService.generateOrderNumber(),
-                totalAmount: totalAmount,
-                currency: event.currency,
-                paymentStatus: "paid", // Free orders are immediately paid (using 'paid' instead of 'free' for consistency with orders table status if needed, or stick to 'free' if it doesn't matter. The check in schema said: pending, paid, failed, refunded)
-                // Wait, checkout.vue uses 'paid' or 'free'. Schema says: pending, paid, failed, refunded.
-                // Actually let's use 'paid' because it's technically settled.
-                itemsTicket: selectedTickets,
-                itemsProduct: selectedProducts || [],
-                registrationId: savedRegistration.id,
-                eventId,
-                itemsProduct: selectedProducts || [],
-                registrationId: savedRegistration.id,
-                eventId,
-                paymentMethod: isPromoFree ? "free" : "free", // Logic: if promo made it free, it's still free.
-            },
-        });
-
-        // 4. Reduce ticket stock
+        // 5. Reduce ticket stock
         for (const item of selectedTickets) {
             await ticketService.updateStock({
                 ticketId: item.ticketId,
@@ -1031,13 +1014,12 @@ exports.completeFreeRegistration = async ({ payload }) => {
             });
         }
 
-        // 5. Increase registration count in event
+        // 6. Increase registration count in event
         await eventService.increaseRegistrationCount({
             eventId: eventId,
         });
 
-        // 6. Mark visitor as converted (if they were a visitor)
-        // Use primary attendee email to mark visitor as converted
+        // 7. Mark visitor as converted (if they were a visitor)
         if (savedAttendees && savedAttendees.length > 0) {
             const primaryAttendee = savedAttendees.find(a => a.is_primary) || savedAttendees[0];
             if (primaryAttendee && primaryAttendee.email) {
@@ -1053,13 +1035,12 @@ exports.completeFreeRegistration = async ({ payload }) => {
             }
         }
 
-        // 7. Send confirmation emails (async, don't wait)
-        // sendTicketsByRegistrationId handles all attendees based on event config
-        // Only call it ONCE per registration, not once per attendee
+        // 8. Send confirmation emails (async, don't wait)
         try {
             emailService
                 .sendTicketsByRegistrationId({
                     registrationId: savedRegistration.id,
+                    orderId: savedOrder.id
                 })
                 .catch((error) => {
                     console.error(`Failed to send confirmation emails:`, error);
@@ -1070,13 +1051,34 @@ exports.completeFreeRegistration = async ({ payload }) => {
             // Don't fail the registration if email fails
         }
 
-        // Enrich attendees with ticket details for the frontend success page state
+        // 9. Increment promo code usage count if applicable
+        const promoCodeApplied = orders?.promoCode || orders?.promo_code;
+        if (promoCodeApplied) {
+            try {
+                const promo = await promoCodeService.validatePromoCode({ code: promoCodeApplied, eventId });
+                if (promo) {
+                    await promoCodeService.incrementUseCount({ id: promo.id });
+                }
+            } catch (error) {
+                console.error("Failed to increment promo code usage count:", error);
+            }
+        }
+
+        // 10. Cleanup temp registration (IMMEDIATE)
+        if (sessionId) {
+            try {
+                await tempRegistrationService.deleteTempRegistration(sessionId);
+            } catch (e) {
+                console.warn(`[RegistrationService] Cleanup failed for free session ${sessionId}:`, e.message);
+            }
+        }
+
+        // Enrich attendees for success page
         const enrichedAttendees = savedAttendees.map(attendee => {
             return {
                 ...attendee,
                 ticketTitle: attendee.ticket?.title || 'Unknown Ticket',
                 price: attendee.ticket?.price || 0,
-                // Ensure field names match what success.vue expects
             };
         });
 
@@ -1085,18 +1087,20 @@ exports.completeFreeRegistration = async ({ payload }) => {
             orderId: savedOrder.id,
             attendees: enrichedAttendees,
             order: savedOrder,
-            event: event, // Include full event data
+            event: event,
             registration: savedRegistration,
-            status: true,
+            paid: true,
+            status: 'paid',
         };
     } catch (error) {
         if (error instanceof CustomError) {
             throw error;
         }
-
+        console.error("Error completing free registration:", error);
         throw new CustomError("Failed to complete free registration", 500);
     }
 };
+
 
 // Get complete free registration confirmation data including order details
 exports.getFreeRegistrationConfirmation = async ({ registrationId }) => {
@@ -1233,32 +1237,7 @@ exports.completeCounterSale = async ({ payload, currentUser }) => {
             timezoneOffset: registration?.timezoneOffset,
         });
 
-        // 2. Create attendees
-        const attendeesWithRegistrationId = attendees.map((attendee, index) => {
-            const attendeeData = {
-                ...attendee,
-                registrationId: savedRegistration.id,
-            };
-
-            // For counter sales, if attendee has no ticket snapshot, assign from selectedTickets
-            if (!attendeeData.ticket && selectedTickets && selectedTickets.length > 0) {
-                // Map to the corresponding ticket in selectedTickets if possible, else take the first one
-                const ticketSnapshot = selectedTickets[index] || selectedTickets[0];
-                attendeeData.ticket = {
-                    id: ticketSnapshot.ticketId,
-                    title: ticketSnapshot.title,
-                    price: ticketSnapshot.price
-                };
-            }
-            return attendeeData;
-        });
-
-        const savedAttendees = await attendeesService.createAttendees({
-            registrationId: savedRegistration.id,
-            attendees: attendeesWithRegistrationId,
-        });
-
-        // 3. Create order record
+        // 2. Prepare Order Data
         let totalTicketsAmount = (selectedTickets || []).reduce(
             (sum, item) => sum + item.price * item.quantity,
             0,
@@ -1271,15 +1250,20 @@ exports.completeCounterSale = async ({ payload, currentUser }) => {
 
         // Apply promo discount if any
         if (validatedPromo) {
-            if (validatedPromo.discount_type === 'percentage') {
-                discountAmount = (totalAmount * validatedPromo.discount_value) / 100;
+            const dT = validatedPromo.discountType || validatedPromo.discount_type;
+            const dV = validatedPromo.discountValue || validatedPromo.discount_value;
+
+            if (dT === 'percentage') {
+                discountAmount = (totalAmount * dV) / 100;
             } else {
-                discountAmount = validatedPromo.discount_value;
+                discountAmount = dV;
             }
             totalAmount = Math.max(0, totalAmount - discountAmount);
         }
 
         const event = await eventService.getEventById({ eventId });
+
+        // 3. Create order record BEFORE attendees
         const savedOrder = await orderService.save({
             payload: {
                 orderNumber: orderService.generateOrderNumber(),
@@ -1298,6 +1282,32 @@ exports.completeCounterSale = async ({ payload, currentUser }) => {
                 promoCode: promoCode || null,
                 discountAmount: discountAmount || 0,
             },
+        });
+
+        // 4. Create attendees (linked to registration AND order)
+        const attendeesWithOrderAndRegistrationIds = attendees.map((attendee, index) => {
+            const attendeeData = {
+                ...attendee,
+                registrationId: savedRegistration.id,
+                orderId: savedOrder.id
+            };
+
+            // For counter sales, if attendee has no ticket snapshot, assign from selectedTickets
+            if (!attendeeData.ticket && selectedTickets && selectedTickets.length > 0) {
+                // Map to the corresponding ticket in selectedTickets if possible, else take the first one
+                const ticketSnapshot = selectedTickets[index] || selectedTickets[0];
+                attendeeData.ticket = {
+                    id: ticketSnapshot.ticketId,
+                    title: ticketSnapshot.title,
+                    price: ticketSnapshot.price
+                };
+            }
+            return attendeeData;
+        });
+
+        const savedAttendees = await attendeesService.createAttendees({
+            registrationId: savedRegistration.id,
+            attendees: attendeesWithOrderAndRegistrationIds,
         });
 
         // 4. Reduce ticket stock
@@ -1324,6 +1334,7 @@ exports.completeCounterSale = async ({ payload, currentUser }) => {
         // 7. Send confirmation emails
         emailService.sendTicketsByRegistrationId({
             registrationId: savedRegistration.id,
+            orderId: savedOrder.id
         }).catch(err => console.error("Email failed:", err));
 
         // 8. Fetch attendees with ticket titles for display

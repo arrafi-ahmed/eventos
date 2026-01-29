@@ -43,8 +43,9 @@ exports.save = async ({ payload }) => {
                             registration_id, event_id, shipping_cost, shipping_address, shipping_type,
                             tax_amount, promo_code, discount_amount,
                             sales_channel, cashier_id, ticket_counter_id, cash_session_id, payment_method,
+                            session_id,
                             created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, NOW(), NOW()) RETURNING *;`;
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW(), NOW()) RETURNING *;`;
 
     const result = await query(sql, [
         orderNumber,
@@ -72,6 +73,7 @@ exports.save = async ({ payload }) => {
         payload.ticketCounterId || payload.ticket_counter_id || null,
         payload.cashSessionId || payload.cash_session_id || null,
         payload.paymentMethod || payload.payment_method || "card",
+        payload.sessionId || payload.session_id || null
     ]);
 
     if (!result.rows[0]) {
@@ -279,18 +281,24 @@ exports.getOrdersBySessionId = async (sessionId) => {
     }
 
     const sql = `
+        -- 1. Find via direct indexed column (Preferred/High Performance)
+        SELECT * FROM orders WHERE session_id = $1
+        
+        UNION
+        
+        -- 2. Find via attendees (fallback for legacy or cross-linking)
         SELECT o.*
         FROM orders o
-        JOIN registration r ON o.registration_id = r.id
-        JOIN attendees a ON a.registration_id = r.id
+        JOIN attendees a ON a.order_id = o.id
         WHERE a.session_id = $1
+        
         UNION
+        
+        -- 3. Find via gateway metadata (deep fallback for older records)
         SELECT *
         FROM orders
         WHERE gateway_metadata->>'sessionId' = $1
-           OR gateway_metadata->>'session_id' = $1
-           OR gateway_response->'metadata'->>'sessionId' = $1
-           OR gateway_response->'metadata'->>'session_id' = $1;
+           OR gateway_metadata->>'session_id' = $1;
     `;
     const result = await query(sql, [sessionId]);
     return result.rows;
@@ -328,13 +336,13 @@ exports.getOrdersByEmail = async (email) => {
                         )
                     )
                     FROM attendees a
-                    WHERE a.registration_id = o.registration_id
+                    WHERE a.order_id = o.id
                 )
             ) as customer_data
         FROM orders o
         JOIN event e ON o.event_id = e.id
-        WHERE o.registration_id IN (
-            SELECT registration_id FROM attendees WHERE email = $1
+        WHERE o.id IN (
+            SELECT order_id FROM attendees WHERE email = $1
         )
         ORDER BY o.created_at DESC;
     `;
@@ -350,15 +358,16 @@ exports.resendOrderEmail = async (orderId, userEmail) => {
     // Safety check: ensure the user requesting the email is linked to this order
     const checkSql = `
         SELECT 1 FROM attendees 
-        WHERE registration_id = $1 AND email = $2
+        WHERE order_id = $1 AND email = $2
         LIMIT 1;
     `;
-    const checkResult = await query(checkSql, [order.registration_id, userEmail]);
+    const checkResult = await query(checkSql, [orderId, userEmail]);
     if (checkResult.rows.length === 0) {
         throw new CustomError("You are not authorized to resend this ticket", 403);
     }
 
     return await emailService.sendTicketsByRegistrationId({
-        registrationId: order.registration_id
+        registrationId: order.registrationId,
+        orderId: orderId
     });
 };

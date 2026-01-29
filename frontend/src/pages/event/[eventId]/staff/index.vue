@@ -34,11 +34,9 @@
   const submitting = ref(false)
   const form = ref(null)
 
-  const assignFormInit = {
+  const assignForm = reactive({
     userId: null,
-    role: 60, // Default to Check-in Agent
-  }
-  const assignForm = reactive({ ...assignFormInit })
+  })
 
   // Filter out users already assigned to this event
   const availableUsers = computed(() => {
@@ -47,6 +45,9 @@
   })
 
   const roleOptions = [
+    { title: 'Admin', value: 20 },
+    { title: 'Organizer', value: 30 },
+    { title: 'Attendee', value: 40 },
     { title: 'Cashier', value: 50 },
     { title: 'Check-in Agent', value: 60 },
   ]
@@ -54,7 +55,7 @@
   const headers = [
     { title: 'Name', key: 'fullName' },
     { title: 'Email', key: 'email' },
-    { title: 'Role', key: 'role' },
+    { title: 'Global Role', key: 'globalRole' },
     { title: 'Actions', key: 'actions', align: 'end', sortable: false },
   ]
 
@@ -70,7 +71,7 @@
   }
 
   function openAssignDialog () {
-    Object.assign(assignForm, assignFormInit)
+    assignForm.userId = null
     dialog.value = true
   }
 
@@ -89,12 +90,13 @@
   })
 
   function openEditRoleDialog (item) {
+    // We don't edit roles here anymore, but we can show details or redirect to global edit
+    // For now, let's keep it simple and just show the name
     Object.assign(editForm, {
       userId: item.userId,
-      role: Number.parseInt(item.role),
       fullName: item.fullName,
     })
-    editDialog.value = true
+    // editDialog.value = true // Disable editing here
   }
 
   async function handleAssign () {
@@ -106,7 +108,7 @@
       await store.dispatch('staff/assignStaff', {
         eventId: eventId.value,
         userId: assignForm.userId,
-        role: assignForm.role,
+        // Role is now derived from app_user in backend
         organizationId: currentUser.value.organizationId,
       })
       dialog.value = false
@@ -194,14 +196,14 @@
               <div class="font-weight-medium">{{ item.fullName }}</div>
             </template>
 
-            <template #item.role="{ item }">
+            <template #item.globalRole="{ item }">
               <v-chip
-                :color="parseInt(item.role) === 50 ? 'primary' : 'secondary'"
+                :color="parseInt(item.globalRole) === 50 ? 'primary' : 'secondary'"
                 label
                 size="small"
                 variant="tonal"
               >
-                {{ getRoleName(item.role) }}
+                {{ getRoleName(item.globalRole) }}
               </v-chip>
             </template>
 
@@ -218,9 +220,9 @@
                 </template>
                 <v-list class="pa-0" density="compact" :rounded="rounded">
                   <v-list-item
-                    prepend-icon="mdi-pencil"
-                    title="Change Role"
-                    @click="openEditRoleDialog(item)"
+                    prepend-icon="mdi-account-cog"
+                    title="Manage User Role"
+                    :to="{ name: 'organizer-staff' }"
                   />
                   <v-divider />
                   <confirmation-dialog
@@ -301,16 +303,6 @@
               </template>
             </v-autocomplete>
 
-            <v-select
-              v-model="assignForm.role"
-              class="mt-4"
-              :density="density"
-              :items="roleOptions"
-              label="Role for this Event"
-              prepend-inner-icon="mdi-badge-account"
-              :rounded="rounded"
-              :variant="variant"
-            />
           </v-form>
         </v-card-text>
 

@@ -28,7 +28,6 @@ export function usePaymentResilience() {
                     paidSession.value = orderData
                 } else {
                     // On landing/tickets, we silently cleanup to ensure Person B doesn't see Person A's data
-                    console.log('[Resilience] Paid session detected on registration page. Cleaning up.')
                     clearRegistrationLocalData()
                 }
             }

@@ -154,14 +154,9 @@ export const getters = {
       return { name: 'dashboard-organizer' }
     }
 
-    // Cashier (Counter Staff)
-    if (getters.isCashier) {
-      return { name: 'counter-shift-start' }
-    }
-
-    // Check-in Agent (Event Staff)
-    if (getters.isStaff) {
-      return { name: 'staff-checkin' }
+    // Cashier or Check-in Agent (Operational Staff)
+    if (getters.isCashier || getters.isStaff) {
+      return { name: 'staff-dashboard' }
     }
 
     // Attendee

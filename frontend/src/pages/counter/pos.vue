@@ -24,7 +24,7 @@
   const activeSession = computed(() => store.state.counter.activeSession)
   const event = computed(() => store.state.event.event)
   const tickets = computed(() => store.state.ticket.tickets)
-  const products = computed(() => store.state.product.organizerProducts)
+  const products = computed(() => store.state.product.products)
 
   const loading = ref(false)
   const submitting = ref(false)
@@ -39,9 +39,23 @@
   const ticketDialog = ref(false)
   const saleResult = ref(null)
   const lastCartItems = ref([])
+  const appliedPromo = ref(null)
+  const applyingPromo = ref(false)
 
   const totalAmount = computed(() => {
-    return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const subtotal = cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    if (!appliedPromo.value) return subtotal
+    
+    const { discountType, discountValue } = appliedPromo.value
+    
+    if (discountType === 'percentage') {
+      return Math.max(0, subtotal - (subtotal * discountValue / 100))
+    } else if (discountType === 'fixed') {
+      return Math.max(0, subtotal - discountValue)
+    } else if (discountType === 'free') {
+      return 0
+    }
+    return subtotal
   })
 
   function addToCart (item, type) {
@@ -69,6 +83,26 @@
 
   function clearCart () {
     cart.value = []
+    appliedPromo.value = null
+    promoCode.value = ''
+  }
+
+  async function handleApplyPromoCode () {
+    if (!promoCode.value) return
+    
+    applyingPromo.value = true
+    try {
+      const response = await store.dispatch('promoCode/validatePromoCode', {
+        code: promoCode.value,
+        eventId: activeSession.value?.eventId || event.value?.id
+      })
+      appliedPromo.value = response.data?.payload
+    } catch (error) {
+      appliedPromo.value = null
+      console.error('Promo code validation failed:', error)
+    } finally {
+      applyingPromo.value = false
+    }
   }
 
   async function handleProcessSale () {
@@ -319,9 +353,17 @@
           <v-divider />
 
           <v-card-actions class="pa-4 flex-column align-stretch">
+            <div class="d-flex justify-space-between mb-1">
+              <span class="text-body-2 text-grey">Subtotal</span>
+              <span class="text-body-2 text-grey">{{ formatPrice(cart.reduce((sum, item) => sum + item.price * item.quantity, 0), event?.currency) }}</span>
+            </div>
+            <div v-if="appliedPromo" class="d-flex justify-space-between mb-1">
+              <span class="text-body-2 text-success">Discount</span>
+              <span class="text-body-2 text-success">-{{ appliedPromo.discountType === 'percentage' ? appliedPromo.discountValue + '%' : formatPrice(appliedPromo.discountValue, event?.currency) }}</span>
+            </div>
             <div class="d-flex justify-space-between mb-4">
               <span class="text-h6">Total</span>
-              <span class="text-h6 color-primary">{{ formatPrice(totalAmount, event?.currency) }}</span>
+              <span class="text-h6 color-primary font-weight-bold">{{ formatPrice(totalAmount, event?.currency) }}</span>
             </div>
             <v-btn
               block
@@ -339,58 +381,130 @@
       </v-col>
     </v-row>
 
-    <!-- Checkout Modal -->
-    <v-dialog v-model="checkoutDialog" max-width="500">
-      <v-card class="pa-4" :rounded="rounded">
-        <v-card-title>Complete Sale</v-card-title>
-        <v-card-text>
-          <div class="text-h4 text-center py-4 text-primary font-weight-bold">
-            {{ formatPrice(totalAmount, event?.currency) }}
+    <v-dialog v-model="checkoutDialog" max-width="500" scrollable>
+      <v-card :rounded="rounded">
+        <v-card-title class="pa-4 d-flex align-center">
+          <v-icon class="mr-2" color="primary">mdi-check-circle-outline</v-icon>
+          Complete Sale
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" @click="checkoutDialog = false" />
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-0">
+          <!-- Summary Area -->
+          <div class="bg-surface-variant pa-6 text-center">
+            <div class="text-overline mb-1">Amount Due</div>
+            
+            <div class="d-flex flex-column align-center">
+              <div v-if="appliedPromo" class="text-body-2 text-medium-emphasis text-decoration-line-through mb-1">
+                Subtotal: {{ formatPrice(cart.reduce((sum, item) => sum + item.price * item.quantity, 0), event?.currency) }}
+              </div>
+              
+              <div class="text-h3 font-weight-bold text-primary mb-1">
+                {{ formatPrice(totalAmount, event?.currency) }}
+              </div>
+
+              <v-chip
+                v-if="appliedPromo"
+                class="mt-2"
+                color="success"
+                label
+                size="small"
+                variant="flat"
+              >
+                <v-icon start>mdi-tag-outline</v-icon>
+                -{{ appliedPromo.discountType === 'percentage' ? appliedPromo.discountValue + '%' : formatPrice(appliedPromo.discountValue, event?.currency) }}
+              </v-chip>
+            </div>
           </div>
 
-          <v-divider class="mb-6" />
+          <div class="pa-6">
+            <!-- Payment Method Section -->
+            <div class="mb-6">
+              <p class="text-subtitle-2 font-weight-bold mb-3">Payment Method</p>
+              <v-btn-toggle
+                v-model="paymentMethod"
+                block
+                color="primary"
+                mandatory
+                variant="outlined"
+              >
+                <v-btn class="flex-grow-1" prepend-icon="mdi-cash" value="cash">
+                  Cash
+                </v-btn>
+                <v-btn class="flex-grow-1" prepend-icon="mdi-credit-card" value="card">
+                  Card
+                </v-btn>
+              </v-btn-toggle>
+            </div>
 
-          <v-label class="mb-2">Payment Method</v-label>
-          <v-btn-toggle
-            v-model="paymentMethod"
-            block
-            class="mb-6"
-            color="primary"
-            hide-details="auto"
-            mandatory
-            variant="outlined"
-          >
-            <v-btn prepend-icon="mdi-cash" value="cash">Cash</v-btn>
-            <v-btn prepend-icon="mdi-credit-card" value="card">Card</v-btn>
-          </v-btn-toggle>
+            <!-- Customer Email Section -->
+            <div class="mb-6">
+              <p class="text-subtitle-2 font-weight-bold mb-3">Customer Email (Optional)</p>
+              <v-text-field
+                v-model="customerEmail"
+                :density="density"
+                hide-details="auto"
+                label="Email"
+                placeholder="For sending digital ticket"
+                prepend-inner-icon="mdi-email-outline"
+                :rounded="rounded"
+                type="email"
+                variant="outlined"
+              />
+            </div>
 
-          <v-text-field
-            v-model="customerEmail"
-            :density="density"
-            hide-details="auto"
-            label="Customer Email (Optional)"
-            placeholder="For sending digital ticket"
-            prepend-inner-icon="mdi-email"
-            :rounded="rounded"
-            type="email"
-            :variant="variant"
-          />
-
-          <v-text-field
-            v-model="promoCode"
-            class="mt-4"
-            :density="density"
-            hide-details="auto"
-            label="Promo Code (Optional)"
-            placeholder="Enter discount code"
-            prepend-inner-icon="mdi-ticket-percent"
-            :rounded="rounded"
-            :variant="variant"
-          />
+            <!-- Promo Code Section -->
+            <div>
+              <p class="text-subtitle-2 font-weight-bold mb-3">Promo Code</p>
+              <v-text-field
+                v-model="promoCode"
+                :density="density"
+                hide-details="auto"
+                label="Apply Code"
+                placeholder="Enter discount code"
+                prepend-inner-icon="mdi-ticket-outline"
+                :rounded="rounded"
+                variant="outlined"
+                @keydown.enter="handleApplyPromoCode"
+              >
+                <template #append-inner>
+                  <v-btn
+                    color="primary"
+                    :disabled="!promoCode || applyingPromo || !!appliedPromo"
+                    :loading="applyingPromo"
+                    :rounded="rounded"
+                    size="small"
+                    variant="flat"
+                    @click="handleApplyPromoCode"
+                  >
+                    {{ appliedPromo ? 'Applied' : 'Apply' }}
+                  </v-btn>
+                </template>
+              </v-text-field>
+              
+              <div v-if="appliedPromo" class="mt-2 text-success text-caption d-flex align-center">
+                <v-icon class="mr-1" size="small">mdi-check-circle-outline</v-icon>
+                Code applied successfully
+              </div>
+            </div>
+          </div>
         </v-card-text>
-        <v-card-actions>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn color="secondary" :rounded="rounded" variant="text" @click="checkoutDialog = false">Cancel</v-btn>
+          <v-btn
+            color="grey"
+            :rounded="rounded"
+            variant="text"
+            @click="checkoutDialog = false"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :loading="submitting"
@@ -420,5 +534,11 @@
 }
 .overflow-y-auto {
   overflow-y: auto;
+}
+</style>
+
+<style>
+.payment-toggle .v-btn {
+  height: 48px !important;
 }
 </style>

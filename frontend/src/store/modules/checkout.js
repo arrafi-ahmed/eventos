@@ -1,5 +1,5 @@
 // Helper for safe localStorage access
-function getFromStorage (key, defaultValue) {
+function getFromStorage(key, defaultValue) {
   try {
     const item = localStorage.getItem(key)
     return item ? JSON.parse(item) : defaultValue
@@ -16,16 +16,17 @@ export const state = {
   selectedTickets: getFromStorage('selectedTickets', []),
   selectedProducts: getFromStorage('selectedProducts', []),
   totalAmount: getFromStorage('totalAmount', 0),
+  cartEventSlug: getFromStorage('cartEventSlug', null),
 }
 
-function normalizeTicket (ticket) {
+function normalizeTicket(ticket) {
   return {
     ...ticket,
     price: Number(ticket.price ?? 0),
   }
 }
 
-function normalizeProduct (product) {
+function normalizeProduct(product) {
   return {
     ...product,
     price: Number(product.price ?? 0),
@@ -33,7 +34,7 @@ function normalizeProduct (product) {
 }
 
 export const mutations = {
-  setCheckoutExists (state, exists) {
+  setCheckoutExists(state, exists) {
     state.isCheckoutExist = exists
     try {
       localStorage.setItem('isCheckoutExist', JSON.stringify(exists))
@@ -41,7 +42,7 @@ export const mutations = {
       console.error('Error syncing isCheckoutExist to localStorage:', error)
     }
   },
-  setSelectedTickets (state, tickets) {
+  setSelectedTickets(state, tickets) {
     state.selectedTickets = (tickets || []).map(normalizeTicket)
     try {
       localStorage.setItem('selectedTickets', JSON.stringify(state.selectedTickets))
@@ -49,7 +50,7 @@ export const mutations = {
       console.error('Error syncing selectedTickets to localStorage:', error)
     }
   },
-  setSelectedProducts (state, products) {
+  setSelectedProducts(state, products) {
     state.selectedProducts = (products || []).map(normalizeProduct)
     try {
       localStorage.setItem('selectedProducts', JSON.stringify(state.selectedProducts))
@@ -57,7 +58,7 @@ export const mutations = {
       console.error('Error syncing selectedProducts to localStorage:', error)
     }
   },
-  setTotalAmount (state, amount) {
+  setTotalAmount(state, amount) {
     state.totalAmount = amount
     try {
       localStorage.setItem('totalAmount', JSON.stringify(amount))
@@ -65,7 +66,7 @@ export const mutations = {
       console.error('Error syncing totalAmount to localStorage:', error)
     }
   },
-  addTicket (state, ticket) {
+  addTicket(state, ticket) {
     state.selectedTickets.push(normalizeTicket(ticket))
     try {
       localStorage.setItem('selectedTickets', JSON.stringify(state.selectedTickets))
@@ -73,7 +74,7 @@ export const mutations = {
       console.error('Error syncing selectedTickets to localStorage:', error)
     }
   },
-  addProduct (state, product) {
+  addProduct(state, product) {
     state.selectedProducts.push(normalizeProduct(product))
     try {
       localStorage.setItem('selectedProducts', JSON.stringify(state.selectedProducts))
@@ -81,7 +82,7 @@ export const mutations = {
       console.error('Error syncing selectedProducts to localStorage:', error)
     }
   },
-  removeTicket (state, ticketId) {
+  removeTicket(state, ticketId) {
     state.selectedTickets = state.selectedTickets.filter(t => t.ticketId !== ticketId)
     try {
       localStorage.setItem('selectedTickets', JSON.stringify(state.selectedTickets))
@@ -89,7 +90,7 @@ export const mutations = {
       console.error('Error syncing selectedTickets to localStorage:', error)
     }
   },
-  removeProduct (state, productId) {
+  removeProduct(state, productId) {
     state.selectedProducts = state.selectedProducts.filter(p => p.productId !== productId)
     try {
       localStorage.setItem('selectedProducts', JSON.stringify(state.selectedProducts))
@@ -97,11 +98,24 @@ export const mutations = {
       console.error('Error syncing selectedProducts to localStorage:', error)
     }
   },
-  clearCheckout (state) {
+  setCartEventSlug(state, slug) {
+    state.cartEventSlug = slug
+    try {
+      if (slug) {
+        localStorage.setItem('cartEventSlug', JSON.stringify(slug))
+      } else {
+        localStorage.removeItem('cartEventSlug')
+      }
+    } catch (error) {
+      console.error('Error syncing cartEventSlug to localStorage:', error)
+    }
+  },
+  clearCheckout(state) {
     state.selectedTickets = []
     state.selectedProducts = []
     state.isCheckoutExist = false
     state.totalAmount = 0
+    state.cartEventSlug = null
 
     // Also clear from localStorage immediately
     try {
@@ -109,6 +123,7 @@ export const mutations = {
       localStorage.setItem('selectedProducts', '[]')
       localStorage.setItem('isCheckoutExist', 'false')
       localStorage.setItem('totalAmount', '0')
+      localStorage.removeItem('cartEventSlug')
     } catch (error) {
       console.error('Error clearing state in localStorage:', error)
     }
@@ -116,7 +131,15 @@ export const mutations = {
 }
 
 export const actions = {
-  addTicket ({ commit, state }, ticket) {
+  addTicket({ commit, state, rootState }, ticket) {
+    // If cart is empty, set the current event slug
+    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0 && !state.cartEventSlug) {
+      const currentSlug = rootState.route?.params?.slug
+      if (currentSlug) {
+        commit('setCartEventSlug', currentSlug)
+      }
+    }
+
     const existingIndex = state.selectedTickets.findIndex(t => t.ticketId === ticket.ticketId)
     if (existingIndex === -1) {
       // Add new ticket
@@ -133,7 +156,15 @@ export const actions = {
     localStorage.removeItem('cartHash')
   },
 
-  addProduct ({ commit, state }, product) {
+  addProduct({ commit, state, rootState }, product) {
+    // If cart is empty, set the current event slug
+    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0 && !state.cartEventSlug) {
+      const currentSlug = rootState.route?.params?.slug
+      if (currentSlug) {
+        commit('setCartEventSlug', currentSlug)
+      }
+    }
+
     const existingIndex = state.selectedProducts.findIndex(p => p.productId === product.productId)
     if (existingIndex === -1) {
       // Add new product
@@ -150,7 +181,7 @@ export const actions = {
     localStorage.removeItem('cartHash')
   },
 
-  removeTicket ({ commit, state }, ticketId) {
+  removeTicket({ commit, state }, ticketId) {
     const remainingTickets = state.selectedTickets.filter(t => t.ticketId !== ticketId)
     commit('removeTicket', ticketId)
     commit('setCheckoutExists', remainingTickets.length > 0 || state.selectedProducts.length > 0)
@@ -159,7 +190,7 @@ export const actions = {
     localStorage.removeItem('cartHash')
   },
 
-  removeProduct ({ commit, state }, productId) {
+  removeProduct({ commit, state }, productId) {
     const remainingProducts = state.selectedProducts.filter(p => p.productId !== productId)
     commit('removeProduct', productId)
     commit('setCheckoutExists', state.selectedTickets.length > 0 || remainingProducts.length > 0)
@@ -168,7 +199,7 @@ export const actions = {
     localStorage.removeItem('cartHash')
   },
 
-  clearCheckout ({ commit }) {
+  clearCheckout({ commit }) {
     commit('clearCheckout')
 
     // Clear from localStorage
@@ -197,20 +228,21 @@ export const actions = {
     }
   },
 
-  initializeFromStorage ({ commit }) {
+  initializeFromStorage({ commit }) {
     commit('setCheckoutExists', getFromStorage('isCheckoutExist', false))
     commit('setSelectedTickets', getFromStorage('selectedTickets', []))
     commit('setSelectedProducts', getFromStorage('selectedProducts', []))
     commit('setTotalAmount', getFromStorage('totalAmount', 0))
+    commit('setCartEventSlug', getFromStorage('cartEventSlug', null))
   },
 
   // Clear all data and reset to initial state
-  resetAll ({ dispatch }) {
+  resetAll({ dispatch }) {
     dispatch('clearCheckout')
   },
 
   // Handle routing logic for checkout/attendee-form
-  goToCheckout ({ state, rootState, commit, dispatch }, { router, route }) {
+  goToCheckout({ state, rootState, commit, dispatch }, { router, route }) {
     // Load registration data from localStorage
     const storedData = localStorage.getItem('registrationData')
     const storedAttendee = localStorage.getItem('attendeesData')
@@ -251,13 +283,13 @@ export const actions = {
     // Save products to localStorage
     const selectedProductItems = rootState.event.event?.config?.enableMerchandiseShop
       ? state.selectedProducts.filter(item => item.quantity > 0).map(product => {
-          return {
-            productId: product.productId,
-            name: product.name,
-            price: Number(product.price || 0),
-            quantity: Number(product.quantity || 1),
-          }
-        })
+        return {
+          productId: product.productId,
+          name: product.name,
+          price: Number(product.price || 0),
+          quantity: Number(product.quantity || 1),
+        }
+      })
       : []
     localStorage.setItem('selectedProducts', JSON.stringify(selectedProductItems))
 

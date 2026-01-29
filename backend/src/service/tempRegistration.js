@@ -175,7 +175,7 @@ exports.updateTempRegistration = async (sessionId, updates) => {
 };
 
 // Retrieve temporary registration data
-exports.getTempRegistration = async (sessionId) => {
+exports.getTempRegistration = async (sessionId, silent = false) => {
     try {
         if (!sessionId) {
             throw new CustomError("Session ID is required", 400);
@@ -191,6 +191,7 @@ exports.getTempRegistration = async (sessionId) => {
         const result = await query(queryText, [sessionId]);
 
         if (result.rows.length === 0) {
+            if (silent) return null;
             throw new CustomError(
                 "Temporary registration data not found or expired",
                 404,
@@ -205,6 +206,7 @@ exports.getTempRegistration = async (sessionId) => {
 
         return tempRegistration;
     } catch (error) {
+        if (silent && error.statusCode === 404) return null;
         // Only log critical errors, ignore expected 404s
         if (error.statusCode !== 404) {
             console.error("Error retrieving temporary registration data:", error);
@@ -248,7 +250,10 @@ exports.getTempRegistrationWAttendees = async (sessionId) => {
                                'updatedAt', a.updated_at
                            )
                        ) FILTER (WHERE a.id IS NOT NULL),
-                       tr.attendees -- Fallback to session blueprint if permanent records not ready
+                       CASE 
+                           WHEN tr.orders->>'paymentStatus' = 'paid' OR tr.orders->>'payment_status' = 'paid' THEN '[]'::jsonb 
+                           ELSE tr.attendees 
+                       END
                    ) AS attendees
             FROM temp_registration tr
                      JOIN event e ON tr.event_id = e.id

@@ -103,7 +103,7 @@
 
     sharing.value = true
     try {
-      await $axios.post('/email/resendTickets', {
+      await $axios.post('/email/resendTicketsByRegistrationId', {
         registrationId: props.saleData.registrationId,
         email: shareEmail.value,
       })
@@ -115,6 +115,23 @@
       console.error('Share failed:', error)
     } finally {
       sharing.value = false
+    }
+  }
+
+  async function downloadTicket (attendee) {
+    try {
+      const response = await $axios.get(`/registration/download-ticket/${attendee.id}/${attendee.qrUuid}`, {
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `ticket-${attendee.qrUuid.split('-')[0]}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (error) {
+      console.error('Download failed:', error)
     }
   }
 
@@ -153,36 +170,37 @@
 
       <!-- Final Actions -->
       <v-card-actions class="pa-6 bg-surface no-print">
-        <v-row dense>
-          <v-col cols="12" sm="6">
-            <v-btn
-              block
-              class="text-none font-weight-bold"
-              color="secondary"
-              prepend-icon="mdi-printer"
-              :rounded="rounded"
-              size="large"
-              variant="outlined"
-              @click="handlePrint"
-            >
-              Print Tickets
-            </v-btn>
-          </v-col>
-          <v-col class="mt-4 mt-sm-0" cols="12" sm="6">
-            <v-btn
-              block
-              class="text-none font-weight-bold"
-              color="primary"
-              prepend-icon="mdi-share-variant"
-              :rounded="rounded"
-              size="large"
-              variant="flat"
-              @click="openShareDialog"
-            >
-              Share via Email
-            </v-btn>
-          </v-col>
-        </v-row>
+        <v-btn
+          class="text-none"
+          color="secondary"
+          prepend-icon="mdi-printer"
+          :rounded="rounded"
+          variant="outlined"
+          @click="handlePrint"
+        >
+          Print
+        </v-btn>
+        <v-btn
+          class="text-none"
+          color="primary"
+          prepend-icon="mdi-download"
+          :rounded="rounded"
+          variant="outlined"
+          @click="saleData?.attendees?.forEach(a => downloadTicket(a))"
+        >
+          Download
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          class="text-none"
+          color="primary"
+          prepend-icon="mdi-share-variant"
+          :rounded="rounded"
+          variant="tonal"
+          @click="openShareDialog"
+        >
+          Share
+        </v-btn>
       </v-card-actions>
     </v-card>
 

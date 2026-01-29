@@ -82,6 +82,7 @@ declare module 'vue-router/auto-routes' {
     'pricing': RouteRecordInfo<'pricing', '/Pricing', Record<never, never>, Record<never, never>>,
     'privacy': RouteRecordInfo<'privacy', '/privacy', Record<never, never>, Record<never, never>>,
     '/staff/': RouteRecordInfo<'/staff/', '/staff', Record<never, never>, Record<never, never>>,
+    'staff-dashboard': RouteRecordInfo<'staff-dashboard', '/staff/dashboard', Record<never, never>, Record<never, never>>,
     'staff-checkin': RouteRecordInfo<'staff-checkin', '/staff/scanner', Record<never, never>, Record<never, never>>,
     '/support/': RouteRecordInfo<'/support/', '/support', Record<never, never>, Record<never, never>>,
     'terms': RouteRecordInfo<'terms', '/terms', Record<never, never>, Record<never, never>>,
@@ -352,6 +353,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/staff/index.vue': {
       routes: '/staff/'
+      views: never
+    }
+    'src/pages/staff/dashboard.vue': {
+      routes: 'staff-dashboard'
       views: never
     }
     'src/pages/staff/scanner.vue': {

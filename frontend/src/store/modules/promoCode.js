@@ -7,25 +7,25 @@ export const state = {
 }
 
 export const mutations = {
-  setPromoCodes (state, payload) {
+  setPromoCodes(state, payload) {
     state.promoCodes = payload
   },
-  addPromoCode (state, payload) {
+  addPromoCode(state, payload) {
     state.promoCodes.push(payload)
   },
-  updatePromoCode (state, payload) {
+  updatePromoCode(state, payload) {
     const index = state.promoCodes.findIndex(p => p.id === payload.id)
     if (index !== -1) {
       state.promoCodes[index] = payload
     }
   },
-  removePromoCode (state, id) {
+  removePromoCode(state, id) {
     state.promoCodes = state.promoCodes.filter(p => p.id !== id)
   },
 }
 
 export const actions = {
-  fetchPromoCodes ({ commit }, { organizationId } = {}) {
+  fetchPromoCodes({ commit }, { organizationId } = {}) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/promo-code/getPromoCodes', {
@@ -40,7 +40,7 @@ export const actions = {
         })
     })
   },
-  savePromoCode ({ commit }, payload) {
+  savePromoCode({ commit }, payload) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/promo-code/save', payload)
@@ -58,12 +58,26 @@ export const actions = {
         })
     })
   },
-  deletePromoCode ({ commit }, id) {
+  deletePromoCode({ commit }, id) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/promo-code/delete', { params: { id } })
         .then(response => {
           commit('removePromoCode', id)
+          resolve(response)
+        })
+        .catch(error => {
+          reject(error)
+        })
+    })
+  },
+  validatePromoCode({ commit }, { code, eventId }) {
+    return new Promise((resolve, reject) => {
+      $axios
+        .get('/promo-code/validate', {
+          params: { code, eventId },
+        })
+        .then(response => {
           resolve(response)
         })
         .catch(error => {

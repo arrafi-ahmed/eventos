@@ -3,9 +3,12 @@
   import { useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useUiProps } from '@/composables/useUiProps'
 
   import EventCard from '@/components/EventCard.vue'
   import { formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/utils'
+
+  const { rounded, size } = useUiProps()
 
   // Hero background image - use default-event.webp (can be replaced with hero-event.webp if needed)
   const heroBackgroundImage = getClientPublicImageUrl('default-event.webp')
@@ -39,6 +42,7 @@
   })
   const activeBanners = computed(() => store.state.homepage?.activeBanners || [])
   const isDark = computed(() => theme.global.name.value === 'dark')
+  const calcHome = computed(() => store.getters['auth/calcHome'])
 
   // Features data - ordered by importance and popularity
   const features = [
@@ -619,7 +623,7 @@
                     color="secondary"
                     prepend-icon="mdi-account-plus"
                     :rounded="rounded"
-                    size="default"
+                    :size="size"
                     :to="{ name: 'register' }"
                   >
                     Sign Up Free
@@ -630,7 +634,7 @@
                     color="secondary"
                     prepend-icon="mdi-view-dashboard"
                     :rounded="rounded"
-                    size="default"
+                    :size="size"
                     :to="calcHome"
                   >
                     Go to Dashboard

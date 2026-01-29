@@ -145,9 +145,13 @@ exports.validateQrCode = async ({ registrationId, attendeeId, qrUuid, eventId })
                a.qr_uuid,
                r.status                                            AS registration_status,
                r.event_id,
+               a.order_id,
+               o.order_number,
+               o.payment_status,
                (CASE WHEN c.attendee_id IS NULL THEN 0 ELSE 1 END) AS is_checked_in
         FROM attendees a
                  JOIN registration r ON a.registration_id = r.id
+                 LEFT JOIN orders o ON a.order_id = o.id
                  LEFT JOIN checkin c ON c.attendee_id = a.id
         WHERE r.id = $1
           AND r.event_id = $2
@@ -178,6 +182,9 @@ exports.validateQrCode = async ({ registrationId, attendeeId, qrUuid, eventId })
         ticketId: row.ticketId,
         qrUuid: row.qrUuid,
         registrationStatus: row.registrationStatus,
+        orderId: row.orderId,
+        orderNumber: row.orderNumber,
+        paymentStatus: row.paymentStatus,
     };
 };
 
@@ -233,29 +240,26 @@ exports.scanByRegistrationId = async ({ qrCodeData, eventId, userId }) => {
     const event = await eventService.getEventById({ eventId });
     const saveAllAttendees = event?.config?.saveAllAttendeesDetails;
 
-    // Compute total attendees from orders.items_ticket for this registration
+    // Compute total attendees for this ORDER (more accurate than registration-wide)
     const totalSql = `
         SELECT COALESCE(SUM((item ->>'quantity')::int), 0) AS total_attendees
         FROM orders o
                  CROSS JOIN LATERAL jsonb_array_elements(o.items_ticket) AS item
-        WHERE o.registration_id = $1
+        WHERE o.id = $1
     `;
-    const totalResult = await query(totalSql, [attendee.registrationId]);
+    const totalResult = await query(totalSql, [attendee.orderId]);
     const totalAttendees = totalResult.rows?.[0]?.totalAttendees || 0;
 
-    // If saveAllAttendeesDetails = false, get orders.items_ticket data
-    // if (!saveAllAttendees || saveAllAttendees === false || saveAllAttendees === 'false') {
+    // Get order items for display (tickets and products)
     const itemsSql = `
-        SELECT o.items_ticket, o.items_product
-        FROM orders o
-        WHERE o.registration_id = $1 LIMIT 1
+        SELECT items_ticket, items_product
+        FROM orders
+        WHERE id = $1
     `;
-    const itemsResult = await query(itemsSql, [attendee.registrationId]);
+    const itemsResult = await query(itemsSql, [attendee.orderId]);
     const itemsTicket = itemsResult.rows?.[0]?.itemsTicket || [];
     const itemsProduct = itemsResult.rows?.[0]?.itemsProduct || [];
     const items = [...itemsTicket, ...itemsProduct];
-    // }
-    // }
 
     return {
         ...attendee,

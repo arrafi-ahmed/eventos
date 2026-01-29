@@ -30,6 +30,7 @@
   const paymentGateway = ref(null)
   const selectedPaymentMethod = ref(null) // 'stripe' or 'orange_money'
   const isProcessingPayment = ref(false)
+  const isInitializingSession = ref(false)
   const clientSecret = ref('')
   const sessionId = ref('')
   const transactionId = ref('')
@@ -292,49 +293,47 @@
   async function handleFreeRegistration () {
     try {
       isProcessingPayment.value = true
-        // Refactored: Map ticket object { id, title } to attendee based on scenarios
+
+      if (!sessionId.value) {
+        // Initialize session first if missing (e.g. bypassed in Step 1)
+        const baseUrl = window.location.origin
+        const returnUrl = `${baseUrl}/${route.params.slug}/success`
+        const cancelUrl = `${baseUrl}/payment/cancel?slug=${route.params.slug}`
+
         const enrichedAttendees = attendees.value.map(attendee => {
-           let ticketSnapshot = {};
-           const saveDetails = event.value?.config?.saveAllAttendeesDetails || event.value?.config?.save_details || false;
-           
-           const selectedTicket = selectedTickets.value.find(t => t.ticketId === attendee.ticketId)
-               || (attendees.value.length === 1 ? selectedTickets.value[0] : {})
-               || {};
-
-           // Scenario A: Single Registration (No Details) -> !saveDetails && count == 1
-           if (!saveDetails && attendees.value.length === 1) {
-              ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
-           } 
-           // Scenario B: Bulk Registration (No Details) -> !saveDetails && count > 1
-           else if (!saveDetails && attendees.value.length > 1) {
-             ticketSnapshot = { id: selectedTicket.ticketId, title: 'Group Ticket' };
-           }
-           // Scenario C: Detailed Registration -> saveDetails == true
-           else {
+             let ticketSnapshot = {};
+             const selectedTicket = selectedTickets.value.find(t => t.ticketId === attendee.ticketId) 
+                 || (attendees.value.length === 1 ? selectedTickets.value[0] : {}) 
+                 || {};
+             
              ticketSnapshot = { id: selectedTicket.ticketId, title: selectedTicket.title };
-           }
-
-           const newAttendee = { ...attendee };
-           delete newAttendee.ticketId; // Remove legacy ID
-
-           return {
-             ...newAttendee,
-             ticket: ticketSnapshot
-           };
+             
+             const newAttendee = { ...attendee };
+             delete newAttendee.ticketId;
+             
+             return { ...newAttendee, ticket: ticketSnapshot };
         });
 
-        const registrationData = {
+        const initRes = await $axios.post('/payment/init', {
+          gateway: 'stripe', // Use stripe for free orders internal tracking
           attendees: enrichedAttendees,
           selectedTickets: selectedTickets.value,
-          selectedProducts: selectedProducts.value || [],
-          registration: {
-            ...registration.value,
-            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            timezoneOffset: new Date().getTimezoneOffset(),
-          },
-          eventId: event.value.id,
-          sessionId: sessionId.value || undefined,
+          selectedProducts: selectedProducts.value,
+          registration: registration.value,
+          eventId: event.value?.id,
+          returnUrl,
+          cancelUrl
+        })
+        
+        if (initRes.data?.payload?.sessionId) {
+          sessionId.value = initRes.data.payload.sessionId
+          localStorage.setItem('tempSessionId', sessionId.value)
         }
+      }
+
+      const registrationData = {
+        sessionId: sessionId.value,
+      }
 
       const res = await $axios.post('/registration/complete-free-registration', registrationData)
       if (res.data.payload?.registrationId) {
@@ -343,50 +342,18 @@
         router.push({
           name: 'event-register-success-slug',
           params: { slug: route.params.slug },
-          state: { registrationData: res.data.payload }
+          query: { session_id: sessionId.value }
         });
       }
     } catch (error) {
       console.error('Free registration failed:', error)
+      const msg = error.response?.data?.msg || 'Free registration failed'
+      store.commit('addSnackbar', { text: msg, color: 'error' })
     } finally {
       isProcessingPayment.value = false
     }
   }
 
-  // Helper to save temp registration (moved out of free registration)
-  async function saveTempRegistrationForFreeOrder () {
-    try {
-      const currentSessionId = sessionId.value
-      const orders = {
-        orderNumber: registration.value?.orderNumber,
-        totalAmount: 0,
-        currency: eventCurrency.value,
-        paymentStatus: 'free',
-        subtotal: 0,
-        taxAmount: 0,
-        eventId: event.value.id,
-      }
-
-      // Prepare data for temp registration
-      const tempRegData = {
-        sessionId: currentSessionId,
-        attendees: attendees.value,
-        registration: registration.value,
-        selectedTickets: selectedTickets.value,
-        selectedProducts: selectedProducts.value || [],
-        eventId: event.value.id,
-        orders: orders, // Include order data structure for consistency
-      }
-
-      // Save to backend
-      await $axios.post('/temp-registration/store', tempRegData, {
-        headers: { 'X-Suppress-Toast': 'true' },
-      })
-    } catch (error) {
-      // Log but don't fail - this is for tracking purposes
-      console.warn('[Checkout] Failed to save temp registration for free order:', error)
-    }
-  }
 
   // Fetch temp registration data from session query parameter (from abandoned cart email)
   async function loadTempRegistrationFromSession (sessionIdParam) {
@@ -404,10 +371,6 @@
         // Backend converts snake_case to camelCase automatically via db.js
         const sessionEventId = tempData.eventId
         if (event.value && event.value.id && sessionEventId && sessionEventId !== event.value.id) {
-          console.warn('[Checkout] Session event ID does not match current event', {
-            sessionEventId,
-            currentEventId: event.value.id,
-          })
           store.commit('addSnackbar', {
             text: 'This checkout link is for a different event. Please select tickets for this event.',
             color: 'warning',
@@ -461,25 +424,14 @@
           // Trigger reactivity for computed properties
           triggerLocalStorageUpdate()
 
-          console.log('[Checkout] Successfully loaded temp registration data into localStorage', {
-            tickets: tickets.length,
-            products: products.length,
-            attendees: attendeesData.length,
-          })
           return true
         } else {
-          console.warn('[Checkout] Temp registration data found but no tickets/products')
           return false
         }
       }
 
       return false
     } catch (error) {
-      console.error('[Checkout] Error loading temp registration data:', error)
-      // Don't show error to user if session not found - just proceed normally
-      if (error.response?.status === 404) {
-        console.log('[Checkout] Session not found or expired, proceeding with normal flow')
-      }
       return false
     }
   }
@@ -501,7 +453,6 @@
 
       // If already paid, we don't need to initialize stripe/om immediately
       if (paidSession.value) {
-        console.log('[Checkout] Paid session detected. Showing recovery banner.')
         return
       }
 
@@ -591,8 +542,6 @@
         
         promoNewTaxAmount.value = newTax
         promoNewTotalAmount.value = netSubtotal + newTax + calculatedShippingCost.value
-        
-        store.commit('addSnackbar', { text: `Promo code ${promo.code} applied!`, color: 'success' })
       }
     } catch (error) {
       console.error('Failed to apply promo code:', error)
@@ -609,30 +558,21 @@
     promoNewTaxAmount.value = null
     promoNewTotalAmount.value = null
     promoCodeInput.value = ''
-
-    // To truly "remove" it from Stripe PI, we'd need another backend call
-    // For now, let's just trigger a re-initialization or update if shipping is saved
-    if (isShippingOptionSaved.value) {
-      initializeCheckout(true)
-    } else {
-      initializeCheckout(true)
-    }
   }
 
   async function saveShippingOption () {
     isShippingOptionSaved.value = true
-    await initializeCheckout(true)
   }
 
   function updatePaymentIntentWithShipping () {
     // This is now handled by initializeCheckout
-    initializeCheckout(true)
   }
 
-  function handleContinueFromStep1 () {
+  async function handleContinueFromStep1 () {
+    // Pure navigation: no more /payment/init here
     if (totalAmount.value === 0) {
-      // Free order: Complete directly from Step 1
-      handleFreeRegistration()
+      // Free order: Go straight to confirm step
+      checkoutStep.value = 3
     } else {
       // Paid order: Go to Payment Method selection
       checkoutStep.value = 2
@@ -898,11 +838,11 @@
                     :rounded="rounded"
                     class="mt-1 font-weight-bold"
                     block
-                    :loading="isProcessingPayment"
+                    :loading="isInitializingSession"
                     @click="handleContinueFromStep1"
                   >
-                    {{ totalAmount === 0 ? 'Complete Registration' : 'Continue to Payment Method' }}
-                    <v-icon end>{{ totalAmount === 0 ? 'mdi-check-circle' : 'mdi-arrow-right' }}</v-icon>
+                    {{ totalAmount === 0 ? 'Review Free Order' : 'Continue to Payment Method' }}
+                    <v-icon end>{{ totalAmount === 0 ? 'mdi-magnify' : 'mdi-arrow-right' }}</v-icon>
                   </v-btn>
                 </div>
               </v-stepper-vertical-item>

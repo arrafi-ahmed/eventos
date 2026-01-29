@@ -242,7 +242,7 @@ exports.sendTicketByAttendeeId = async ({ attendeeId }) => {
     });
 };
 
-exports.sendTicketsByRegistrationId = async ({ registrationId }) => {
+exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null }) => {
     // Get registration data with event and extras
     const { registration, event, extrasPurchase } = await registrationService.getRegistrationWEventWExtrasPurchase({
         registrationId,
@@ -252,13 +252,19 @@ exports.sendTicketsByRegistrationId = async ({ registrationId }) => {
     const userTimezone = registration.userTimezone || 'UTC';
     const timezoneAbbr = getTimezoneAbbreviation(userTimezone);
 
-    // Get all attendees for this registration
-    const attendees = await attendeesService.getAttendeesByRegistrationId({
-        registrationId: registration.id,
-    });
+    // Get attendees for this specific registration/order
+    const attendeesSql = `
+        SELECT a.*, a.ticket->>'title' as ticket_title
+        FROM attendees a
+        WHERE a.registration_id = $1
+        ${orderId ? 'AND a.order_id = $2' : ''}
+        ORDER BY a.is_primary DESC, a.id ASC;`;
+
+    const attendeesResult = await query(attendeesSql, orderId ? [registrationId, orderId] : [registrationId]);
+    const attendees = attendeesResult.rows;
 
     if (!attendees || attendees.length === 0) {
-        throw new CustomError("No attendees found for this registration", 404);
+        throw new CustomError("No attendees found for this confirmation", 404);
     }
 
     // Get order details and total quantity from orders table
@@ -277,10 +283,10 @@ exports.sendTicketsByRegistrationId = async ({ registrationId }) => {
                o.product_status
         FROM orders o,
              jsonb_array_elements(o.items_ticket) AS item
-        WHERE o.registration_id = $1
+        WHERE ${orderId ? 'o.id = $1' : 'o.registration_id = $1'}
         GROUP BY o.total_amount, o.shipping_cost, o.items_product, o.product_status
     `;
-    const orderResult = await query(orderSql, [registration.id]);
+    const orderResult = await query(orderSql, [orderId || registration.id]);
     const totalTickets = orderResult.rows[0]?.totalTickets || 1;
     const orderItems = orderResult.rows[0]?.itemsDetail || [];
     const productItems = orderResult.rows[0]?.itemsProduct || [];

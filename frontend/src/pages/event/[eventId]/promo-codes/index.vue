@@ -1,4 +1,4 @@
-<script setup>
+ <script setup>
   import { computed, onMounted, ref } from 'vue'
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
@@ -94,9 +94,11 @@
     if (!isFormValid.value) return
 
     submitting.value = true
-    if (validRange.value && validRange.value.length === 2) {
-      promoData.value.validFrom = validRange.value[0]
-      promoData.value.validUntil = validRange.value[1]
+    if (validRange.value && validRange.value.length > 0) {
+      // Sort to ensure chronological order if the component doesn't guarantee it
+      const sortedDates = [...validRange.value].sort((a, b) => new Date(a) - new Date(b))
+      promoData.value.validFrom = sortedDates[0]
+      promoData.value.validUntil = sortedDates.at(-1)
     } else {
       promoData.value.validFrom = null
       promoData.value.validUntil = null

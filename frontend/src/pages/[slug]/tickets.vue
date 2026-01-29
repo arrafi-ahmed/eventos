@@ -339,18 +339,6 @@
     localStorage.removeItem('tempSessionId')
     localStorage.removeItem('cartHash')
 
-    // Check if localStorage is empty but store still has values
-    // This can happen if user visited success page which cleared localStorage but not store
-    const storedTickets = localStorage.getItem('selectedTickets')
-    const storedProducts = localStorage.getItem('selectedProducts')
-
-    // If localStorage is empty but store has values, clear the store
-    if ((!storedTickets || storedTickets === '[]') && selectedTickets.value && selectedTickets.value.length > 0) {
-      store.dispatch('checkout/clearCheckout')
-    } else if ((!storedProducts || storedProducts === '[]') && selectedProducts.value && selectedProducts.value.length > 0) {
-      store.dispatch('checkout/clearCheckout')
-    }
-
     // Fetch event and tickets first
     await fetchTickets()
   })

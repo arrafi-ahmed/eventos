@@ -44,28 +44,36 @@
 
   // Initialize cart from localStorage on app mount
   // Also load layout/design data (footer, banners) on first load
-  onMounted(async () => {
+  onMounted(() => {
     try {
       store.dispatch('checkout/initializeFromStorage')
-      // Load all layout data in a single call (uses cache if available)
-      const layoutData = await store.dispatch('layout/fetchAllLayoutData')
-
-      // Update individual store modules for backward compatibility
-      if (layoutData.footer) {
-        store.commit('footerSettings/setSettings', layoutData.footer)
+      
+      const promises = [
+        store.dispatch('layout/fetchAllLayoutData')
+      ]
+      
+      if (store.getters['auth/signedin']) {
+        promises.push(store.dispatch('auth/refreshCurrentUser'))
       }
-      if (layoutData.header) {
-        store.commit('headerSettings/setSettings', layoutData.header)
-      }
-      if (layoutData.appearance) {
-        store.commit('appearanceSettings/setSettings', layoutData.appearance)
-      }
-      if (layoutData.organizerDashboardBanner) {
-        store.commit('organizerDashboardBanner/setSettings', layoutData.organizerDashboardBanner)
-      }
-      if (layoutData.homepageBanners) {
-        store.commit('homepage/setActiveBanners', layoutData.homepageBanners)
-      }
+      
+      Promise.all(promises).then(([layoutData]) => {
+        // Update individual store modules for backward compatibility
+        if (layoutData.footer) {
+          store.commit('footerSettings/setSettings', layoutData.footer)
+        }
+        if (layoutData.header) {
+          store.commit('headerSettings/setSettings', layoutData.header)
+        }
+        if (layoutData.appearance) {
+          store.commit('appearanceSettings/setSettings', layoutData.appearance)
+        }
+        if (layoutData.organizerDashboardBanner) {
+          store.commit('organizerDashboardBanner/setSettings', layoutData.organizerDashboardBanner)
+        }
+        if (layoutData.homepageBanners) {
+          store.commit('homepage/setActiveBanners', layoutData.homepageBanners)
+        }
+      }).catch(err => console.error('Error fetching data:', err))
     } catch (error) {
       console.error('Error initializing app:', error)
     }
@@ -74,9 +82,10 @@
   // Clear checkout when changing events (using slug-based routing)
   watch(
     () => route.params.slug,
-    (newSlug, oldSlug) => {
-      // Only clear if slug actually changed (not on initial mount)
-      if (oldSlug && newSlug && newSlug !== oldSlug) {
+    (newSlug) => {
+      const cartSlug = store.state.checkout.cartEventSlug
+      // If we have items in the cart for a DIFFERENT event, clear it
+      if (newSlug && cartSlug && newSlug !== cartSlug) {
         store.dispatch('checkout/clearCheckout')
       }
     },

@@ -426,7 +426,7 @@
 
             <div class="d-flex gap-6 mb-4">
               <v-number-input
-                v-model="ticket.price"
+                v-model.number="ticket.price"
                 :density="density"
                 hide-details="auto"
                 label="Price"
@@ -443,7 +443,7 @@
 
               <v-number-input
                 v-if="isLimitedTime"
-                v-model="ticket.originalPrice"
+                v-model.number="ticket.originalPrice"
                 :density="density"
                 hide-details="auto"
                 label="Original Price"
@@ -461,7 +461,7 @@
 
             <div class="d-flex gap-4 mb-6">
               <v-number-input
-                v-model="ticket.currentStock"
+                v-model.number="ticket.currentStock"
                 class="flex-1"
                 :density="density"
                 hide-details="auto"
@@ -475,7 +475,7 @@
                 :variant="variant"
               />
               <v-number-input
-                v-model="ticket.maxStock"
+                v-model.number="ticket.maxStock"
                 class="flex-1"
                 :density="density"
                 hide-details="auto"
@@ -540,7 +540,7 @@
 
             <div v-if="event?.config?.enableOnSiteQuota" class="d-flex gap-4 mb-6">
               <v-number-input
-                v-model="ticket.onSiteQuota"
+                v-model.number="ticket.onSiteQuota"
                 class="flex-1"
                 :density="density"
                 hide-details="auto"
@@ -554,7 +554,7 @@
                 :variant="variant"
               />
               <v-number-input
-                v-model="ticket.lowStockThreshold"
+                v-model.number="ticket.lowStockThreshold"
                 class="flex-1"
                 :density="density"
                 hide-details="auto"

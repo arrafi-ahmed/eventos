@@ -96,7 +96,8 @@ exports.getSessionStats = async ({ sessionId }) => {
     };
 
     result.rows.forEach(row => {
-        const total = parseInt(row.total || 0);
+        const total = Number(row.total) || 0;
+
         if (row.paymentMethod === 'cash') stats.cashSales = total;
         else if (row.paymentMethod === 'card') stats.cardSales = total;
         else if (row.paymentMethod === 'free') stats.freeSales = total;
