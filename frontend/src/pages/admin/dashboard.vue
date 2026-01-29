@@ -278,6 +278,7 @@
 
         salesByChannelData.value = (response.data?.payload?.channels || []).map((item, index) => {
           return {
+            key: item.name || `channel-${index}`,
             title: item.name || 'Unknown',
             value: Number.parseInt(item.revenue) || 0,
             color: item.name === 'Counter' ? '#1867C0' : '#5CBBF6',
@@ -290,8 +291,8 @@
         const absentCount = Math.max(0, totalTickets - checkedInCount)
 
         checkinData.value = [
-          { title: 'Checked In', value: checkedInCount, color: '#2E7D32' },
-          { title: 'Absent', value: absentCount, color: '#ED2939' },
+          { key: 'checked-in', title: 'Checked In', value: checkedInCount, color: '#2E7D32' },
+          { key: 'absent', title: 'Absent', value: absentCount, color: '#ED2939' },
         ]
       }
 
@@ -822,6 +823,7 @@
                         v-if="checkinData.length > 0"
                         animation
                         height="250"
+                        item-key="key"
                         :items="checkinData"
                         legend
                         reveal
@@ -848,10 +850,16 @@
                         v-if="salesByChannelData.length > 0"
                         animation
                         height="250"
+                        item-key="key"
                         :items="salesByChannelData"
-                        legend
+                        :legend="{
+                          visible: true,
+                          textFormat: (item) => `${item.title}: ${formatCurrency(item.value, summary.currency)}`
+                        }"
                         reveal
-                        tooltip
+                        :tooltip="{
+                          subtitleFormat: (item) => formatCurrency(item.value, summary.currency)
+                        }"
                         width="280"
                       />
                     </div>
