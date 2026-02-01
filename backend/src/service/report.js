@@ -312,14 +312,24 @@ exports.exportToPDF = async ({ data, title = "Report" }) => {
         </html>
     `;
 
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        console.log(`[Report Service] Exporting PDF using custom path: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+    }
     let options = {
         format: 'A4',
         landscape: true,
-        margin: { top: 20, right: 20, bottom: 20, left: 20 }
+        margin: { top: 20, right: 20, bottom: 20, left: 20 },
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null
     };
     let file = { content: html };
 
-    return await pdf.generatePdf(file, options);
+    try {
+        return await pdf.generatePdf(file, options);
+    } catch (error) {
+        console.error("[Report Service] PDF Generation Error:", error);
+        throw error;
+    }
 };
 
 /**

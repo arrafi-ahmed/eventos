@@ -12,6 +12,11 @@ const { formatInTimezone, formatDateOnly, formatTimeOnly, formatDateTime } = req
  */
 exports.generateTicketPdf = async ({ attendee, event, organization }) => {
     try {
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            console.log(`[PDF Service] Using custom Puppeteer path: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+        } else {
+            console.warn(`[PDF Service] PUPPETEER_EXECUTABLE_PATH not set. Defaulting to bundled Chromium.`);
+        }
         const qrData = await generateQrData({
             registrationId: attendee.registrationId,
             attendeeId: attendee.id,
@@ -46,7 +51,8 @@ exports.generateTicketPdf = async ({ attendee, event, organization }) => {
         const options = {
             format: 'A4',
             printBackground: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null
         };
         const file = { content: html };
 
@@ -409,16 +415,23 @@ exports.generateSessionReport = async ({ reportData }) => {
 </html>
         `;
 
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            console.log(`[PDF Service] Generating report using custom path: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+        }
         const options = {
             format: 'A4',
             printBackground: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null
         };
         const file = { content: html };
 
         const pdfBuffer = await new Promise((resolve, reject) => {
             html_to_pdf.generatePdf(file, options, (err, buffer) => {
-                if (err) reject(err);
+                if (err) {
+                    console.error("[PDF Service] html_to_pdf error:", err);
+                    reject(err);
+                }
                 else resolve(buffer);
             });
         });
