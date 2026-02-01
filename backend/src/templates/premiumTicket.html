@@ -276,7 +276,9 @@
             <!-- Header -->
             <div class="ticket-header">
                 <div class="header-content" style="text-align: {{header.logoPosition}};">
-                    {{#if header.logo}}
+                    {{#if header.logoBase64}}
+                    <img src="{{header.logoBase64}}" alt="Logo" class="logo-img">
+                    {{else if header.logo}}
                     <img src="{{header.logo}}" alt="Logo" class="logo-img">
                     {{/if}}
                     <span class="event-name-overline">Event Entry</span>
