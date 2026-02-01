@@ -131,11 +131,33 @@
       ? customerEmail.value
       : `walkin-${Date.now()}@pos.local`
 
-    const attendee = {
-      firstName: 'Walk-in',
-      lastName: 'Customer',
-      email: email,
-      isPrimary: true,
+    const totalTicketQuantity = selectedTickets.reduce((sum, t) => sum + t.quantity, 0)
+    const saveAllDetails = event.value?.config?.saveAllAttendeesDetails
+
+    const attendeeList = []
+    if (saveAllDetails && totalTicketQuantity > 0) {
+      tickets.forEach(t => {
+        for (let i = 0; i < t.quantity; i++) {
+          attendeeList.push({
+            firstName: attendeeList.length === 0 ? 'Walk-in' : 'Guest',
+            lastName: attendeeList.length === 0 ? 'Customer' : (attendeeList.length + 1),
+            email: email,
+            isPrimary: attendeeList.length === 0,
+            ticket: {
+              id: t.id,
+              title: t.name,
+              price: t.price,
+            },
+          })
+        }
+      })
+    } else {
+      attendeeList.push({
+        firstName: 'Walk-in',
+        lastName: 'Customer',
+        email: email,
+        isPrimary: true,
+      })
     }
 
     const payload = {
@@ -143,7 +165,7 @@
       paymentMethod: paymentMethod.value,
       customerEmail: customerEmail.value || null,
       promoCode: promoCode.value || null,
-      attendees: [attendee],
+      attendees: attendeeList,
       selectedTickets,
       selectedProducts,
       registration: {

@@ -337,7 +337,7 @@
                     :density="density"
                     hide-details="auto"
                     label="Tax Amount"
-                    :prefix="getCurrencySymbol({ code: newEvent.currency || 'USD', type: 'symbol' })"
+                    :prefix="getCurrencySymbol({ code: newEvent.currency || 'XOF', type: 'symbol' })"
                     :rounded="rounded"
                     type="number"
                     :variant="variant"

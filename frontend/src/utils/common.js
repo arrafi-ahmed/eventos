@@ -219,7 +219,7 @@ export function getCurrencySymbol({ code, type }) {
   return currencyData[type]
 }
 
-export const defaultCurrency = getCurrencySymbol({ code: 'usd' })
+export const defaultCurrency = getCurrencySymbol({ code: 'xof' })
 
 /**
  * Format price for display - converts cents to currency units
@@ -325,6 +325,7 @@ export function getCurrencyMinorUnitRatio(currency) {
     php: 100,
     idr: 100,
     vnd: 1, // Vietnamese Dong has no minor unit
+    xof: 1, // West African CFA Franc has no minor unit
   }
 
   return currencyMap[currency.toLowerCase()] || 100 // Default to 100 for unknown currencies

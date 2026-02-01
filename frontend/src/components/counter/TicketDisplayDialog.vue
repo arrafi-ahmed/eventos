@@ -68,7 +68,7 @@
       @page { size: auto; margin: 10mm; }
       body { margin: 0; padding: 0; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .printable-tickets { padding: 0 !important; }
-      .digital-ticket-wrapper { box-shadow: none !important; filter: none !important; margin-bottom: 30px; page-break-inside: avoid; }
+      .digital-ticket-wrapper { box-shadow: none !important; filter: none !important; margin-bottom: 30px; page-break-inside: avoid; page-break-after: always; }
       .digital-ticket { border: 1px solid #eee !important; }
       .bg-surface-light { background-color: #f8fafc !important; }
       .text-primary { color: #ED2939 !important; }
@@ -152,7 +152,7 @@
       <v-card-text class="pa-0 bg-surface-variant ticket-preview-content">
         <!-- Ticket Container -->
         <div class="tickets-preview-wrapper pa-6 pa-md-8 printable-tickets">
-          <div v-for="attendee in saleData?.attendees" :key="attendee.id" class="mb-4">
+          <div v-for="attendee in saleData?.attendees" :key="attendee.id" class="mb-4 digital-ticket-wrapper">
             <DigitalTicketCard
               :attendee="attendee"
               :event-name="event?.name || 'Event'"

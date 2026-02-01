@@ -177,9 +177,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, you collect name and email for every attendee. When disabled, only the lead attendee's information is required (Bulk Registration)."
+                hint="When enabled, each ticket issues a unique QR code. When disabled, one QR code is issued for the entire group (Bulk Registration)."
                 inset
-                label="Collect Individual Attendee Details"
+                label="Unique QR Code per Ticket"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -326,7 +326,7 @@
                 label="Shipping Fee"
                 :min="0"
                 hide-details="auto"
-                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
                 :reverse="false"
                 :rounded="rounded"
                 :rules="[(v) => v >= 0 || 'Must be 0 or greater']"

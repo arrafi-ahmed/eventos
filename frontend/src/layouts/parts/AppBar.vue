@@ -90,6 +90,11 @@
       icon: 'mdi-cog',
     },
     {
+      title: 'Cashier Sales',
+      to: { name: 'manage-sales-logs' },
+      icon: 'mdi-receipt-text-outline',
+    },
+    {
       title: 'Export Data',
       to: { name: 'export-data-admin' },
       icon: 'mdi-download',
@@ -115,6 +120,11 @@
       title: 'Manage Staff',
       to: { name: 'organizer-staff' },
       icon: 'mdi-account-group',
+    },
+    {
+      title: 'Cashier Sales',
+      to: { name: 'manage-sales-logs' },
+      icon: 'mdi-receipt-text-outline',
     },
     {
       title: 'Session History',

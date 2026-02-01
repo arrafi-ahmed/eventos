@@ -90,7 +90,7 @@
   })
 
   const event = computed(() => store.state.event.event)
-  const eventCurrency = computed(() => (event.value?.currency || 'USD').toUpperCase())
+  const eventCurrency = computed(() => (event.value?.currency || 'XOF').toUpperCase())
 
   // Totals Calculation
   const subtotalAmount = computed(() => {

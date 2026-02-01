@@ -628,3 +628,68 @@ exports.getSalesByEvent = async ({ eventIds, startDate, endDate, organizationId 
         counterOrders: parseInt(row.counterOrders) || 0
     }));
 };
+/**
+ * Get detailed sales logs for cashiers
+ */
+exports.getDetailedCashierSales = async ({ eventIds, organizationId, startDate, endDate }) => {
+    let whereClause = "WHERE o.payment_status IN ('paid', 'free') AND o.sales_channel = 'counter'";
+    const params = [];
+    let paramIndex = 1;
+
+    if (eventIds && eventIds.length > 0) {
+        whereClause += ` AND o.event_id = ANY($${paramIndex})`;
+        params.push(eventIds);
+        paramIndex++;
+    } else if (organizationId) {
+        whereClause += ` AND e.organization_id = $${paramIndex}`;
+        params.push(organizationId);
+        paramIndex++;
+    }
+
+    if (startDate) {
+        whereClause += ` AND o.created_at >= $${paramIndex}`;
+        params.push(startDate);
+        paramIndex++;
+    }
+
+    if (endDate) {
+        whereClause += ` AND o.created_at <= $${paramIndex}`;
+        params.push(endDate);
+        paramIndex++;
+    }
+
+    const sql = `
+        SELECT 
+            o.order_number,
+            o.created_at as sale_date,
+            u.full_name as cashier_name,
+            tc.name as counter_name,
+            item->>'title' as ticket_title,
+            (item->>'price')::int as ticket_price,
+            (item->>'quantity')::int as quantity,
+            o.payment_method,
+            o.currency,
+            o.total_amount
+        FROM orders o
+        JOIN event e ON o.event_id = e.id
+        LEFT JOIN app_user u ON o.cashier_id = u.id
+        LEFT JOIN ticket_counter tc ON o.ticket_counter_id = tc.id
+        CROSS JOIN LATERAL jsonb_array_elements(o.items_ticket) item
+        ${whereClause}
+        ORDER BY o.created_at DESC
+    `;
+
+    const result = await query(sql, params);
+    return result.rows.map(row => ({
+        orderNumber: row.orderNumber,
+        saleDate: row.saleDate,
+        cashierName: row.cashierName || 'Online/System',
+        counterName: row.counterName || '-',
+        ticketTitle: row.ticketTitle,
+        ticketPrice: parseInt(row.ticketPrice) || 0,
+        quantity: parseInt(row.quantity) || 0,
+        paymentMethod: row.paymentMethod,
+        currency: row.currency,
+        totalAmount: parseInt(row.totalAmount) || 0
+    }));
+};

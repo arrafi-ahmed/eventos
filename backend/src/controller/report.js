@@ -274,4 +274,22 @@ router.get("/export", auth, isOrganizationManager, async (req, res, next) => {
     }
 });
 
+router.get("/cashier-sales-detailed", auth, isOrganizationManager, async (req, res, next) => {
+    try {
+        const { eventIds, startDate, endDate } = req.query;
+        const organizationId = req.currentUser.organizationId;
+        const parsedEventIds = eventIds ? (Array.isArray(eventIds) ? eventIds : eventIds.split(',').map(id => parseInt(id))) : null;
+
+        const results = await reportService.getDetailedCashierSales({
+            eventIds: parsedEventIds,
+            organizationId,
+            startDate,
+            endDate
+        });
+        res.status(200).json(new ApiResponse(null, results));
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

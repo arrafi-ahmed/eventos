@@ -6,7 +6,7 @@ import { getIntentConfig, INTENT_CONFIG, SLOT_VALIDATORS } from '@/utils/support
 
 const STORAGE_KEY = 'support_session_id'
 
-export function useSupportBot () {
+export function useSupportBot() {
   const store = useStore()
   const route = useRoute()
   const router = useRouter()
@@ -33,7 +33,7 @@ export function useSupportBot () {
     await initializeSession()
   })
 
-  async function initializeSession () {
+  async function initializeSession() {
     isInitializing.value = true
 
     // Only load chat if sessionId is in URL query parameter
@@ -57,7 +57,7 @@ export function useSupportBot () {
     isInitializing.value = false
   }
 
-  async function loadChatHistory (sessionIdToLoad) {
+  async function loadChatHistory(sessionIdToLoad) {
     if (!sessionIdToLoad) {
       return
     }
@@ -93,7 +93,7 @@ export function useSupportBot () {
     }
   }
 
-  function updateUrlWithSessionId (id) {
+  function updateUrlWithSessionId(id) {
     router.replace({
       query: {
         ...route.query,
@@ -102,13 +102,13 @@ export function useSupportBot () {
     })
   }
 
-  function updateUrlWithoutSessionId () {
+  function updateUrlWithoutSessionId() {
     const query = { ...route.query }
     delete query.sessionId
     router.replace({ query })
   }
 
-  function saveSessionId (id) {
+  function saveSessionId(id) {
     sessionId.value = id
     localStorage.setItem(STORAGE_KEY, id)
     // Append sessionId to URL when chat starts
@@ -116,7 +116,7 @@ export function useSupportBot () {
   }
 
   // Send chat message
-  async function sendMessage (text) {
+  async function sendMessage(text) {
     if (!text.trim() || isLoading.value) {
       return
     }
@@ -210,7 +210,7 @@ export function useSupportBot () {
   }
 
   // Handle intent button click
-  function selectIntent (intentKey) {
+  function selectIntent(intentKey) {
     const config = getIntentConfig(intentKey)
     if (!config) {
       return
@@ -241,7 +241,7 @@ export function useSupportBot () {
   }
 
   // Submit intent form
-  async function submitIntentForm () {
+  async function submitIntentForm() {
     if (!currentIntent.value) {
       return
     }
@@ -321,12 +321,12 @@ export function useSupportBot () {
               : '○ Not checked in'
             const time = a.checkedInAt
               ? new Date(a.checkedInAt).toLocaleString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })
               : ''
             // Use name if available and looks valid, otherwise fallback to email or "Attendee"
             const trimmedName = (a.name || '').trim()
@@ -347,43 +347,43 @@ export function useSupportBot () {
           // Payment status response
           const paidDate = data.paidAt
             ? new Date(data.paidAt).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })
             : null
-          successMessage = `**Payment Status for Order ${data.orderNumber}**\n\nStatus: ${data.paymentStatus}\nAmount: ${data.currency || 'USD'} ${data.totalAmount}${paidDate ? `\nPaid on: ${paidDate}` : ''}`
+          successMessage = `**Payment Status for Order ${data.orderNumber}**\n\nStatus: ${data.paymentStatus}\nAmount: ${data.currency || 'XOF'} ${data.totalAmount}${paidDate ? `\nPaid on: ${paidDate}` : ''}`
         } else if (data.shipment) {
           // Shipment tracking response
           const estDelivery = data.shipment.estimatedDelivery
             ? new Date(data.shipment.estimatedDelivery).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
             : null
           successMessage = `**Shipment Status for Order ${data.orderNumber}**\n\n${data.shipment.trackingNumber ? `Tracking Number: ${data.shipment.trackingNumber}\n` : ''}Status: ${data.shipment.status}${estDelivery ? `\nEstimated Delivery: ${estDelivery}` : ''}`
         } else if (data.event) {
           // Event details response
           const startDate = data.event.startDate
             ? new Date(data.event.startDate).toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })
             : null
           const endDate = data.event.endDate
             ? new Date(data.event.endDate).toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })
             : null
 
           let eventInfo = `**${data.event.name}**\n\n`
@@ -407,12 +407,12 @@ export function useSupportBot () {
           // Order details response
           const orderDate = data.order.createdAt
             ? new Date(data.order.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
             : null
-          successMessage = `**Order ${data.order.orderNumber}**\n\nStatus: ${data.order.status}\nAmount: ${data.order.currency || 'USD'} ${data.order.totalAmount}${orderDate ? `\nDate: ${orderDate}` : ''}${data.order.eventName ? `\nEvent: ${data.order.eventName}` : ''}`
+          successMessage = `**Order ${data.order.orderNumber}**\n\nStatus: ${data.order.status}\nAmount: ${data.order.currency || 'XOF'} ${data.order.totalAmount}${orderDate ? `\nDate: ${orderDate}` : ''}${data.order.eventName ? `\nEvent: ${data.order.eventName}` : ''}`
         }
 
         addMessage('assistant', successMessage)
@@ -426,7 +426,7 @@ export function useSupportBot () {
   }
 
   // Verify OTP
-  async function verifyOTP (code) {
+  async function verifyOTP(code) {
     if (!otpData.value || !code) {
       return
     }
@@ -456,7 +456,7 @@ export function useSupportBot () {
   }
 
   // Resend OTP
-  async function resendOTP () {
+  async function resendOTP() {
     if (!otpData.value) {
       return
     }
@@ -481,7 +481,7 @@ export function useSupportBot () {
   }
 
   // Helper functions
-  function addMessage (role, content, metadata = {}) {
+  function addMessage(role, content, metadata = {}) {
     messages.value.push({
       role,
       content,
@@ -490,23 +490,23 @@ export function useSupportBot () {
     })
   }
 
-  function setCurrentIntent (intentKey, prefillSlots = {}) {
+  function setCurrentIntent(intentKey, prefillSlots = {}) {
     currentIntent.value = intentKey
     formData.value = { ...prefillSlots }
   }
 
-  function resetIntent () {
+  function resetIntent() {
     currentIntent.value = null
     formData.value = {}
     otpData.value = null
   }
 
-  function showQuickIntentButtons () {
+  function showQuickIntentButtons() {
     // Trigger UI to show buttons (handled in component)
     currentIntent.value = 'show_buttons'
   }
 
-  function formatUserRequest (intentKey, formData, config) {
+  function formatUserRequest(intentKey, formData, config) {
     // Create a user-friendly summary of what they're requesting
     const intentLabel = config.label || intentKey
 
@@ -527,7 +527,7 @@ export function useSupportBot () {
     return intentLabel
   }
 
-  function handleError (error) {
+  function handleError(error) {
     let errorMessage = 'An error occurred. Please try again.'
 
     if (error.response?.data?.payload) {

@@ -43,7 +43,11 @@ exports.generateTicketPdf = async ({ attendee, event, organization }) => {
             ticketUuid: (attendee.qrUuid || 'N/A').split('-')[0].toUpperCase(),
         });
 
-        const options = { format: 'A4', printBackground: true };
+        const options = {
+            format: 'A4',
+            printBackground: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        };
         const file = { content: html };
 
         // Generate PDF buffer
@@ -405,7 +409,11 @@ exports.generateSessionReport = async ({ reportData }) => {
 </html>
         `;
 
-        const options = { format: 'A4', printBackground: true };
+        const options = {
+            format: 'A4',
+            printBackground: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        };
         const file = { content: html };
 
         const pdfBuffer = await new Promise((resolve, reject) => {

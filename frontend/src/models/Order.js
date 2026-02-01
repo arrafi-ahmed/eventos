@@ -2,11 +2,11 @@
  * Order model class
  */
 export class Order {
-  constructor (data = {}) {
+  constructor(data = {}) {
     this.id = data.id || null
     this.orderNumber = data.orderNumber || ''
     this.totalAmount = data.totalAmount || 0
-    this.currency = data.currency || 'USD'
+    this.currency = data.currency || 'XOF'
     this.paymentStatus = data.paymentStatus || 'pending'
     this.stripePaymentIntentId = data.stripePaymentIntentId || null
     this.items = data.items || []
@@ -19,7 +19,7 @@ export class Order {
   /**
    * Payment status constants
    */
-  static get PAYMENT_STATUSES () {
+  static get PAYMENT_STATUSES() {
     return {
       PENDING: 'pending',
       PAID: 'paid',
@@ -31,7 +31,7 @@ export class Order {
   /**
    * Common currencies
    */
-  static get CURRENCIES () {
+  static get CURRENCIES() {
     return {
       USD: 'USD',
       EUR: 'EUR',
@@ -45,56 +45,56 @@ export class Order {
   /**
    * Check if order is pending
    */
-  isPending () {
+  isPending() {
     return this.paymentStatus === Order.PAYMENT_STATUSES.PENDING
   }
 
   /**
    * Check if order is paid
    */
-  isPaid () {
+  isPaid() {
     return this.paymentStatus === Order.PAYMENT_STATUSES.PAID
   }
 
   /**
    * Check if order failed
    */
-  isFailed () {
+  isFailed() {
     return this.paymentStatus === Order.PAYMENT_STATUSES.FAILED
   }
 
   /**
    * Check if order is refunded
    */
-  isRefunded () {
+  isRefunded() {
     return this.paymentStatus === Order.PAYMENT_STATUSES.REFUNDED
   }
 
   /**
    * Check if order is completed (paid)
    */
-  isCompleted () {
+  isCompleted() {
     return this.isPaid()
   }
 
   /**
    * Check if order has Stripe payment intent
    */
-  hasStripePaymentIntent () {
+  hasStripePaymentIntent() {
     return this.stripePaymentIntentId !== null
   }
 
   /**
    * Check if order has items
    */
-  hasItems () {
+  hasItems() {
     return this.items && Array.isArray(this.items) && this.items.length > 0
   }
 
   /**
    * Get items array
    */
-  getItems () {
+  getItems() {
     if (!this.hasItems()) {
       return []
     }
@@ -104,28 +104,28 @@ export class Order {
   /**
    * Get item count
    */
-  getItemCount () {
+  getItemCount() {
     return this.getItems().length
   }
 
   /**
    * Get total amount in cents
    */
-  getTotalAmountInCents () {
+  getTotalAmountInCents() {
     return this.totalAmount
   }
 
   /**
    * Get total amount in dollars
    */
-  getTotalAmountInDollars () {
+  getTotalAmountInDollars() {
     return this.totalAmount / 100
   }
 
   /**
    * Format total amount for display
    */
-  formatTotalAmount () {
+  formatTotalAmount() {
     if (this.totalAmount === 0) {
       return 'Free'
     }
@@ -149,14 +149,14 @@ export class Order {
   /**
    * Check if order is free
    */
-  isFree () {
+  isFree() {
     return this.totalAmount === 0
   }
 
   /**
    * Validates the order data
    */
-  validate () {
+  validate() {
     const errors = []
 
     if (!this.orderNumber || this.orderNumber.trim().length === 0) {
@@ -203,7 +203,7 @@ export class Order {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON () {
+  toJSON() {
     return {
       id: this.id,
       orderNumber: this.orderNumber,

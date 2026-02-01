@@ -160,7 +160,7 @@ const getCurrencySymbol = ({ code, type }) => {
     return currencyData[type];
 };
 
-const defaultCurrency = getCurrencySymbol({ code: "usd" });
+const defaultCurrency = getCurrencySymbol({ code: "xof" });
 
 const generateQrData = async ({ registrationId, attendeeId, qrUuid }) => {
     const data = JSON.stringify({

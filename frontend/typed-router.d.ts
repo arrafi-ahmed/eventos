@@ -68,6 +68,8 @@ declare module 'vue-router/auto-routes' {
     'events-browse': RouteRecordInfo<'events-browse', '/events', Record<never, never>, Record<never, never>>,
     'extras-purchase': RouteRecordInfo<'extras-purchase', '/ExtrasPurchase', Record<never, never>, Record<never, never>>,
     'form-builder': RouteRecordInfo<'form-builder', '/form-builder', Record<never, never>, Record<never, never>>,
+    'manage-index': RouteRecordInfo<'manage-index', '/manage', Record<never, never>, Record<never, never>>,
+    'manage-sales-logs': RouteRecordInfo<'manage-sales-logs', '/manage/sales-logs', Record<never, never>, Record<never, never>>,
     'not-found': RouteRecordInfo<'not-found', '/NotFound', Record<never, never>, Record<never, never>>,
     '/organization/': RouteRecordInfo<'/organization/', '/organization', Record<never, never>, Record<never, never>>,
     'organization-add': RouteRecordInfo<'organization-add', '/organization/add', Record<never, never>, Record<never, never>>,
@@ -297,6 +299,14 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/form-builder.vue': {
       routes: 'form-builder'
+      views: never
+    }
+    'src/pages/manage/index.vue': {
+      routes: 'manage-index'
+      views: never
+    }
+    'src/pages/manage/sales-logs.vue': {
+      routes: 'manage-sales-logs'
       views: never
     }
     'src/pages/NotFound.vue': {

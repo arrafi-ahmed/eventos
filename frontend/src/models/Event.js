@@ -4,7 +4,7 @@
 import { EventConfig } from './EventConfig'
 
 export class Event {
-  constructor (data = {}) {
+  constructor(data = {}) {
     this.id = data.id || null
     this.name = data.name || ''
     this.description = data.description || ''
@@ -15,7 +15,7 @@ export class Event {
     this.banner = data.banner || null
     this.landingConfig = data.landingConfig || null
     this.slug = data.slug || null
-    this.currency = data.currency || 'USD'
+    this.currency = data.currency || 'XOF'
     this.taxAmount = data.taxAmount || 0
     this.taxType = data.taxType || 'percent'
     this.organizationId = data.organizationId || null
@@ -28,7 +28,7 @@ export class Event {
   /**
    * Check if event is currently active (between start and end dates)
    */
-  isActive () {
+  isActive() {
     if (!this.startDatetime || !this.endDatetime) {
       return false
     }
@@ -43,7 +43,7 @@ export class Event {
   /**
    * Check if event is upcoming
    */
-  isUpcoming () {
+  isUpcoming() {
     if (!this.startDatetime) {
       return false
     }
@@ -57,7 +57,7 @@ export class Event {
   /**
    * Check if event is past
    */
-  isPast () {
+  isPast() {
     if (!this.endDatetime) {
       return false
     }
@@ -71,7 +71,7 @@ export class Event {
   /**
    * Generate a URL-friendly slug from the event name
    */
-  generateSlug () {
+  generateSlug() {
     if (!this.name) {
       return ''
     }
@@ -87,7 +87,7 @@ export class Event {
   /**
    * Validates the event data
    */
-  validate () {
+  validate() {
     const errors = []
 
     if (!this.name || this.name.trim().length === 0) {
@@ -135,7 +135,7 @@ export class Event {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON () {
+  toJSON() {
     return {
       id: this.id,
       name: this.name,

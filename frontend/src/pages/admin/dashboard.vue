@@ -259,7 +259,7 @@
 
         // Pick the primary revenue (one with amount > 0, or first one) for the card display and scaling
         const revenues = summaryData.revenues || []
-        const primaryRevenue = revenues.find(r => r.amount > 0) || revenues[0] || { amount: 0, currency: 'USD' }
+        const primaryRevenue = revenues.find(r => r.amount > 0) || revenues[0] || { amount: 0, currency: 'XOF' }
 
         summary.value = {
           ...summaryData,
@@ -360,8 +360,8 @@
   }
 
   // Format currency
-  function formatCurrency (value, currency = 'USD') {
-    if (!currency) currency = 'USD'
+  function formatCurrency (value, currency = 'XOF') {
+    if (!currency) currency = 'XOF'
     const isZeroDecimal = ['IDR', 'JPY', 'KRW', 'VND'].includes(currency.toUpperCase())
     const amount = isZeroDecimal ? value : (value / 100)
 
@@ -479,7 +479,7 @@
       const response = await $axios.get('/admin/reports/summary', { params: { isOverall: true } })
       const data = response.data?.payload?.summary || {}
       const revenues = data.revenues || []
-      const primaryRevenue = revenues.find(r => r.amount > 0) || revenues[0] || { amount: 0, currency: 'USD' }
+      const primaryRevenue = revenues.find(r => r.amount > 0) || revenues[0] || { amount: 0, currency: 'XOF' }
       
       overallSummary.value = {
         ...data,

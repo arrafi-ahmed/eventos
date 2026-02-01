@@ -2,7 +2,7 @@
  * Ticket model class
  */
 export class Ticket {
-  constructor (data = {}) {
+  constructor(data = {}) {
     this.id = data.id || null
     this.title = data.title || ''
     this.description = data.description || ''
@@ -16,14 +16,14 @@ export class Ticket {
   /**
    * Check if ticket is free
    */
-  isFree () {
+  isFree() {
     return this.price === 0
   }
 
   /**
    * Check if ticket is available for purchase
    */
-  isAvailable () {
+  isAvailable() {
     if (this.maxStock === null) {
       return true // Unlimited stock
     }
@@ -33,14 +33,14 @@ export class Ticket {
   /**
    * Check if ticket has unlimited stock
    */
-  hasUnlimitedStock () {
+  hasUnlimitedStock() {
     return this.maxStock === null
   }
 
   /**
    * Get remaining stock count
    */
-  getRemainingStock () {
+  getRemainingStock() {
     if (this.maxStock === null) {
       return null // Unlimited
     }
@@ -50,7 +50,7 @@ export class Ticket {
   /**
    * Decrease stock by specified quantity
    */
-  decreaseStock (quantity = 1) {
+  decreaseStock(quantity = 1) {
     if (this.maxStock === null) {
       return true // Unlimited stock
     }
@@ -66,7 +66,7 @@ export class Ticket {
   /**
    * Increase stock by specified quantity
    */
-  increaseStock (quantity = 1) {
+  increaseStock(quantity = 1) {
     if (this.maxStock === null) {
       return true // Unlimited stock
     }
@@ -82,7 +82,7 @@ export class Ticket {
   /**
    * Format price for display (requires currency parameter)
    */
-  formatPrice (quantity = 1, currency = 'USD') {
+  formatPrice(quantity = 1, currency = 'XOF') {
     const total = this.price * quantity
 
     if (this.isFree()) {
@@ -109,14 +109,14 @@ export class Ticket {
   /**
    * Get price in cents
    */
-  getPriceInCents (quantity = 1) {
+  getPriceInCents(quantity = 1) {
     return this.price * quantity
   }
 
   /**
    * Validates the ticket data
    */
-  validate () {
+  validate() {
     const errors = []
 
     if (!this.title || this.title.trim().length === 0) {
@@ -156,7 +156,7 @@ export class Ticket {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON () {
+  toJSON() {
     return {
       id: this.id,
       title: this.title,

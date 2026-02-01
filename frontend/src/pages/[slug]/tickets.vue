@@ -55,12 +55,12 @@
 
   // Get currency from event
   const eventCurrency = computed(() => {
-    // Check if event has currency field, otherwise default to USD
+    // Check if event has currency field, otherwise default to XOF
     const currency = event.value?.currency
     if (currency && typeof currency === 'string' && currency.length === 3) {
       return currency.toUpperCase()
     }
-    return 'USD'
+    return 'XOF'
   })
 
   // Helper check for sale window

@@ -432,7 +432,7 @@
                 label="Price"
                 min="0"
                 inset
-                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
                 control-variant="default"
                 :rounded="rounded"
                 class="flex-1"
@@ -450,7 +450,7 @@
                 min="0"
                 placeholder="Optional"
                 inset
-                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
                 control-variant="default"
                 :rounded="rounded"
                 class="flex-1"
