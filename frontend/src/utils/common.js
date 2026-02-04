@@ -4,7 +4,7 @@ import { currencies } from '@/utils/currency-list'
 import { countries } from '@/utils/country-list'
 
 export const appInfo = {
-  name: 'ticketi',
+  name: 'EventOS',
   version: 1.0,
   company: {
     name: null,
