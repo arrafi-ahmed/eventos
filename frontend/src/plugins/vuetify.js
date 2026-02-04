@@ -9,6 +9,9 @@ import { createVuetify } from 'vuetify'
 import { VDateInput } from 'vuetify/labs/VDateInput'
 import { VFileUpload } from 'vuetify/labs/VFileUpload'
 import { VStepperVertical, VStepperVerticalItem } from 'vuetify/labs/VStepperVertical'
+import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n'
+import i18n from './i18n'
+import { useI18n } from 'vue-i18n'
 
 import { VPie } from 'vuetify/labs/VPie'
 
@@ -120,6 +123,9 @@ const vuetify = createVuetify({
       light,
       dark,
     },
+  },
+  locale: {
+    adapter: createVueI18nAdapter({ i18n, useI18n }),
   },
   defaults: {},
 })

@@ -11,6 +11,7 @@ import { defineConfig } from 'vite'
 
 import Layouts from 'vite-plugin-vue-layouts-next'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import compression from 'vite-plugin-compression'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -51,6 +52,14 @@ export default defineConfig({
       },
       vueTemplate: true,
     }),
+    compression({
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    compression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+    }),
   ],
   optimizeDeps: {
     exclude: [
@@ -75,6 +84,18 @@ export default defineConfig({
       '.tsx',
       '.vue',
     ],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vuetify-vendor': ['vuetify', 'vuetify/labs/VFileUpload', 'vuetify/labs/VDateInput', 'vuetify/labs/VPie', 'vuetify/labs/VStepperVertical'],
+          'vue-vendor': ['vue', 'vue-router', 'vuex', 'vue-i18n'],
+          'mdi-vendor': ['@mdi/font/css/materialdesignicons.css'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 3000,

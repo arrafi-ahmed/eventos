@@ -1,6 +1,6 @@
 <script setup>
-  import { onMounted, ref } from 'vue'
-
+  import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
@@ -10,12 +10,28 @@
     meta: {
       layout: 'default',
       title: 'Donation Page',
+      titleKey: 'pages.pricing.title',
     },
   })
 
   const { xs } = useDisplay()
   const router = useRouter()
   const store = useStore()
+  const { t } = useI18n()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    success_title: t('registration.success.title'),
+    success_subtitle: t('registration.success.subtitle'),
+    register_for: t('registration.success.register_for'),
+    details: t('registration.success.details'),
+    name: t('registration.success.name'),
+    email: t('registration.success.email'),
+    organization: t('registration.success.organization'),
+    not_specified: t('registration.success.not_specified'),
+    view_tickets: t('registration.success.view_tickets'),
+    loading: t('registration.success.loading'),
+  }))
 
   // Registration data from localStorage
   const registrationData = ref({
@@ -75,7 +91,7 @@
         }
       }
     } catch {
-      store.commit('addSnackbar', { text: 'Failed to load event information.', color: 'error' })
+      store.commit('addSnackbar', { text: t('common.error_loading_event'), color: 'error' })
     } finally {
       isLoading.value = false
     }
@@ -111,7 +127,6 @@
   onMounted(async () => {
     // Try to get registration data from localStorage as fallback
     const storedData = localStorage.getItem('registrationData')
-    const sponsorshipData = localStorage.getItem('sponsorshipData')
 
     if (storedData) {
       const parsedData = JSON.parse(storedData)
@@ -141,25 +156,10 @@
           }
         } catch {}
       }
-    } else if (sponsorshipData) {
-      // Handle direct sponsorship without registration
-      const sponsorship = JSON.parse(sponsorshipData)
-      registrationData.value = {
-        ...registrationData.value,
-        eventId: sponsorship.eventId,
-        organizationId: sponsorship.organizationId,
-        eventName: sponsorship.eventName,
-        // For direct sponsorship, we'll need to collect sponsor info in the form
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        organization: '',
-      }
     } else {
       // If no data, redirect back to landing page
       store.commit('addSnackbar', {
-        text: 'No registration or sponsorship data found. Please register first.',
+        text: 'No registration data found. Please register first.',
         color: 'error',
       })
       router.push({ name: 'landing' })
@@ -180,18 +180,17 @@
           <transition name="fade-slide">
             <div>
               <h1 class="display-2 font-weight-bold mb-4 text-white text-shadow">
-                Registration Complete
+                {{ ui.success_title }}
               </h1>
               <p class="headline mb-8 text-white text-shadow">
-                Thank you for registering! You can now proceed to view and purchase tickets for this
-                event.
+                {{ ui.success_subtitle }}
               </p>
               <div
                 v-if="registrationData && registrationData.firstName"
                 class="text-white text-shadow"
               >
                 <p class="text-h6">
-                  Registration for: {{ registrationData.firstName }} {{ registrationData.lastName }}
+                  {{ ui.register_for }}: {{ registrationData.firstName }} {{ registrationData.lastName }}
                 </p>
                 <p class="text-subtitle-1">
                   {{ registrationData.organization }}
@@ -219,7 +218,7 @@
           >
             <v-card-title class="text-center bg-primary text-white py-6">
               <h2 class="text-h4 font-weight-bold">
-                Registration Complete!
+                {{ ui.success_title }}!
               </h2>
             </v-card-title>
             <v-card-text class="pa-6">
@@ -232,11 +231,10 @@
                   mdi-check-circle
                 </v-icon>
                 <h3 class="text-h5 mb-4">
-                  Thank you for registering!
+                  {{ ui.success_subtitle.split('!')[0] }}!
                 </h3>
                 <p class="text-body-1 mb-6">
-                  Your registration has been successfully completed. You can now proceed to view and
-                  purchase tickets for this event.
+                  {{ ui.success_subtitle }}
                 </p>
 
                 <div
@@ -245,17 +243,17 @@
                 >
                   <v-divider class="my-4" />
                   <h4 class="text-h6 mb-2">
-                    Registration Details:
+                    {{ ui.details }}:
                   </h4>
                   <p class="text-body-2">
-                    <strong>Name:</strong>
+                    <strong>{{ ui.name }}:</strong>
                     {{ registrationData.firstName }} {{ registrationData.lastName }}
                     <br>
-                    <strong>Email:</strong>
+                    <strong>{{ ui.email }}:</strong>
                     {{ registrationData.email }}
                     <br>
-                    <strong>Organization:</strong>
-                    {{ registrationData.organization || 'Not specified' }}
+                    <strong>{{ ui.organization }}:</strong>
+                    {{ registrationData.organization || ui.not_specified }}
                   </p>
                 </div>
 
@@ -266,7 +264,7 @@
                   size="large"
                   @click="proceedToTickets"
                 >
-                  {{ isLoading ? 'Loading...' : 'View Event Tickets' }}
+                  {{ isLoading ? ui.loading : ui.view_tickets }}
                 </v-btn>
               </div>
             </v-card-text>

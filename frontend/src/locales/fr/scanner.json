@@ -1,0 +1,50 @@
+{
+    "title": "Enregistrement de l'événement",
+    "scanner_tab": "Scanner",
+    "search_tab": "Recherche",
+    "history_tab": "Historique",
+    "stats": {
+        "title": "Stats de présence",
+        "total_expected": "Total attendu",
+        "checked_in": "Enregistré",
+        "remaining": "Restant",
+        "complete": "Terminé"
+    },
+    "scanner": {
+        "recent_scanned": "Récemment scanné",
+        "checked_in_overlay": "ENREGISTRÉ",
+        "already_checked_overlay": "DÉJÀ ENREGISTRÉ",
+        "invalid_code_overlay": "CODE INVALIDE"
+    },
+    "search": {
+        "label": "Rechercher un participant",
+        "placeholder": "Nom ou email (Appuyez sur Entrée pour rechercher)",
+        "checkin_btn": "Enregistrer",
+        "checked_in_chip": "Enregistré",
+        "no_results": "Aucun résultat pour \"{keyword}\"",
+        "empty_state": "Entrez le nom ou l'email et appuyez sur recherche"
+    },
+    "history": {
+        "checked_in_at": "Enregistré à {time} • {email}",
+        "no_history_title": "Pas d'enregistrements récents",
+        "no_history_msg": "Les scans réussis apparaîtront ici"
+    },
+    "details": {
+        "title": "Détails du participant",
+        "status": "Statut",
+        "pending": "En attente",
+        "checked_in": "Enregistré",
+        "email": "Email",
+        "phone": "Téléphone",
+        "ticket_info": "Informations sur le billet",
+        "price": "Prix",
+        "free": "Gratuit",
+        "checkin_btn": "Enregistrer le participant",
+        "already_checked_btn": "Déjà enregistré"
+    },
+    "confirm": {
+        "title": "Confirmer l'enregistrement",
+        "cancel": "Annuler",
+        "confirm_btn": "Confirmer l'enregistrement"
+    }
+}

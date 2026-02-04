@@ -1,12 +1,17 @@
 <script setup>
-  import { computed, onMounted } from 'vue'
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useStore } from 'vuex'
   import { appInfo } from '@/utils'
 
   const store = useStore()
+  const { t } = useI18n()
 
-  const footerSettings = computed(() => store.state.footerSettings?.settings || {
-    style: 'oneline',
+  /* 
+    The layout store (store/modules/layout.js) provides a 'footer' getter.
+  */
+  const footerSettings = computed(() => store.getters['layout/footer'] || {
+    style: 'expanded',
     companyName: null,
     companyAddress: null,
     companyEmail: null,
@@ -16,11 +21,19 @@
     copyrightText: null,
   })
 
-  // Footer text logic refined to handle Arrafi link gracefully
+  // Computed UI handles standard labels
+  const ui = computed(() => ({
+    quick_links: t('footer.quick_links'),
+    follow_us: t('footer.follow_us'),
+    all_rights_reserved: t('footer.all_rights_reserved'),
+  }))
+
   const companyName = computed(() => footerSettings.value.companyName?.trim() || appInfo.name)
   const customText = computed(() => {
     const text = footerSettings.value.copyrightText?.trim()
-    if (!text || text.includes('Arrafi') || text.toLowerCase() === 'all rights reserved') return null
+    const allRightsReserved = ui.value.all_rights_reserved.toLowerCase()
+    
+    if (!text || text.includes('Arrafi') || text.toLowerCase() === 'all rights reserved' || text.toLowerCase() === allRightsReserved) return null
     return text
   })
   const currentYear = new Date().getFullYear()
@@ -38,9 +51,6 @@
     }
     return icons[platform] || 'mdi-link'
   }
-
-// Footer settings are loaded in App.vue on mount
-// This component just uses the cached/loaded data from store
 </script>
 
 <template>
@@ -119,7 +129,7 @@
             class="footer-section"
           >
             <h3 class="footer-title">
-              Quick Links
+              {{ ui.quick_links }}
             </h3>
             <div class="footer-links">
               <router-link
@@ -139,7 +149,7 @@
             class="footer-section"
           >
             <h3 class="footer-title">
-              Follow Us
+              {{ ui.follow_us }}
             </h3>
             <div class="footer-social">
               <a
@@ -187,7 +197,8 @@
     <div class="footer-content">
       <p class="footer-copyright text-center">
         © {{ currentYear }} {{ companyName }}.
-        <span v-if="customText"> {{ customText }}.</span>       
+        <span v-if="customText"> {{ customText }}.</span>
+        <span v-else> {{ ui.all_rights_reserved }}.</span>
       </p>
     </div>
   </v-footer>

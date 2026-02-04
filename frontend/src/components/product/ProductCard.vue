@@ -1,7 +1,10 @@
 <script setup>
   import { computed, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useUiProps } from '@/composables/useUiProps'
   import { getProductImageUrl } from '@/utils'
+
+  const { t } = useI18n()
 
   const props = defineProps({
     product: {
@@ -66,6 +69,20 @@
 
   const { rounded, size, density, variant } = useUiProps()
 
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    out_of_stock: t('shop.product.out_of_stock'),
+    only_left: (count) => t('shop.product.only_left', { count }),
+    in_stock: t('shop.product.in_stock'),
+    featured: t('shop.product.featured'),
+    in_event: t('shop.product.in_event'),
+    available: (count) => t('shop.product.available', { count }),
+    add_to_cart: t('shop.product.add_to_cart'),
+    edit: t('shop.product.edit'),
+    delete: t('shop.product.delete'),
+    remove: t('shop.product.remove'),
+  }))
+
   // Local quantity state
   const quantity = ref(props.initialQuantity)
 
@@ -109,9 +126,9 @@
   })
 
   const stockText = computed(() => {
-    if (props.product.stock === 0) return 'Out of Stock'
-    if (props.product.stock < 10) return `Only ${props.product.stock} left`
-    return 'In Stock'
+    if (props.product.stock === 0) return ui.value.out_of_stock
+    if (props.product.stock < 10) return ui.value.only_left(props.product.stock)
+    return ui.value.in_stock
   })
 
   // Quantity controls
@@ -192,7 +209,7 @@
         variant="flat"
       >
         <v-icon start>mdi-star</v-icon>
-        Featured
+        {{ ui.featured }}
       </v-chip>
 
       <!-- In Event Badge -->
@@ -204,7 +221,7 @@
         variant="flat"
       >
         <v-icon start>mdi-check</v-icon>
-        In Event
+        {{ ui.in_event }}
       </v-chip>
     </div>
 
@@ -235,7 +252,7 @@
             {{ product.stock > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
           </v-icon>
           <span class="text-caption font-weight-bold text-uppercase letter-spacing-1">
-            {{ product.stock || 0 }} Available
+            {{ ui.available(product.stock || 0) }}
           </span>
         </div>
       </div>
@@ -266,7 +283,7 @@
         rounded="xl"
         @click="incrementQuantity"
       >
-        Add to Cart
+        {{ ui.add_to_cart }}
       </v-btn>
 
       <div
@@ -316,7 +333,7 @@
         variant="tonal"
         @click="emit('edit', product)"
       >
-        Edit
+        {{ ui.edit }}
       </v-btn>
 
       <v-btn
@@ -330,7 +347,7 @@
         variant="tonal"
         @click="emit('delete', product)"
       >
-        Delete
+        {{ ui.delete }}
       </v-btn>
 
       <v-btn
@@ -343,7 +360,7 @@
         variant="tonal"
         @click="emit('remove', product)"
       >
-        Remove
+        {{ ui.remove }}
       </v-btn>
     </div>
 

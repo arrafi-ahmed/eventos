@@ -1,0 +1,93 @@
+{
+    "title": "Paramètres",
+    "meta_title": "Paramètres",
+    "subtitle": "Gérer les paramètres et les configurations du système",
+    "sections": {
+        "homepage_banners": {
+            "title": "Personnaliser la page d'accueil",
+            "subtitle": "Gérer les bannières tournantes affichées sur la page d'accueil",
+            "no_banners": "Aucune bannière pour le moment",
+            "create_first": "Créez votre première bannière de page d'accueil",
+            "add_btn": "Ajouter une bannière",
+            "count": "Bannières ({count})",
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Modifier",
+                "delete": "Supprimer"
+            },
+            "delete_confirm": "Êtes-vous sûr de vouloir supprimer la bannière #{index} ? Cette action est irréversible.",
+            "delete_title": "Supprimer la bannière"
+        },
+        "header": {
+            "title": "Personnaliser l'en-tête",
+            "subtitle": "Configurer le logo de l'en-tête, l'alignement et la position du menu",
+            "logos": "Logos",
+            "light_logo": "Logo thème clair",
+            "dark_logo": "Logo thème sombre",
+            "upload_light": "Télécharger le logo clair",
+            "upload_dark": "Télécharger le logo sombre",
+            "desktop_width": "Largeur bureau",
+            "mobile_width": "Largeur mobile",
+            "view": "Vue",
+            "no_logos_hint": "Aucun logo téléchargé. Le nom de l'application sera affiché sous forme de texte.",
+            "logo_position": "Position du logo",
+            "menu_position": "Position du menu",
+            "save_btn": "Enregistrer les paramètres de l'en-tête"
+        },
+        "footer": {
+            "title": "Personnaliser le pied de page",
+            "subtitle": "Configurer le style et le contenu du pied de page",
+            "style": "Style du pied de page",
+            "copyright": "Texte de copyright (facultatif)",
+            "company_info": "Informations sur l'entreprise",
+            "company_name": "Nom de l'entreprise",
+            "address": "Adresse",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "quick_links": "Liens rapides",
+            "link_title": "Titre",
+            "route_name": "Nom de la route",
+            "social_links": "Liens réseaux sociaux",
+            "facebook": "URL Facebook",
+            "instagram": "URL Instagram",
+            "tiktok": "URL TikTok",
+            "save_btn": "Enregistrer les paramètres du pied de page"
+        },
+        "appearance": {
+            "title": "Apparence",
+            "subtitle": "Configurer le thème et le schéma de couleurs pour les modes clair et sombre",
+            "default_theme": "Thème par défaut",
+            "tabs": {
+                "colors": "Couleurs",
+                "advanced": "Avancé (JSON)",
+                "light": "Thème clair",
+                "dark": "Thème sombre"
+            },
+            "parse_btn": "Analyser et appliquer le JSON",
+            "save_btn": "Enregistrer les paramètres d'apparence"
+        },
+        "localization": {
+            "title": "Paramètres de localisation",
+            "subtitle": "Configurer la devise et la langue par défaut",
+            "language": "Langue par défaut",
+            "currency": "Devise par défaut",
+            "save_btn": "Enregistrer les paramètres de localisation"
+        },
+        "organizer_banner": {
+            "title": "Bannière du tableau de bord organisateur",
+            "subtitle": "Personnaliser la bannière promotionnelle affichée sur le tableau de bord de l'organisateur",
+            "enable": "Activer la bannière",
+            "enable_hint": "Afficher ou masquer la bannière sur le tableau de bord de l'organisateur",
+            "icon": "Icône *",
+            "icon_hint": "Nom de l'icône Material Design (ex: mdi-printer, mdi-star)",
+            "banner_title": "Titre de la bannière *",
+            "banner_desc": "Description de la bannière",
+            "cta_text": "Texte du bouton *",
+            "cta_url": "URL du bouton *",
+            "save_btn": "Enregistrer les paramètres de la bannière"
+        }
+    }
+}

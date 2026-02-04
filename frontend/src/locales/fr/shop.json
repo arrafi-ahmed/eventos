@@ -1,0 +1,18 @@
+{
+    "title": "Boutique {name}",
+    "subtitle": "Produits disponibles ({count})",
+    "meta_title": "Boutique de l'événement",
+    "back_to_tickets": "Retour aux billets",
+    "product": {
+        "out_of_stock": "Rupture de stock",
+        "only_left": "Plus que {count} restants",
+        "in_stock": "En stock",
+        "featured": "Mis en avant",
+        "in_event": "Dans l'événement",
+        "available": "{count} disponibles",
+        "add_to_cart": "Ajouter au panier",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "remove": "Retirer"
+    }
+}

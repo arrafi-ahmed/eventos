@@ -1,22 +1,26 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
   import AppNoData from '@/components/AppNoData.vue'
   import { useUiProps } from '@/composables/useUiProps'
+  import { getEventImageUrl, getClientPublicImageUrl } from '@/utils'
   import $axios from '@/plugins/axios'
 
   definePage({
     name: 'staff-dashboard',
     meta: {
       layout: 'default',
-      title: 'My assigned events',
+      title: 'Staff Dashboard',
+      titleKey: 'pages.staff.title',
       requiresAuth: true,
     },
   })
 
   const { rounded, density, variant, size } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
 
@@ -62,8 +66,8 @@
 <template>
   <v-container>
     <PageTitle
-      subtitle="Select an event to start working"
-      title="My Events"
+      :subtitle="t('pages.staff.subtitle')"
+      :title="t('pages.staff.my_events')"
     />
 
     <div v-if="loading" class="d-flex justify-center align-center py-12">
@@ -80,11 +84,10 @@
       >
         <v-card class="event-card h-100 d-flex flex-column" elevation="3" :rounded="rounded">
           <v-img
-            v-if="event.banner"
             class="align-end"
             cover
             height="150"
-            :src="`${$axios.defaults.baseURL}/event-banner/${event.banner}`"
+            :src="getEventImageUrl(event.banner)"
           />
           <v-card-text class="pa-6 flex-grow-1">
             <h2 class="text-h5 font-weight-bold mb-2">{{ event.name }}</h2>
@@ -111,7 +114,7 @@
               variant="flat"
               @click="goToPOS(event.id)"
             >
-              Open POS
+              {{ t('pages.staff.open_pos') }}
             </v-btn>
             <v-btn
               v-if="isStaff"
@@ -122,7 +125,7 @@
               variant="flat"
               @click="goToCheckin(event.id)"
             >
-              Check-in Tickets
+              {{ t('pages.staff.checkin_tickets') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -132,8 +135,8 @@
     <div v-else class="text-center py-12">
       <AppNoData
         icon="mdi-calendar-remove"
-        message="You haven't been assigned to any events yet. Please contact your organizer."
-        title="No Assigned Events"
+        :message="t('pages.staff.no_assigned_msg')"
+        :title="t('pages.staff.no_assigned_title')"
       />
     </div>
   </v-container>
@@ -152,6 +155,7 @@
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

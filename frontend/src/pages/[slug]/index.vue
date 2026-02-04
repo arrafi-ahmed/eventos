@@ -1,6 +1,6 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
-
+  import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
@@ -9,11 +9,14 @@
   import { apiCall, formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
   import { countries } from '@/utils/country-list'
 
+  const { t } = useI18n()
+
   definePage({
     name: 'event-landing-slug',
     meta: {
       layout: 'default',
-      title: 'Event Registration',
+      title: 'Event',
+      titleKey: 'pages.event.title',
     },
   })
 
@@ -23,6 +26,25 @@
   const router = useRouter()
   const route = useRoute()
   const regForm = ref(null)
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('landing.title'),
+    subtitle: t('landing.subtitle'),
+    prefilled_alert: t('landing.prefilled_alert'),
+    first_name: t('landing.form.first_name'),
+    last_name: t('landing.form.last_name'),
+    email: t('landing.form.email'),
+    phone: t('landing.form.phone'),
+    first_name_required: t('landing.form.first_name_required'),
+    last_name_required: t('landing.form.last_name_required'),
+    email_required: t('landing.form.email_required'),
+    email_invalid: t('landing.form.email_invalid'),
+    loading_event: t('landing.loading_event'),
+    processing: t('landing.processing'),
+    continue: t('landing.continue'),
+    meta_title: t('landing.meta_title'),
+  }))
 
   // Event and Organization data - using computed properties for reactive state
   const isLoading = ref(true)
@@ -66,7 +88,7 @@
 
   // Phone input configuration
   const phoneInputItem = computed(() => ({
-    text: 'Phone Number',
+    text: ui.value.phone,
     required: true,
     options: countries,
   }))
@@ -75,7 +97,7 @@
     if (regForm.value) {
       const { valid } = await regForm.value.validate()
       if (!valid) {
-        store.commit('addSnackbar', { text: 'Please fill in all required fields correctly.', color: 'error' })
+        store.commit('addSnackbar', { text: t('landing.errors.fill_required'), color: 'error' })
         return
       }
     }
@@ -123,10 +145,10 @@
         })
       } else {
         // No slug available, redirect to homepage
-        store.commit('addSnackbar', { text: 'Event information not available. Please try again.', color: 'error' })
+        store.commit('addSnackbar', { text: t('landing.errors.event_info_missing'), color: 'error' })
       }
     } catch {
-      store.commit('addSnackbar', { text: 'Registration failed. Please try again.', color: 'error' })
+      store.commit('addSnackbar', { text: t('landing.errors.registration_failed'), color: 'error' })
     } finally {
       isProcessingPayment.value = false
     }
@@ -145,14 +167,14 @@
           if (!event.value || !event.value.id) {
             router.push({
               name: 'not-found',
-              params: { status: 404, message: 'Event not found!' },
+              params: { status: 404, message: t('landing.errors.event_not_found') },
             })
             return
           }
         } catch {
           router.push({
             name: 'not-found',
-            params: { status: 404, message: 'Event not found!' },
+            params: { status: 404, message: t('landing.errors.event_not_found') },
           })
           return
         }
@@ -207,6 +229,7 @@
           hasPrefilled = true
         }
       }
+      formPrefilled.value = hasPrefilled
     } catch (error) {
       console.warn('Failed to prefill form from localStorage:', error)
     }
@@ -242,7 +265,7 @@
           <div class="hero-text-overlay">
             <div class="hero-text-chip">
               <h1 class="hero-title text-left">
-                {{ event?.name || 'Event Registration' }}
+                {{ event?.name || ui.meta_title }}
               </h1>
               <p class="hero-subtitle text-left">
                 {{ eventDateSubtitle }}
@@ -257,8 +280,8 @@
         :compact="true"
         :show-back-button="false"
         pos-title="center"
-        subtitle="Enter your details to proceed to ticket selection"
-        title="Complete Your Registration"
+        :subtitle="ui.subtitle"
+        :title="ui.title"
       />
 
       <div class="maxw-narrow py-8">
@@ -279,7 +302,7 @@
               <template #prepend>
                 <v-icon>mdi-information</v-icon>
               </template>
-              Form has been prefilled with your previous data
+              {{ ui.prefilled_alert }}
             </v-alert>
 
             <v-form
@@ -298,11 +321,11 @@
                     hide-details="auto"
                     required
                     :rounded="rounded"
-                    :rules="[v => !!v || 'First name is required']"
+                    :rules="[v => !!v || ui.first_name_required]"
                     :variant="variant"
                   >
                     <template #label>
-                      First Name <span class="text-error ml-1">*</span>
+                      {{ ui.first_name }} <span class="text-error ml-1">*</span>
                     </template>
                   </v-text-field>
                 </v-col>
@@ -317,11 +340,11 @@
                     hide-details="auto"
                     required
                     :rounded="rounded"
-                    :rules="[v => !!v || 'Last name is required']"
+                    :rules="[v => !!v || ui.last_name_required]"
                     :variant="variant"
                   >
                     <template #label>
-                      Last Name <span class="text-error ml-1">*</span>
+                      {{ ui.last_name }} <span class="text-error ml-1">*</span>
                     </template>
                   </v-text-field>
                 </v-col>
@@ -335,14 +358,14 @@
                 required
                 :rounded="rounded"
                 :rules="[
-                  v => !!v || 'Email is required',
-                  v => /.+@.+\..+/.test(v) || 'Email must be valid'
+                  v => !!v || ui.email_required,
+                  v => /.+@.+\..+/.test(v) || ui.email_invalid
                 ]"
                 type="email"
                 :variant="variant"
               >
                 <template #label>
-                  Email <span class="text-error ml-1">*</span>
+                  {{ ui.email }} <span class="text-error ml-1">*</span>
                 </template>
               </v-text-field>
 
@@ -362,7 +385,7 @@
                 type="info"
                 variant="tonal"
               >
-                Loading event information...
+                {{ ui.loading_event }}
               </v-alert>
 
               <div class="form-actions">
@@ -376,7 +399,7 @@
                   :size="size"
                   type="submit"
                 >
-                  {{ isProcessingPayment ? 'Processing...' : 'Continue' }}
+                  {{ isProcessingPayment ? ui.processing : ui.continue }}
                 </v-btn>
               </div>
             </v-form>

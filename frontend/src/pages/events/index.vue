@@ -1,11 +1,14 @@
 <script setup>
   import { computed, onMounted, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import EventCard from '@/components/EventCard.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { formatEventDateDisplay, getEventImageUrl } from '@/utils'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'events-browse',
@@ -18,6 +21,16 @@
   const router = useRouter()
   const store = useStore()
   const { variant, density, size, rounded } = useUiProps()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('home.browse.title'),
+    subtitle: t('home.browse.subtitle'),
+    search_placeholder: t('home.browse.search_placeholder'),
+    loading: t('home.browse.loading'),
+    no_events: t('home.browse.no_events'),
+    showing_results: (start, end, total) => t('home.browse.showing_results', { start, end, total }),
+  }))
 
   // State
   const isLoading = ref(true)
@@ -145,8 +158,8 @@
     <v-container class="px-4 px-md-8 px-lg-12">
       <PageTitle
         :back-route="'/'"
-        subtitle="Discover upcoming events"
-        title="Browse Events"
+        :subtitle="ui.subtitle"
+        :title="ui.title"
       />
 
       <v-row
@@ -163,7 +176,7 @@
             append-inner-icon="mdi-magnify"
             clearable
             hide-details
-            label="Search events"
+            :label="ui.search_placeholder"
             :rounded="rounded"
             :variant="variant"
             @click:append-inner="handleSearch"
@@ -181,7 +194,7 @@
           size="48"
         />
         <div class="text-caption mt-3">
-          Loading events…
+          {{ ui.loading }}
         </div>
       </div>
 
@@ -212,7 +225,7 @@
             type="info"
             variant="tonal"
           >
-            No upcoming events found.
+            {{ ui.no_events }}
           </v-alert>
         </v-col>
       </v-row>
@@ -241,9 +254,11 @@
           size="small"
           variant="outlined"
         >
-          Showing {{
-            Math.min(((currentPage - 1) * itemsPerPage) + 1, Math.max(1, pagination.totalItems))
-          }}-{{ Math.min(currentPage * itemsPerPage, pagination.totalItems) }} of {{ pagination.totalItems }} events
+          {{ ui.showing_results(
+            Math.min(((currentPage - 1) * itemsPerPage) + 1, Math.max(1, pagination.totalItems)),
+            Math.min(currentPage * itemsPerPage, pagination.totalItems),
+            pagination.totalItems
+          ) }}
         </v-chip>
       </div>
     </v-container>

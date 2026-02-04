@@ -92,16 +92,24 @@ const emailTemplateSource = fs.readFileSync(emailTemplatePath, "utf8");
 
 // Register Handlebars helper for currency formatting
 handlebars.registerHelper('formatCurrency', function (amount, currency) {
-    const currencySymbols = {
-        'USD': '$',
-        'GBP': '£',
-        'EUR': '€',
-        'JPY': '¥',
-        'INR': '₹',
-    };
-    const symbol = currencySymbols[currency] || currency;
-    const value = (amount / 100).toFixed(2);
-    return `${symbol} ${value}`;
+    if (!currency) return amount;
+
+    // Scale amount if it's in minor units (assumed for Stripe/backend consistency)
+    // Most currencies use cents (100), some use 1 (JPY, XOF, etc)
+    // We'll use our util to get the right ratio
+    const { getCurrencyMinorUnitRatio } = require("../utils/common");
+    const ratio = getCurrencyMinorUnitRatio(currency);
+    const value = amount / ratio;
+
+    try {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency,
+        }).format(value);
+    } catch (error) {
+        // Fallback if currency code is invalid
+        return `${currency.toUpperCase()} ${value.toFixed(2)}`;
+    }
 });
 
 const compileTicketTemplate = handlebars.compile(emailTemplateSource);
@@ -133,8 +141,8 @@ exports.sendTicketByAttendeeId = async ({ attendeeId }) => {
     }
 
     // Now get the registration data using the registrationId from the attendee
-    const { registration, event, extrasPurchase } =
-        await registrationService.getRegistrationWEventWExtrasPurchase({
+    const { registration, event } =
+        await registrationService.getRegistrationWithAttendees({ // Changed method
             registrationId: attendee.registrationId,
         });
 
@@ -189,11 +197,6 @@ exports.sendTicketByAttendeeId = async ({ attendeeId }) => {
     });
     attachments.push({ type: "qrcode", content: qrCodeMain, cid: "qrCodeMain" });
 
-    // Add extras QR if primary attendee
-    if (attendee.isPrimary && extrasPurchase?.id && extrasPurchase.extrasData?.length) {
-        const qrCodeExtras = await generateQrCode({ id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid });
-        attachments.push({ type: "qrcode", content: qrCodeExtras, cid: "qrCodeExtras" });
-    }
 
     // Format dates
     const eventDateDisplay = formatEventDateTimeRange(
@@ -228,7 +231,7 @@ exports.sendTicketByAttendeeId = async ({ attendeeId }) => {
         shippingAmount,
         taxAmount,
         totalAmount,
-        extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
+        extrasList: [],
         appName: appInfo.name,
         userTimezone,
         timezoneAbbr,
@@ -243,8 +246,7 @@ exports.sendTicketByAttendeeId = async ({ attendeeId }) => {
 };
 
 exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null }) => {
-    // Get registration data with event and extras
-    const { registration, event, extrasPurchase } = await registrationService.getRegistrationWEventWExtrasPurchase({
+    const { registration, event } = await registrationService.getRegistrationWithAttendees({
         registrationId,
     });
 
@@ -337,11 +339,6 @@ exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null })
         });
         attachments.push({ type: 'qrcode', content: qrCodeMain, cid: 'qrCodeMain' });
 
-        // Add extras QR if applicable
-        if (extrasPurchase?.id && extrasPurchase.extrasData?.length) {
-            const qrCodeExtras = await generateQrCode({ id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid });
-            attachments.push({ type: 'qrcode', content: qrCodeExtras, cid: 'qrCodeExtras' });
-        }
 
         const header = await getBrandingData();
         const html = compileTicketTemplate({
@@ -369,7 +366,7 @@ exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null })
             shippingAmount,
             taxAmount,
             totalAmount,
-            extrasList: extrasPurchase?.extrasData || [],
+            extrasList: [],
             appName: appInfo.name,
             userTimezone,
             timezoneAbbr,
@@ -404,11 +401,6 @@ exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null })
             });
             attachments.push({ type: "qrcode", content: qrCodeMain, cid: "qrCodeMain" });
 
-            // Add extras QR if primary attendee
-            if (attendee.isPrimary && extrasPurchase?.id && extrasPurchase.extrasData?.length) {
-                const qrCodeExtras = await generateQrCode({ id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid });
-                attachments.push({ type: "qrcode", content: qrCodeExtras, cid: "qrCodeExtras" });
-            }
 
             // Find the attendee's specific ticket price
             const attendeeTicket = orderItems.find(item => item.ticketTitle === attendee.ticketTitle) || orderItems[0];
@@ -436,7 +428,7 @@ exports.sendTicketsByRegistrationId = async ({ registrationId, orderId = null })
                 subtotal: attendeeTicketPrice,
                 taxAmount: 0,
                 totalAmount: attendeeTicketPrice,
-                extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
+                extrasList: [],
                 appName: appInfo.name,
                 userTimezone,
                 timezoneAbbr,

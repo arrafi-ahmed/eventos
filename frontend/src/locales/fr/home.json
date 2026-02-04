@@ -1,0 +1,96 @@
+{
+    "title": "Accueil",
+    "hero_title": "Vendez vos billets, gérez vos événements, suivez tout",
+    "hero_subtitle": "Tout ce dont vous avez besoin pour organiser des événements réussis - de la vente de billets à l'enregistrement QR, le tout sur une seule plateforme",
+    "create_event": "Créez votre premier événement",
+    "browse_events": "Parcourir les événements",
+    "upcoming_events": "Événements à venir",
+    "join_us": "Rejoignez-nous pour ces expériences inspirantes",
+    "browse_all_events": "Parcourir tous les événements",
+    "loading_events": "Chargement des événements...",
+    "no_upcoming_events": "Aucun événement à venir",
+    "check_back_soon": "Revenez bientôt pour découvrir de nouveaux événements et concerts.",
+    "powerful_features": "Des fonctionnalités puissantes pour les organisateurs et les participants",
+    "everything_you_need": "Tout ce dont vous avez besoin pour gérer vos événements en toute transparence",
+    "ready_to_start": "Prêt à commencer à vendre des billets ?",
+    "join_thousands": "Rejoignez des milliers d'organisateurs qui font confiance à notre plateforme pour gérer leurs événements, vendre des billets et suivre les participants en toute transparence.",
+    "signup_free": "S'inscrire gratuitement",
+    "go_to_dashboard": "Aller au tableau de bord",
+    "event": {
+        "reserve_now": "Réserver maintenant",
+        "status": {
+            "today": "Aujourd'hui",
+            "tomorrow": "Demain",
+            "this_week": "Cette semaine",
+            "next_week": "Semaine prochaine",
+            "upcoming": "À venir",
+            "past": "Passé"
+        }
+    },
+    "features": {
+        "event_management": {
+            "title": "Gestion d'événements",
+            "desc": "Créez et gérez des événements en toute simplicité"
+        },
+        "onsite_sales": {
+            "title": "Ventes sur place",
+            "desc": "Vente de billets sur place avec paiements en espèces/carte"
+        },
+        "counter_management": {
+            "title": "Gestion des guichets",
+            "desc": "Plusieurs guichets avec suivi des sessions de caisse"
+        },
+        "online_payments": {
+            "title": "Paiements en ligne",
+            "desc": "Intégration Stripe avec multi-devises"
+        },
+        "qr_checkin": {
+            "title": "Enregistrement QR",
+            "desc": "Scanner rapide avec accès agent d'enregistrement"
+        },
+        "ai_chatbot": {
+            "title": "Chatbot IA",
+            "desc": "Chatbot de support après-vente alimenté par l'IA"
+        },
+        "attendee_management": {
+            "title": "Gestion des participants",
+            "desc": "Tableau de bord complet et outils pour les participants"
+        },
+        "sales_analytics": {
+            "title": "Analyses des ventes",
+            "desc": "Suivez les performances en ligne vs sur place"
+        },
+        "merchandise_shop": {
+            "title": "Boutique de produits",
+            "desc": "Vendez des produits et suivez les commandes"
+        },
+        "form_builder": {
+            "title": "Générateur de formulaires",
+            "desc": "Formulaires d'inscription personnalisés"
+        },
+        "role_access": {
+            "title": "Accès par rôle",
+            "desc": "Gérez les permissions pour les organisateurs, les caissiers et le personnel"
+        },
+        "custom_branding": {
+            "title": "Image de marque personnalisée",
+            "desc": "Personnalisez vos pages d'événements avec des logos et des couleurs"
+        },
+        "visitor_tracking": {
+            "title": "Suivi des visiteurs",
+            "desc": "Surveillez les vues des pages et l'intérêt pour les billets"
+        },
+        "cart_recovery": {
+            "title": "Récupération de panier",
+            "desc": "Rappelez aux utilisateurs les sélections de billets abandonnées"
+        },
+        "promo_codes": {
+            "title": "Codes promo",
+            "desc": "Créez des réductions et des offres spéciales"
+        },
+        "early_bird": {
+            "title": "Tarification Early Bird",
+            "desc": "Changements de prix automatiques basés sur la date"
+        }
+    }
+}

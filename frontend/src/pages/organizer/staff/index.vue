@@ -1,7 +1,7 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
   import { useStore } from 'vuex'
-  import AppNoData from '@/components/AppNoData.vue'
+  import { useI18n } from 'vue-i18n'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
@@ -10,16 +10,17 @@
     name: 'organizer-staff',
     meta: {
       layout: 'default',
-      title: 'Manage Organization Staff',
+      title: 'Manage Staff',
+      titleKey: 'pages.organizer.staff',
       requiresOrganizer: true,
       requiresAuth: true,
     },
   })
 
   const store = useStore()
-  const { rounded, density, variant } = useUiProps()
-
-  const staff = computed(() => store.state.appUser.users || [])
+  const { rounded, density, variant, size } = useUiProps()
+  const { t } = useI18n()
+  const staff = computed(() => (store.state.appUser.users || []).filter(u => Number(u.role) !== 20))
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
   const loading = ref(false)
 
@@ -38,16 +39,16 @@
   const staffForm = reactive({ ...staffFormInit })
 
   const roleOptions = [
-    { title: 'Cashier', value: 50 },
-    { title: 'Check-in Agent', value: 60 },
-    { title: 'Organizer', value: 30 },
+    { title: t('pages.organizer.role_cashier'), value: 50 },
+    { title: t('pages.organizer.role_agent'), value: 60 },
+    { title: t('pages.organizer.role_organizer'), value: 30 },
   ]
 
   const headers = [
-    { title: 'Name', key: 'fullName' },
-    { title: 'Email', key: 'email' },
-    { title: 'Role', key: 'role' },
-    { title: 'Actions', key: 'actions', align: 'end', sortable: false },
+    { title: t('pages.organizer.full_name'), key: 'fullName' },
+    { title: t('pages.organizer.email_address'), key: 'email' },
+    { title: t('pages.organizer.role_label'), key: 'role' },
+    { title: t('common.actions'), key: 'actions', align: 'end', sortable: false },
   ]
 
   async function loadStaff () {
@@ -106,7 +107,7 @@
   }
 
   function getRoleName (role) {
-    return roleOptions.find(r => r.value === Number.parseInt(role))?.title || 'Unknown'
+    return roleOptions.find(r => r.value === Number.parseInt(role))?.title || t('common.unknown')
   }
 
   onMounted(() => {
@@ -120,8 +121,9 @@
   <v-container>
     <PageTitle
       :back-route="{ name: 'dashboard-organizer' }"
-      subtitle="Manage your team members"
-      title="Organization Staff"
+      :subtitle="t('pages.organizer.staff_subtitle')"
+      :title="t('pages.organizer.staff')"
+      :title-key="'pages.organizer.staff'"
     >
       <template #actions>
         <v-btn
@@ -133,7 +135,7 @@
           variant="flat"
           @click="openAddDialog"
         >
-          Add Staff
+          {{ t('pages.organizer.add_staff') }}
         </v-btn>
       </template>
     </PageTitle>
@@ -177,19 +179,19 @@
                 <v-list class="pa-0" density="compact" :rounded="rounded">
                   <v-list-item
                     prepend-icon="mdi-pencil"
-                    title="Edit Staff"
+                    :title="t('pages.organizer.edit_staff')"
                     @click="openEditDialog(item)"
                   />
                   <v-divider />
                   <confirmation-dialog
-                    popup-content="Are you sure you want to remove this user from your organization?"
+                    :popup-content="t('pages.organizer.remove_user_confirm')"
                     @confirm="handleRemoveUser(item.id)"
                   >
                     <template #activator="{ onClick }">
                       <v-list-item
                         class="text-error"
                         prepend-icon="mdi-account-remove"
-                        title="Remove User"
+                        :title="t('pages.organizer.remove_user')"
                         @click.stop="onClick"
                       />
                     </template>
@@ -201,8 +203,8 @@
             <template #no-data>
               <AppNoData
                 icon="mdi-account-group-outline"
-                message="No staff members found in your organization."
-                title="No Staff Found"
+                :message="t('pages.organizer.no_staff_msg')"
+                :title="t('pages.organizer.no_staff_title')"
               />
             </template>
           </v-data-table>
@@ -214,23 +216,23 @@
     <v-dialog v-model="dialog" max-width="500px">
       <v-card :rounded="rounded">
         <v-card-title class="pa-6 pb-0">
-          <span class="text-h5">{{ staffForm.id ? 'Edit' : 'Add' }} Staff Member</span>
+          <span class="text-h5">{{ staffForm.id ? t('common.edit') : t('common.add') }} {{ t('pages.organizer.role_agent') }}</span>
         </v-card-title>
 
         <v-card-text class="pa-6">
           <p class="text-body-2 text-grey-darken-1 mb-6">
-            {{ staffForm.id ? 'Update staff details below.' : 'Create a new staff account. They can be assigned to events later.' }}
+            {{ staffForm.id ? t('pages.organizer.staff_update_hint') : t('pages.organizer.staff_add_hint') }}
           </p>
 
           <v-form ref="form" v-model="isFormValid" @submit.prevent="handleSubmit">
             <v-text-field
               v-model="staffForm.fullName"
               :density="density"
-              label="Full Name"
+              :label="t('pages.organizer.full_name')"
               prepend-inner-icon="mdi-account"
               required
               :rounded="rounded"
-              :rules="[v => !!v || 'Full Name is required']"
+              :rules="[v => !!v || t('pages.organizer.name_required')]"
               :variant="variant"
             />
 
@@ -238,11 +240,11 @@
               v-model="staffForm.email"
               class="mt-2"
               :density="density"
-              label="Email Address"
+              :label="t('pages.organizer.email_address')"
               prepend-inner-icon="mdi-email"
               required
               :rounded="rounded"
-              :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'E-mail must be valid']"
+              :rules="[v => !!v || t('pages.organizer.email_required'), v => /.+@.+\..+/.test(v) || t('pages.organizer.email_invalid')]"
               type="email"
               :variant="variant"
             />
@@ -251,13 +253,13 @@
               v-model="staffForm.password"
               class="mt-2"
               :density="density"
-              :hint="staffForm.id ? 'Leave blank to keep current password' : 'Initial password'"
+              :hint="staffForm.id ? t('pages.organizer.keep_password_hint') : t('pages.organizer.initial_password_hint')"
               label="Password"
               persistent-hint
               prepend-inner-icon="mdi-lock"
               :required="!staffForm.id"
               :rounded="rounded"
-              :rules="staffForm.id ? [] : [v => !!v || 'Password is required', v => v.length >= 6 || 'Min 6 characters']"
+              :rules="staffForm.id ? [] : [v => !!v || t('pages.organizer.password_required'), v => v.length >= 6 || t('pages.organizer.password_min')]"
               type="password"
               :variant="variant"
             />
@@ -267,7 +269,7 @@
               class="mt-4"
               :density="density"
               :items="roleOptions"
-              label="Role"
+              :label="t('pages.organizer.role_label')"
               prepend-inner-icon="mdi-badge-account"
               :rounded="rounded"
               :variant="variant"
@@ -283,7 +285,7 @@
             variant="text"
             @click="dialog = false"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </v-btn>
           <v-btn
             color="primary"
@@ -292,7 +294,7 @@
             variant="flat"
             @click="handleSubmit"
           >
-            {{ staffForm.id ? 'Update' : 'Add' }} Staff
+            {{ staffForm.id ? t('common.update') : t('common.add') }} {{ t('pages.organizer.role_agent') }}
           </v-btn>
         </v-card-actions>
       </v-card>

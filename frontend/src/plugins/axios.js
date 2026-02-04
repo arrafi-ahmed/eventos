@@ -21,12 +21,12 @@ const publicRoutes = new Set([
   '/stripe/get-registration-from-payment',
   '/ticket/getTicketsByEventId',
   '/ticket/getTicketById',
-  '/extras/purchaseExtras',
-  '/extras/getExtrasByEventId',
-  '/extras/getExtrasByIds',
-  '/sponsorship-package/getPackagesByEventId',
   '/product/getEventProducts',
   '/info',
+  '/layout',
+  '/layout-cache/timestamps',
+  '/system-settings',
+  '/homepage/banners/active',
 ])
 
 $axios.interceptors.request.use(config => {

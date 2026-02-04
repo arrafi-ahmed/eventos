@@ -3,6 +3,7 @@
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -20,6 +21,7 @@
 
   const { xs } = useDisplay()
   const { rounded, size, variant, density } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
 
@@ -36,14 +38,14 @@
   const maxDocumentSize = 10 * 1024 * 1024 // 10MB
 
   const documentRules = [
-    value => !!getFirstFile(value) || 'ID document is required',
+    value => !!getFirstFile(value) || t('pages.organizer.id_required'),
     value => {
       const file = getFirstFile(value)
-      return !file || allowedDocumentTypes.has(file.type) || 'Please upload a JPG, PNG, or PDF file'
+      return !file || allowedDocumentTypes.has(file.type) || t('pages.organizer.id_format_error')
     },
     value => {
       const file = getFirstFile(value)
-      return !file || file.size <= maxDocumentSize || 'File size must be less than 10MB'
+      return !file || file.size <= maxDocumentSize || t('pages.organizer.id_size_error')
     },
   ]
 
@@ -82,7 +84,7 @@
     } catch (error) {
       console.error('Error uploading ID:', error)
       store.commit('addSnackbar', {
-        text: 'Failed to upload ID document. Please try again.',
+        text: t('pages.organizer.id_upload_fail'),
         color: 'error',
       })
     } finally {
@@ -101,8 +103,8 @@
     <v-row>
       <v-col cols="12" md="8" offset-md="2">
         <PageTitle
-          subtitle="Upload your government-issued ID for verification"
-          title="Identity Verification"
+          :subtitle="t('pages.organizer.verify_subtitle')"
+          :title="t('pages.organizer.verify_title')"
         />
 
         <v-card class="mt-6">
@@ -122,13 +124,13 @@
                 <div class="d-flex align-center justify-space-between">
                   <div>
                     <div class="font-weight-bold mb-1">
-                      Status: {{
-                        verificationStatus === 'pending' ? 'Pending Review' : verificationStatus === 'approved' ?
-                          'Approved' : 'Rejected'
+                      {{ t('pages.organizer.status_label') }}: {{
+                        verificationStatus === 'pending' ? t('pages.organizer.pending_review') : verificationStatus === 'approved' ?
+                          t('pages.organizer.approved') : t('pages.organizer.rejected')
                       }}
                     </div>
                     <div v-if="verificationStatus === 'rejected' && currentUser?.rejection_reason" class="text-body-2">
-                      Rejection Reason: {{ currentUser.rejection_reason }}
+                      {{ t('pages.organizer.rejection_reason_label') }}: {{ currentUser.rejection_reason }}
                     </div>
                   </div>
                   <v-btn
@@ -137,7 +139,7 @@
                     variant="text"
                     @click="window.open(getDocumentUrl(currentUser.id_document), '_blank')"
                   >
-                    <v-tooltip activator="parent">View Current Document</v-tooltip>
+                    <v-tooltip activator="parent">{{ t('pages.organizer.view_document') }}</v-tooltip>
                   </v-btn>
                 </div>
               </v-alert>
@@ -148,12 +150,12 @@
                 color="info"
                 variant="tonal"
               >
-                <div class="text-body-1 font-weight-bold mb-2">Upload Requirements:</div>
+                <div class="text-body-1 font-weight-bold mb-2">{{ t('pages.organizer.upload_requirements') }}</div>
                 <ul class="text-body-2">
-                  <li>Government-issued ID (Driver's License, Passport, National ID, etc.)</li>
-                  <li>File formats: JPG, PNG, or PDF</li>
-                  <li>Maximum file size: 10MB</li>
-                  <li>Document must be clear and readable</li>
+                  <li>{{ t('pages.organizer.id_req_1') }}</li>
+                  <li>{{ t('pages.organizer.id_req_2') }}</li>
+                  <li>{{ t('pages.organizer.id_req_3') }}</li>
+                  <li>{{ t('pages.organizer.id_req_4') }}</li>
                 </ul>
               </v-alert>
 
@@ -167,7 +169,7 @@
                 :rounded="rounded"
                 :rules="documentRules"
                 show-size
-                title="Upload ID Document"
+                :title="t('pages.organizer.upload_id')"
                 variant="compact"
               />
 
@@ -183,7 +185,7 @@
                   type="submit"
                   :variant="variant"
                 >
-                  {{ hasExistingDocument ? 'Update ID Document' : 'Upload ID Document' }}
+                  {{ hasExistingDocument ? t('pages.organizer.update_id') : t('pages.organizer.upload_id') }}
                 </v-btn>
                 <v-btn
                   :rounded="rounded"
@@ -191,7 +193,7 @@
                   :to="{ name: 'dashboard-organizer' }"
                   :variant="variant"
                 >
-                  Cancel
+                  {{ t('common.cancel') }}
                 </v-btn>
               </div>
             </v-form>

@@ -1,7 +1,6 @@
 const fs = require("fs").promises;
 const path = require("path");
-const headerSettingsService = require("../service/headerSettings");
-const appearanceSettingsService = require("../service/appearanceSettings");
+const systemSettingsService = require("../service/systemSettings");
 const { getApiPublicImgUrl, getFilePath, appInfo } = require("./common");
 
 /**
@@ -25,8 +24,9 @@ async function fileToBase64(filePath) {
  */
 async function getBrandingData() {
     try {
-        const settings = await headerSettingsService.getHeaderSettings();
-        const appearance = await appearanceSettingsService.getAppearanceSettings();
+        const systemSettings = await systemSettingsService.getSystemSettings();
+        const settings = systemSettings.header || {};
+        const appearance = systemSettings.appearance || {};
 
         let logoUrl = null;
         let logoDarkUrl = null;

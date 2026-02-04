@@ -342,24 +342,18 @@
    =========================================== */
 .page-title-wrapper,
 .page-title-wrapper-compact {
-    margin-top: 8px;
-    /* my-2 */
-    margin-bottom: 8px;
-    /* my-2 */
+    margin-top: 16px;
+    margin-bottom: 24px;
 }
 
 @media (min-width: 960px) {
     .page-title-wrapper {
-        margin-top: 16px;
-        /* my-md-4 */
-        margin-bottom: 16px;
-        /* my-md-4 */
+        margin-top: 24px;
+        margin-bottom: 32px;
     }
 
     .page-title-wrapper-compact {
         margin-top: 16px;
-        /* my-md-4 */
-        margin-bottom: 8px;
-        /* keep compact bottom tighter */
+        margin-bottom: 16px;
     }
 }

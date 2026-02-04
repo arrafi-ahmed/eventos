@@ -120,6 +120,8 @@ class PaymentService {
 
                 if (dT === 'percentage') {
                     discountAmount = Math.round((subtotal * dV) / 100);
+                } else if (dT === 'free') {
+                    discountAmount = subtotal;
                 } else {
                     discountAmount = dV;
                 }
@@ -464,6 +466,8 @@ class PaymentService {
 
         if (dT === 'percentage') {
             discountAmount = Math.round((subtotal * dV) / 100);
+        } else if (dT === 'free') {
+            discountAmount = subtotal;
         } else {
             discountAmount = dV;
         }

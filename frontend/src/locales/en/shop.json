@@ -1,0 +1,18 @@
+{
+    "title": "{name} Shop",
+    "subtitle": "Available Products ({count})",
+    "meta_title": "Event Shop",
+    "back_to_tickets": "Back to Tickets",
+    "product": {
+        "out_of_stock": "Out of Stock",
+        "only_left": "Only {count} left",
+        "in_stock": "In Stock",
+        "featured": "Featured",
+        "in_event": "In Event",
+        "available": "{count} Available",
+        "add_to_cart": "Add to Cart",
+        "edit": "Edit",
+        "delete": "Delete",
+        "remove": "Remove"
+    }
+}

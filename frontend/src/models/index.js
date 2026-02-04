@@ -8,8 +8,6 @@ export { Order } from './Order.js'
 // Export all model classes
 export { Organization } from './Organization.js'
 export { Registration } from './Registration.js'
-export { Sponsorship } from './Sponsorship.js'
-export { SponsorshipPackage } from './SponsorshipPackage.js'
 export { TempRegistrationData } from './TempRegistrationData.js'
 export { Ticket } from './Ticket.js'
 export { TicketCounter } from './TicketCounter.js'

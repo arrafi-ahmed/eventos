@@ -1,0 +1,61 @@
+{
+    "cart": {
+        "title": "Panier",
+        "header": "Panier",
+        "tickets_selected": "billet(s) sélectionné(s)",
+        "products_selected": "produit(s) sélectionné(s)",
+        "selected": "sélectionné",
+        "total": "Total",
+        "cart_btn": "Panier",
+        "continue_reg": "Continuer l'inscription",
+        "continue_short": "Continuer ?",
+        "empty_title": "Votre panier est vide",
+        "empty_desc": "Sélectionnez des billets ou produits pour commencer",
+        "continue_shopping": "Continuer mes achats",
+        "each": "chaque",
+        "subtotal": "Sous-total",
+        "shipping": "Livraison",
+        "checkout": "Payer",
+        "ticket": "billet | billets",
+        "product": "produit | produits",
+        "total_label": "Total",
+        "continue_xs": "Continuer ?",
+        "checkout_btn": "Payer"
+    },
+    "support_bot": {
+        "loading": "Chargement de la conversation...",
+        "welcome": "Comment puis-je vous aider aujourd'hui ?",
+        "choose_option": "Choisissez une option :",
+        "need_help": "Besoin d'aide ? Essayez l'une de ces options :",
+        "input_placeholder": "Tapez votre message...",
+        "intents": {
+            "resend_ticket": "Je n'ai pas reçu mon billet",
+            "check_payment_status": "Vérifier le statut du paiement",
+            "check_checkin_status": "Vérifier le statut d'enregistrement",
+            "track_shipment": "Suivre l'expédition",
+            "update_shipping_address": "Mettre à jour l'adresse de livraison",
+            "update_attendee_info": "Mettre à jour les informations du participant",
+            "view_order_details": "Voir les détails de la commande",
+            "check_event_details": "Vérifier les détails de l'événement",
+            "contact_us": "Contactez-nous"
+        },
+        "form": {
+            "header": "Veuillez fournir les informations suivantes :",
+            "cancel": "Annuler",
+            "submit": "Envoyer",
+            "fields": {
+                "first_name": "Prénom",
+                "last_name": "Nom",
+                "email": "Email",
+                "phone": "Téléphone"
+            }
+        }
+    },
+    "time": {
+        "just_now": "À l'instant",
+        "m_ago": "m",
+        "h_ago": "h",
+        "yesterday": "Hier",
+        "d_ago": "j"
+    }
+}

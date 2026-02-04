@@ -1,0 +1,93 @@
+{
+    "title": "Settings",
+    "meta_title": "Settings",
+    "subtitle": "Manage system settings and configurations",
+    "sections": {
+        "homepage_banners": {
+            "title": "Customize Homepage",
+            "subtitle": "Manage rotating banners displayed on the homepage",
+            "no_banners": "No banners yet",
+            "create_first": "Create your first homepage banner",
+            "add_btn": "Add Banner",
+            "count": "Banners ({count})",
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Edit",
+                "delete": "Delete"
+            },
+            "delete_confirm": "Are you sure you want to delete Banner #{index}? This action cannot be undone.",
+            "delete_title": "Delete Banner"
+        },
+        "header": {
+            "title": "Customize Header",
+            "subtitle": "Configure header logo, alignment, and menu position",
+            "logos": "Logos",
+            "light_logo": "Light Theme Logo",
+            "dark_logo": "Dark Theme Logo",
+            "upload_light": "Upload Light Logo",
+            "upload_dark": "Upload Dark Logo",
+            "desktop_width": "Desktop Width",
+            "mobile_width": "Mobile Width",
+            "view": "View",
+            "no_logos_hint": "No logos uploaded. App name will be displayed as text.",
+            "logo_position": "Logo Position",
+            "menu_position": "Menu Position",
+            "save_btn": "Save Header Settings"
+        },
+        "footer": {
+            "title": "Customize Footer",
+            "subtitle": "Configure footer style and content",
+            "style": "Footer Style",
+            "copyright": "Copyright Text (Optional)",
+            "company_info": "Company Information",
+            "company_name": "Company Name",
+            "address": "Address",
+            "email": "Email",
+            "phone": "Phone",
+            "quick_links": "Quick Links",
+            "link_title": "Title",
+            "route_name": "Route Name",
+            "social_links": "Social Media Links",
+            "facebook": "Facebook URL",
+            "instagram": "Instagram URL",
+            "tiktok": "TikTok URL",
+            "save_btn": "Save Footer Settings"
+        },
+        "appearance": {
+            "title": "Appearance",
+            "subtitle": "Configure theme and color scheme for light and dark modes",
+            "default_theme": "Default Theme",
+            "tabs": {
+                "colors": "Colors",
+                "advanced": "Advanced (JSON)",
+                "light": "Light Theme",
+                "dark": "Dark Theme"
+            },
+            "parse_btn": "Parse & Apply JSON",
+            "save_btn": "Save Appearance Settings"
+        },
+        "localization": {
+            "title": "Localization Settings",
+            "subtitle": "Configure default currency and language",
+            "language": "Default Language",
+            "currency": "Default Currency",
+            "save_btn": "Save Localization Settings"
+        },
+        "organizer_banner": {
+            "title": "Organizer Dashboard Banner",
+            "subtitle": "Customize the promotional banner displayed on the organizer dashboard",
+            "enable": "Enable Banner",
+            "enable_hint": "Show or hide the banner on organizer dashboard",
+            "icon": "Icon *",
+            "icon_hint": "Material Design icon name (e.g., mdi-printer, mdi-star)",
+            "banner_title": "Banner Title *",
+            "banner_desc": "Banner Description",
+            "cta_text": "Button Text *",
+            "cta_url": "Button URL *",
+            "save_btn": "Save Banner Settings"
+        }
+    }
+}

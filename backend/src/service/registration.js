@@ -436,63 +436,6 @@ exports.getRegistrationByEmail = async ({ email, eventId }) => {
     return result.rows[0];
 };
 
-exports.getRegistrationWEventWExtrasPurchase = async ({ registrationId }) => {
-    const sql = `
-        SELECT jsonb_build_object(
-                       'id', r.id,
-                       'eventId', r.event_id,
-                       'additionalFields', r.additional_fields,
-                       'userTimezone', r.user_timezone,
-                       'timezoneOffset', r.timezone_offset,
-                       'status', r.status,
-                       'createdAt', r.created_at,
-                       'updatedAt', r.updated_at,
-                       'attendees', COALESCE(
-                               (SELECT jsonb_agg(
-                                               jsonb_build_object(
-                                                       'id', a.id,
-                                                       'firstName', a.first_name,
-                                                       'lastName', a.last_name,
-                                                       'email', a.email,
-                                                       'phone', a.phone,
-                                                       'ticket', a.ticket,
-                                                       'ticketTitle', a.ticket->>'title',
-                                                       'qrUuid', a.qr_uuid,
-                                                       'isPrimary', a.is_primary,
-                                                       'createdAt', a.created_at,
-                                                       'updatedAt', a.updated_at
-                                               )
-                                       )
-                                FROM attendees a
-                                WHERE a.registration_id = r.id), '[]' ::jsonb
-                                    )
-               )                 AS registration,
-               jsonb_build_object(
-                       'id', e.id,
-                       'name', e.name,
-                       'startDate', e.start_datetime,
-                       'endDate', e.end_datetime,
-                       'location', e.location,
-                       'currency', e.currency,
-                       'config', e.config
-               )                 AS event,
-               COALESCE(jsonb_build_object(
-                                'id', ep.id,
-                                'qrUuid', ep.qr_uuid,
-                                'extrasData', ep.extras_data,
-                                'status', ep.status,
-                                'scannedAt', ep.scanned_at
-                        ), NULL) AS extrasPurchase
-
-        FROM registration r
-                 JOIN event e ON r.event_id = e.id
-                 LEFT JOIN extras_purchase ep ON ep.registration_id = r.id
-        WHERE r.id = $1 LIMIT 1
-    `;
-    const result = await query(sql, [registrationId]);
-    return result.rows[0];
-};
-
 exports.getRegistrationWithAttendees = async ({ registrationId }) => {
     // Get registration with event and organization info
     const registrationSql = `
@@ -511,6 +454,11 @@ exports.getRegistrationWithAttendees = async ({ registrationId }) => {
         return null;
     }
 
+    const registration = registrationResult.rows[0];
+
+    // Get event data for complete object (needed by email service)
+    const event = await eventService.getEventById({ eventId: registration.eventId });
+
     // Get attendees with ticket info
     const attendeesSql = `
         SELECT a.*, a.ticket->>'title' as ticket_title
@@ -519,10 +467,9 @@ exports.getRegistrationWithAttendees = async ({ registrationId }) => {
         ORDER BY a.is_primary DESC, a.id ASC;`;
     const attendeesResult = await query(attendeesSql, [registrationId]);
 
-    const registration = registrationResult.rows[0];
     registration.attendees = attendeesResult.rows;
 
-    return registration;
+    return { registration, event };
 };
 
 // Get all attendees for an event (flattened structure - one row per attendee)
@@ -549,43 +496,43 @@ exports.getAttendees = async ({
                      INNER JOIN attendees a ON r.id = a.registration_id
             WHERE r.event_id = $1
               AND r.status = true
-        `;
+    `;
         const countResult = await query(countSql, [event.id]);
         totalCount = parseInt(countResult.rows[0].total);
     }
 
     //@formatter:off
     const sql = `
-        SELECT r.id         as registration_id,
-               r.event_id   as event_id,
-               r.additional_fields,
-               r.status     as registration_status,
-               r.created_at as registration_created_at,
-               r.updated_at as registration_updated_at,
-               a.id         as attendee_id,
-               a.first_name,
-               a.last_name,
-                a.email,
-               a.phone,
-               a.ticket->>'title' as ticket_title,
-               a.qr_uuid,
-               a.is_primary,
-               a.created_at as attendee_created_at,
-               a.updated_at as attendee_updated_at,
-               c.id         as checkin_id,
-               c.created_at as checkin_time,
-               CASE 
-                   WHEN (a.ticket->>'id') IS NOT NULL THEN 
-                       jsonb_build_array(
-                           jsonb_build_object(
-                               'ticketId', (a.ticket->>'id')::int,
-                               'title', a.ticket->>'title',
-                               'price', (a.ticket->>'price')::numeric,
-                               'quantity', 1
-                           )
-                       )
+        SELECT r.id as registration_id,
+    r.event_id as event_id,
+    r.additional_fields,
+    r.status as registration_status,
+    r.created_at as registration_created_at,
+    r.updated_at as registration_updated_at,
+    a.id as attendee_id,
+    a.first_name,
+    a.last_name,
+    a.email,
+    a.phone,
+    a.ticket ->> 'title' as ticket_title,
+    a.qr_uuid,
+    a.is_primary,
+    a.created_at as attendee_created_at,
+    a.updated_at as attendee_updated_at,
+    c.id as checkin_id,
+    c.created_at as checkin_time,
+    CASE
+WHEN(a.ticket ->> 'id') IS NOT NULL THEN
+jsonb_build_array(
+    jsonb_build_object(
+        'ticketId', (a.ticket ->> 'id'):: int,
+        'title', a.ticket ->> 'title',
+        'price', (a.ticket ->> 'price'):: numeric,
+        'quantity', 1
+    )
+)
                    ELSE o.items_ticket
-               END as items
+END as items
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
@@ -593,10 +540,10 @@ exports.getAttendees = async ({
         WHERE r.event_id = $1
           AND r.status = true
         ORDER BY 
-          CASE WHEN $2 = 'checkin' THEN 
-            c.created_at 
+          CASE WHEN $2 = 'checkin' THEN
+c.created_at 
           END DESC NULLS LAST,
-          CASE WHEN $2 = 'registration' OR $2 IS NULL THEN r.created_at END DESC
+    CASE WHEN $2 = 'registration' OR $2 IS NULL THEN r.created_at END DESC
         LIMIT $3 OFFSET $4
     `;
 
@@ -651,65 +598,65 @@ exports.searchAttendees = async ({
                      INNER JOIN attendees a ON r.id = a.registration_id
             WHERE r.event_id = $1
               AND r.status = true
-              AND (
-                a.first_name ILIKE $2 OR
+AND(
+    a.first_name ILIKE $2 OR
                     a.last_name ILIKE $2 OR
                     a.email ILIKE $2 OR
                     a.phone ILIKE $2
-                )
-        `;
+)
+    `;
         const countResult = await query(countSql, [event.id, keyword]);
         totalCount = parseInt(countResult.rows[0].total);
     }
 
     const sql = `
-        SELECT r.id         as registration_id,
-               r.event_id   as event_id,
-               r.additional_fields,
-               r.status     as registration_status,
-               r.created_at as registration_created_at,
-               r.updated_at as registration_updated_at,
-               a.id         as attendee_id,
-               a.first_name,
-               a.last_name,
-               a.email,
-               a.phone,
-               a.ticket->>'title' as ticket_title,
-               a.qr_uuid,
-               a.is_primary,
-               a.created_at as attendee_created_at,
-               a.updated_at as attendee_updated_at,
-               c.id         as checkin_id,
-               c.created_at as checkin_time,
-               CASE 
-                   WHEN (a.ticket->>'id') IS NOT NULL THEN 
-                       jsonb_build_array(
-                           jsonb_build_object(
-                               'ticketId', (a.ticket->>'id')::int,
-                               'title', a.ticket->>'title',
-                               'price', (a.ticket->>'price')::numeric,
-                               'quantity', 1
-                           )
-                       )
+        SELECT r.id as registration_id,
+    r.event_id as event_id,
+    r.additional_fields,
+    r.status as registration_status,
+    r.created_at as registration_created_at,
+    r.updated_at as registration_updated_at,
+    a.id as attendee_id,
+    a.first_name,
+    a.last_name,
+    a.email,
+    a.phone,
+    a.ticket ->> 'title' as ticket_title,
+    a.qr_uuid,
+    a.is_primary,
+    a.created_at as attendee_created_at,
+    a.updated_at as attendee_updated_at,
+    c.id as checkin_id,
+    c.created_at as checkin_time,
+    CASE
+WHEN(a.ticket ->> 'id') IS NOT NULL THEN
+jsonb_build_array(
+    jsonb_build_object(
+        'ticketId', (a.ticket ->> 'id'):: int,
+        'title', a.ticket ->> 'title',
+        'price', (a.ticket ->> 'price'):: numeric,
+        'quantity', 1
+    )
+)
                    ELSE o.items_ticket
-               END as items
+END as items
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
                  LEFT JOIN orders o ON r.id = o.registration_id
         WHERE r.event_id = $1
           AND r.status = true
-          AND (
-            a.first_name ILIKE $2 OR
+AND(
+    a.first_name ILIKE $2 OR
             a.last_name ILIKE $2 OR
             a.email ILIKE $2 OR
             a.phone ILIKE $2
-            )
+)
         ORDER BY CASE
                      WHEN $3 = 'checkin' THEN
                          CASE WHEN c.created_at IS NOT NULL THEN 0 ELSE 1 END
-                     END,
-                 CASE WHEN $3 = 'registration' OR $3 IS NULL THEN r.created_at END DESC
+END,
+    CASE WHEN $3 = 'registration' OR $3 IS NULL THEN r.created_at END DESC
             LIMIT $4
         OFFSET $5
     `;
@@ -727,7 +674,7 @@ exports.searchAttendees = async ({
 
 exports.removeRegistration = async ({ eventId, registrationId }) => {
     const sql = `
-        DELETE
+DELETE
         FROM registration
         WHERE id = $1
           AND event_id = $2 RETURNING *
@@ -736,39 +683,6 @@ exports.removeRegistration = async ({ eventId, registrationId }) => {
     return result.rows[0];
 };
 
-exports.validateExtrasQrCode = async ({ id, qrUuid, eventId }) => {
-    const sql = `
-        SELECT *, r.id as r_id, ep.id as id
-        FROM registration r
-                 LEFT JOIN extras_purchase ep ON r.id = ep.registration_id
-        WHERE ep.id = $1
-          AND r.event_id = $2
-          AND r.status = true
-    `;
-    const result = await query(sql, [id, eventId]);
-    const extrasPurchase = result.rows[0];
-
-    if (!extrasPurchase || extrasPurchase.qrUuid != qrUuid) {
-        throw new CustomError("Invalid QR Code", 401, extrasPurchase);
-    } else if (extrasPurchase.status === true) {
-        throw new CustomError("Already Redeemed", 401, extrasPurchase);
-    }
-    return extrasPurchase;
-};
-
-exports.scanByExtrasPurchaseId = async ({ qrCodeData, eventId }) => {
-    const { id, qrUuid } = JSON.parse(qrCodeData);
-    const extrasPurchase = await exports.validateExtrasQrCode({
-        id,
-        qrUuid,
-        eventId,
-    });
-    const payload = { id: extrasPurchase.id, status: true };
-    const updatedExtrasPurchase = await eventService.updateExtrasPurchaseStatus({
-        payload,
-    });
-    return updatedExtrasPurchase;
-};
 
 exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
     // For download, we need all attendees without pagination
@@ -810,7 +724,7 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
         formQuestions.forEach((q) => {
             sheet_columns.push({
                 header: q.text,
-                key: `qId_${q.id}`,
+                key: `qId_${q.id} `,
                 width: 30,
             });
         });
@@ -821,7 +735,7 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
     attendees.forEach((item) => {
         const rowData = {
             registration_id: item.registrationId,
-            name: `${item.firstName || ""} ${item.lastName || ""}`.trim(),
+            name: `${item.firstName || ""} ${item.lastName || ""} `.trim(),
             email: item.email || "",
             phone: item.phone || "",
             registration_time: item.registrationCreatedAt
@@ -840,9 +754,9 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
         if (formQuestions.length > 0) {
             formQuestions.forEach((q) => {
                 // Try to find the answer in additionalFields by question text or ID
-                const value = additionalFields[q.text] || additionalFields[q.id] || additionalFields[`qId_${q.id}`];
+                const value = additionalFields[q.text] || additionalFields[q.id] || additionalFields[`qId_${q.id} `];
                 if (value) {
-                    rowData[`qId_${q.id}`] = value;
+                    rowData[`qId_${q.id} `] = value;
                 }
             });
         }
@@ -850,12 +764,12 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
         // Also include any other fields that might be in additionalFields but not in formQuestions
         Object.keys(additionalFields).forEach((key) => {
             // Skip if already processed via formQuestions
-            const isFormQuestion = formQuestions.some(q => q.text === key || q.id.toString() === key || `qId_${q.id}` === key);
+            const isFormQuestion = formQuestions.some(q => q.text === key || q.id.toString() === key || `qId_${q.id} ` === key);
             if (!isFormQuestion) {
                 const value = additionalFields[key];
                 if (value && (typeof value === "string" || typeof value === "number")) {
                     // Check if column already exists safely by checking keys
-                    const colKey = `additional_${key}`;
+                    const colKey = `additional_${key} `;
                     const columnExists = worksheet.columns.some(col => col.key === colKey);
 
                     if (!columnExists) {
@@ -874,9 +788,8 @@ exports.downloadAttendees = async ({ eventId, timezone = 'UTC' }) => {
     return workbook;
 };
 
-// Initialize registration with extras and payment intent
 exports.initRegistration = async (payload) => {
-    const { newRegistration, extrasIds } = payload;
+    const { newRegistration } = payload; // removed extrasIds
 
     if (!newRegistration) {
         throw new CustomError("New registration data is required", 400);
@@ -886,19 +799,9 @@ exports.initRegistration = async (payload) => {
         payload: newRegistration,
     });
 
-    let savedExtrasPurchase = null;
-    if (extrasIds?.length) {
-        savedExtrasPurchase = await eventService.saveExtrasPurchase({
-            extrasIds: extrasIds,
-            registrationId: savedRegistration.id,
-        });
-    }
-
     const { clientSecret } = await stripeService.createPaymentIntent({
         payload: {
             savedRegistration,
-            savedExtrasPurchase,
-            extrasIds: extrasIds,
         },
     });
 
@@ -951,7 +854,7 @@ exports.completeFreeRegistration = async ({ payload }) => {
 
         if (existingRegistration) {
             throw new CustomError(
-                `Registration already exists for email: ${attendee.email}`,
+                `Registration already exists for email: ${attendee.email} `,
                 400,
             );
         }
@@ -1030,7 +933,7 @@ exports.completeFreeRegistration = async ({ payload }) => {
                     });
                 } catch (error) {
                     // Don't fail registration if visitor marking fails
-                    console.warn(`Failed to mark visitor as converted:`, error);
+                    console.warn(`Failed to mark visitor as converted: `, error);
                 }
             }
         }
@@ -1043,11 +946,11 @@ exports.completeFreeRegistration = async ({ payload }) => {
                     orderId: savedOrder.id
                 })
                 .catch((error) => {
-                    console.error(`Failed to send confirmation emails:`, error);
+                    console.error(`Failed to send confirmation emails: `, error);
                     // Don't fail the registration if email fails
                 });
         } catch (error) {
-            console.error(`Failed to queue confirmation emails:`, error);
+            console.error(`Failed to queue confirmation emails: `, error);
             // Don't fail the registration if email fails
         }
 
@@ -1069,7 +972,7 @@ exports.completeFreeRegistration = async ({ payload }) => {
             try {
                 await tempRegistrationService.deleteTempRegistration(sessionId);
             } catch (e) {
-                console.warn(`[RegistrationService] Cleanup failed for free session ${sessionId}:`, e.message);
+                console.warn(`[RegistrationService] Cleanup failed for free session ${sessionId}: `, e.message);
             }
         }
 

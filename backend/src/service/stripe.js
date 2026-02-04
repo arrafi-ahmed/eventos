@@ -11,7 +11,6 @@ const tempRegistrationService = require("./tempRegistration");
 const orderService = require("./order");
 const { v4: uuidv4 } = require("uuid");
 const { defaultCurrency, getCurrencyMinorUnitRatio } = require("../utils/common");
-const sponsorshipService = require("./sponsorship");
 const attendeesService = require("./attendees");
 const eventVisitorService = require("./eventVisitor");
 
@@ -258,7 +257,7 @@ exports.getRegistrationFromPaymentIntentMetadata = async (paymentIntentId) => {
 };
 
 exports.createPaymentIntent = async ({
-    payload: { savedRegistration, savedExtrasPurchase, extrasIds },
+    payload: { savedRegistration },
 }) => {
     const lineItems = [];
     let subtotal = 0;
@@ -276,16 +275,6 @@ exports.createPaymentIntent = async ({
     const eventTicketPrice = tickets.length > 0 ? tickets[0].price : 0; // Assuming one ticket per event for registration
     if (eventTicketPrice > 0) {
         subtotal += eventTicketPrice;
-    }
-
-    // Get extras prices
-    if (extrasIds?.length > 0) {
-        const extras = await eventService.getExtrasByIds({ extrasIds });
-        extras.forEach((item) => {
-            if (item.price > 0) {
-                subtotal += item.price;
-            }
-        });
     }
 
     if (subtotal <= 0) {
@@ -317,7 +306,6 @@ exports.createPaymentIntent = async ({
         metadata: {
             registrationId: savedRegistration.id,
             registrationUuid: savedRegistration.qrUuid,
-            extrasPurchaseId: savedExtrasPurchase?.id,
             eventId: savedRegistration.eventId,
         },
     });
@@ -1248,33 +1236,7 @@ exports.webhook = async (req) => {
                 }
             }
 
-            // Handle sponsorship payment
-            if (paymentIntentSucceeded.metadata.type === "sponsorship") {
-                // For new sponsorship flow, we need to create the sponsorship record
-                // The frontend will handle this after successful payment
-            }
 
-            // Handle extras-only payment
-            if (paymentIntentSucceeded.metadata.type === "extras") {
-                const extrasIds = JSON.parse(paymentIntentSucceeded.metadata.extrasIds);
-                const registrationId = paymentIntentSucceeded.metadata.registrationId;
-
-                // Create extras purchase record
-                await eventService.saveExtrasPurchase({
-                    extrasIds: extrasIds,
-                    registrationId: registrationId,
-                    status: true,
-                });
-
-                // Send confirmation email (async, don't wait)
-                emailService
-                    .sendTicketsByRegistrationId({
-                        registrationId: registrationId,
-                    })
-                    .catch((error) => {
-                        console.error("Failed to send email for extras payment:", error);
-                    });
-            }
 
             responseMsg = "Payment successful!";
             break;
@@ -1354,123 +1316,6 @@ exports.checkPaymentStatus = async ({ paymentIntent }) => {
     }
 };
 
-exports.createExtrasPaymentIntent = async ({
-    payload: { extrasIds, registrationId, customerEmail, eventId },
-}) => {
-    // Get event currency and tax configuration
-    const event = await eventService.getEventById({
-        eventId: eventId,
-    });
-    const eventCurrency = event?.currency || 'USD';
-
-    // Get extras prices
-    const extras = await eventService.getExtrasByIds({ extrasIds });
-    let subtotal = 0;
-
-    extras.forEach((item) => {
-        if (item.price > 0) {
-            subtotal += item.price;
-        }
-    });
-
-    if (subtotal <= 0) {
-        return { clientSecret: "no-stripe" };
-    }
-
-    // Calculate tax if configured
-    let totalAmount = subtotal;
-    const taxType = event.taxType || event.tax_type;
-    const taxAmountConfig = event.taxAmount || event.tax_amount;
-
-    if (taxType && taxAmountConfig && subtotal > 0) {
-        const type = taxType.toLowerCase();
-        const amount = Number(taxAmountConfig);
-
-        if (type === 'percent' && amount > 0) {
-            const taxAmount = Math.round((subtotal * amount) / 100);
-            totalAmount += taxAmount;
-        } else if (type === 'fixed' && amount > 0) {
-            // amount expected in cents
-            totalAmount += Math.round(amount);
-        }
-    }
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totalAmount * 100), // Convert to cents
-        currency: eventCurrency,
-        receipt_email: customerEmail,
-        metadata: {
-            registrationId: registrationId,
-            extrasIds: extrasIds,
-            eventId: eventId,
-            type: "extras",
-        },
-    });
-
-    return { clientSecret: paymentIntent.client_secret };
-};
-
-// Create extras payment intent with validation
-exports.createExtrasPaymentIntentWithValidation = async (payload) => {
-    const { extrasIds, registrationId, customerEmail, eventId } = payload;
-
-    // Validate inputs
-    if (!extrasIds || !Array.isArray(extrasIds) || extrasIds.length === 0) {
-        throw new CustomError("Extras IDs are required", 400);
-    }
-    if (!registrationId) {
-        throw new CustomError("Registration ID is required", 400);
-    }
-    if (!customerEmail) {
-        throw new CustomError("Customer email is required", 400);
-    }
-    if (!eventId) {
-        throw new CustomError("Event ID is required", 400);
-    }
-
-    // Create Stripe payment intent
-    const { clientSecret } = await exports.createExtrasPaymentIntent({
-        payload: {
-            extrasIds,
-            registrationId,
-            customerEmail,
-            eventId,
-        },
-    });
-
-    return { clientSecret };
-};
-
-// Create sponsorship payment intent
-exports.createSponsorshipPaymentIntent = async ({
-    packageId,
-    amount,
-    currency,
-    sponsorEmail,
-    eventId,
-}) => {
-    if (amount <= 0) {
-        return { clientSecret: "no-stripe" };
-    }
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: currency.toLowerCase(),
-        receipt_email: sponsorEmail,
-        metadata: {
-            packageId: packageId,
-            eventId: eventId,
-            type: "sponsorship",
-        },
-        automatic_payment_methods: {
-            enabled: true,
-        },
-    });
-
-    return { clientSecret: paymentIntent.client_secret };
-};
 exports.applyPromoCode = async ({ paymentIntentId, promoCode, sessionId, eventId }) => {
     const promoCodeService = require("./promoCode");
     const tempRegistrationService = require('./tempRegistration');

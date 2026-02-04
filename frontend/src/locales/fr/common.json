@@ -1,0 +1,63 @@
+{
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "no_results": "Aucun résultat trouvé",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "error": "Erreur",
+    "success": "Succès",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "confirm_delete_msg": "Êtes-vous sûr de vouloir supprimer cet élément ? Cette action ne peut pas être annulée.",
+    "not_found": {
+        "title": "Non trouvé",
+        "subtitle": "Comment nous collectons, utilisons et protégeons vos informations personnelles",
+        "message": "On dirait que vous êtes perdu !",
+        "go_home": "Accueil"
+    },
+    "legal": {
+        "terms_subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser notre service",
+        "privacy_subtitle": "Comment nous collectons, utilisons et protégeons vos informations personnelles"
+    },
+    "error_loading_event": "Échec du chargement des informations de l'événement.",
+    "positions": {
+        "left": "Gauche",
+        "center": "Centre",
+        "right": "Droite"
+    },
+    "views": {
+        "desktop": "Bureau",
+        "mobile": "Mobile"
+    },
+    "footer_styles": {
+        "oneline": "Une ligne (Simple)",
+        "expanded": "Étendu (Sections complètes)"
+    },
+    "themes": {
+        "light": "Clair",
+        "dark": "Sombre"
+    },
+    "languages": {
+        "en": "Anglais",
+        "fr": "Français"
+    },
+    "date_presets": {
+        "today": "Aujourd'hui",
+        "week": "Les 7 derniers jours",
+        "month": "Les 30 derniers jours",
+        "thisMonth": "Ce mois-ci",
+        "lastMonth": "Le mois dernier",
+        "custom": "Période personnalisée"
+    },
+    "rules": {
+        "required": "Ce champ est obligatoire",
+        "must_be_gt_0": "Doit être supérieur à 0",
+        "must_be_ge_0": "Doit être égal ou supérieur à 0",
+        "select_both_dates": "Veuillez sélectionner les dates de début et de fin",
+        "start_before_end": "La date de début doit être antérieure à la date de fin"
+    }
+}

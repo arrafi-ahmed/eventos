@@ -1,7 +1,7 @@
 <template>
   <div class="intent-form">
     <div class="intent-form-header">
-      <span class="text-caption text-medium-emphasis">Please provide the following:</span>
+      <span class="text-caption text-medium-emphasis">{{ t('components.support_bot.form.header') }}</span>
     </div>
 
     <v-form class="intent-form-content" @submit.prevent="handleSubmit">
@@ -59,7 +59,7 @@
           variant="text"
           @click="$emit('cancel')"
         >
-          Cancel
+          {{ t('components.support_bot.form.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -68,7 +68,7 @@
           size="small"
           type="submit"
         >
-          Submit
+          {{ t('components.support_bot.form.submit') }}
         </v-btn>
       </div>
     </v-form>
@@ -77,6 +77,9 @@
 
 <script setup>
   import { ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
+ 
+  const { t } = useI18n()
 
   const props = defineProps({
     intent: {
@@ -119,10 +122,10 @@
   function getSelectItems (slotKey) {
     if (slotKey === 'fieldToUpdate') {
       return [
-        { title: 'First Name', value: 'first_name' },
-        { title: 'Last Name', value: 'last_name' },
-        { title: 'Email', value: 'email' },
-        { title: 'Phone', value: 'phone' },
+        { title: t('components.support_bot.form.fields.first_name'), value: 'first_name' },
+        { title: t('components.support_bot.form.fields.last_name'), value: 'last_name' },
+        { title: t('components.support_bot.form.fields.email'), value: 'email' },
+        { title: t('components.support_bot.form.fields.phone'), value: 'phone' },
       ]
     }
     return []

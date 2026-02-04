@@ -3,6 +3,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay, useTheme } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import Logo from '@/components/Logo.vue'
   import UserAvatar from '@/components/UserAvatar.vue'
   import { getApiPublicImageUrl, getClientPublicImageUrl, getToLink } from '@/utils'
@@ -10,6 +11,7 @@
   const store = useStore()
   const router = useRouter()
   const route = useRoute()
+  const { locale, t } = useI18n()
 
   const signedin = computed(() => store.getters['auth/signedin'])
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
@@ -24,8 +26,8 @@
   const isCashier = computed(() => store.getters['auth/isCashier'])
   const isStaff = computed(() => store.getters['auth/isStaff'])
 
-  // Get header settings from store
-  const headerSettings = computed(() => store.state.headerSettings?.settings || {
+  // Get header settings from layout store
+  const headerSettings = computed(() => store.getters['layout/header'] || {
     logoImage: null,
     logoImageDark: null,
     logoPosition: 'left',
@@ -39,7 +41,7 @@
   const isDark = computed(() => theme.global.name.value === 'dark')
 
   // Get loading state from store
-  const headerSettingsLoading = computed(() => store.state.headerSettings?.loading ?? true)
+  const headerSettingsLoading = computed(() => store.getters['layout/isLoading'])
 
   // Computed logo position (use settings or fallback to prop)
   const computedLogoPosition = computed(() => headerSettings.value.logoPosition || posLogo || 'left')
@@ -73,107 +75,103 @@
     return !headerSettingsLoading.value && !logoImageUrl.value
   })
 
-  const menuItemsAdmin = [
+  const menuItemsAdmin = computed(() => [
     {
-      title: 'Dashboard',
+      title: t('menu.dashboard'),
       to: { name: 'admin-dashboard' },
       icon: 'mdi-view-dashboard',
     },
     {
-      title: 'Organizer Review',
+      title: t('menu.organizer_review'),
       to: { name: 'admin-review' },
       icon: 'mdi-account-check',
     },
     {
-      title: 'Settings',
+      title: t('menu.settings'),
       to: { name: 'settings-admin' },
       icon: 'mdi-cog',
     },
     {
-      title: 'Cashier Sales',
-      to: { name: 'manage-sales-logs' },
-      icon: 'mdi-receipt-text-outline',
-    },
-    {
-      title: 'Export Data',
+      title: t('menu.export_data'),
       to: { name: 'export-data-admin' },
       icon: 'mdi-download',
     },
-  ]
-  const menuItemsOrganizer = [
+  ])
+
+  const menuItemsOrganizer = computed(() => [
     {
-      title: 'Dashboard',
+      title: t('menu.dashboard'),
       to: { name: 'dashboard-organizer' },
       icon: 'mdi-view-dashboard',
     },
     {
-      title: 'Add Event',
+      title: t('menu.add_event'),
       to: { name: 'event-add' },
       icon: 'mdi-plus',
     },
     {
-      title: 'Ticket Counters',
+      title: t('menu.ticket_counters'),
       to: { name: 'admin-ticket-counters' },
       icon: 'mdi-ticket-confirmation-outline',
     },
     {
-      title: 'Manage Staff',
+      title: t('menu.manage_staff'),
       to: { name: 'organizer-staff' },
       icon: 'mdi-account-group',
     },
     {
-      title: 'Cashier Sales',
+      title: t('menu.cashier_sales'),
       to: { name: 'manage-sales-logs' },
       icon: 'mdi-receipt-text-outline',
     },
     {
-      title: 'Session History',
+      title: t('menu.session_history'),
       to: { name: 'counter-sessions' },
       icon: 'mdi-history',
     },
-  ]
+  ])
 
-  const menuItemsCashier = [
+  const menuItemsCashier = computed(() => [
     {
-      title: 'POS / Sales',
+      title: t('menu.pos_sales'),
       to: { name: 'counter-shift-start' },
       icon: 'mdi-cash-register',
     },
     {
-      title: 'Session History',
+      title: t('menu.session_history'),
       to: { name: 'counter-sessions' },
       icon: 'mdi-history',
     },
-  ]
+  ])
 
-  const menuItemsStaff = [
+  const menuItemsStaff = computed(() => [
     {
-      title: 'Scanner',
+      title: t('menu.scanner'),
       to: { name: 'staff-checkin' },
       icon: 'mdi-account-check-outline',
     },
-  ]
+  ])
 
-  const menuItemsAttendee = [
+  const menuItemsAttendee = computed(() => [
     {
-      title: 'My Orders',
+      title: t('menu.my_orders'),
       to: { name: 'recent-orders' },
       icon: 'mdi-ticket-confirmation',
     },
-  ]
+  ])
 
-  const menuItemsCommon = [
+  const menuItemsCommon = computed(() => [
     {
-      title: 'Profile',
+      title: t('menu.profile'),
       to: { name: 'profile' },
       icon: 'mdi-account',
     },
     {
-      title: 'Support',
-      to: { name: '/support/' },
+      title: t('menu.support'),
+      to: { name: 'support' },
       icon: 'mdi-robot',
     },
-  ]
+  ])
 
   const menuItems = computed(() => {
     if (!signedin.value) {
@@ -182,19 +180,19 @@
 
     let items = []
     if (isAdmin.value) {
-      items = items.concat(menuItemsAdmin)
+      items = items.concat(menuItemsAdmin.value)
     } else if (isOrganizer.value) {
-      items = items.concat(menuItemsOrganizer)
+      items = items.concat(menuItemsOrganizer.value)
     } else if (isCashier.value) {
-      items = items.concat(menuItemsCashier)
+      items = items.concat(menuItemsCashier.value)
     } else if (isStaff.value) {
-      items = items.concat(menuItemsStaff)
+      items = items.concat(menuItemsStaff.value)
     } else {
       // Attendees and other roles
-      items = items.concat(menuItemsAttendee)
+      items = items.concat(menuItemsAttendee.value)
     }
 
-    return items.concat(menuItemsCommon)
+    return items.concat(menuItemsCommon.value)
   })
 
   const drawer = ref(false)
@@ -274,23 +272,23 @@
     switch (route.name) {
       case 'tickets':
       case 'tickets-slug': {
-        return 'Back to Landing'
+        return t('menu.back_to_landing')
       }
       case 'checkout':
       case 'checkout-slug': {
-        return 'Back to Tickets'
+        return t('menu.back_to_tickets')
       }
       case 'attendee-form':
       case 'attendee-form-slug': {
-        return 'Back to Tickets'
+        return t('menu.back_to_tickets')
       }
       case 'event-register-success':
       case 'event-register-success-slug':
       case 'success': {
-        return 'Back to Event'
+        return t('menu.back_to_event')
       }
       default: {
-        return 'Back'
+        return t('menu.back')
       }
     }
   })
@@ -302,10 +300,18 @@
   const getFirstName = computed(() => (currentUser.value?.fullName || '').split(' ')[0] || '')
   const getGreetings = computed(() => {
     const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 18) return 'Good afternoon'
-    return 'Good evening'
+    if (h < 12) return t('menu.good_morning')
+    if (h < 18) return t('menu.good_afternoon')
+    return t('menu.good_evening')
   })
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    welcome: t('menu.welcome'),
+    discover_events: t('menu.discover_events'),
+    signin: t('menu.signin'),
+    signout: t('menu.signout'),
+  }))
 
   function goBack () {
     if (backRoute) {
@@ -342,6 +348,11 @@
         }
       }
     }
+  }
+
+  const changeLanguage = (lang) => {
+    locale.value = lang
+    localStorage.setItem('user-locale', lang)
   }
 </script>
 
@@ -421,6 +432,7 @@
 
       <!-- Right Section -->
       <div class="app-bar-section app-bar-right">
+
         <Logo
           v-if="computedLogoPosition === 'right' && (!headerSettingsLoading || logoImageUrl)"
           :container-class="`rounded-lg ${isScrolled ? 'bg-transparent' : ''}`"
@@ -458,9 +470,11 @@
     v-model="drawer"
     location="end"
     temporary
-    :width="250"
+    :width="280"
   >
     <v-list nav>
+      <v-divider class="mb-2" />
+
       <v-list-item v-if="signedin" class="user-greeting-card py-4 rounded-xl mb-4">
         <div class="d-flex justify-start align-center">
           <UserAvatar
@@ -483,8 +497,8 @@
             <v-icon color="primary" size="32">mdi-auto-fix</v-icon>
           </v-avatar>
           <div class="ml-4">
-            <div class="text-h6 font-weight-bold mb-n1">Welcome!</div>
-            <div class="text-caption text-medium-emphasis">Discover amazing events</div>
+            <div class="text-h6 font-weight-bold mb-n1">{{ ui.welcome }}</div>
+            <div class="text-caption text-medium-emphasis">{{ ui.discover_events }}</div>
           </div>
         </div>
       </v-list-item>
@@ -497,9 +511,44 @@
       >
         <v-list-item-title class="nav-item-text">{{ item.title }}</v-list-item-title>
       </v-list-item>
+      <v-divider class="my-4" />
+
+      <v-list-item
+        prepend-icon="mdi-translate"
+        rounded
+      >
+        <v-list-item-title class="nav-item-text">{{ t('menu.language') }}</v-list-item-title>
+        <template #append>
+          <v-menu location="start" offset-x>
+            <template #activator="{ props }">
+              <v-btn
+                class="text-uppercase font-weight-bold"
+                color="primary"
+                density="comfortable"
+                size="small"
+                v-bind="props"
+                variant="tonal"
+              >
+                {{ locale }}
+              </v-btn>
+            </template>
+            <v-list density="compact" rounded="lg">
+              <v-list-item @click="changeLanguage('en')">
+                <template #prepend>🇺🇸</template>
+                <v-list-item-title class="ml-2">English</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="changeLanguage('fr')">
+                <template #prepend>🇫🇷</template>
+                <v-list-item-title class="ml-2">Français</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </template>
+      </v-list-item>
     </v-list>
     <template #append>
       <div class="ma-5">
+
         <v-btn
           v-if="signedin"
           block
@@ -507,7 +556,8 @@
           prepend-icon="mdi-exit-to-app"
           rounded="xl"
           :to="{ name: 'signout' }"
-        >Signout
+        >
+          {{ ui.signout }}
         </v-btn>
         <v-btn
           v-else
@@ -516,7 +566,8 @@
           prepend-icon="mdi-exit-to-app"
           rounded="xl"
           :to="{ name: 'signin' }"
-        >Sign In
+        >
+          {{ ui.signin }}
         </v-btn>
       </div>
     </template>

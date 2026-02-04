@@ -285,7 +285,7 @@
                       :density="density"
                       hide-details="auto"
                       label="Discount Value"
-                      :prefix="promoData.discountType === 'fixed' ? getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' }) : ''"
+                      :prefix="promoData.discountType === 'fixed' ? getCurrencySymbol({ code: event?.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'XOF', type: 'symbol' }) : ''"
                       :rounded="rounded"
                       :rules="[v => !!v || 'Value is required']"
                       :suffix="promoData.discountType === 'percentage' ? '%' : ''"

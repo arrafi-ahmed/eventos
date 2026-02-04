@@ -7,6 +7,8 @@ require("dotenv").config({
 process.env.TZ = "UTC";
 
 const express = require("express");
+const imageFallback = require("./src/middleware/imageFallback");
+
 const app = express();
 const path = require("path");
 
@@ -37,6 +39,7 @@ app.post(
 app.use(customHelmet);
 app.use(customCors);
 
+app.use(imageFallback);
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -56,30 +59,19 @@ app.use("/payment", require("./src/controller/payment").router);
 app.use("/stripe", require("./src/controller/stripe").router);
 app.use("/ticket", require("./src/controller/ticket"));
 app.use("/order", require("./src/controller/order"));
-app.use("/sponsorship", require("./src/controller/sponsorship"));
-app.use("/sponsorship-package", require("./src/controller/sponsorshipPackage"));
-app.use("/extras", require("./src/controller/extras"));
 app.use("/temp-registration", require("./src/controller/tempRegistration"));
 app.use("/product", require("./src/controller/product"));
 app.use("/product-order", require("./src/controller/productOrder"));
 app.use("/organizer", require("./src/controller/organizer"));
-app.use("/admin", require("./src/controller/admin"));
-app.use("/homepage", require("./src/controller/homepage"));
-app.use("/admin/homepage", require("./src/controller/homepage"));
 app.use("/admin/sales-export", require("./src/controller/salesExport"));
+app.use("/admin", require("./src/controller/admin"));
 app.use("/abandoned-cart", require("./src/controller/abandonedCart"));
 app.use("/event-visitor", require("./src/controller/eventVisitor"));
 app.use("/profile", require("./src/controller/profile"));
 app.use("/user-settings", require("./src/controller/userSettings"));
-app.use("/footer", require("./src/controller/footerSettings"));
-app.use("/admin/footer", require("./src/controller/footerSettings"));
-app.use("/header", require("./src/controller/headerSettings"));
-app.use("/admin/header", require("./src/controller/headerSettings"));
-app.use("/appearance", require("./src/controller/appearanceSettings"));
-app.use("/admin/appearance", require("./src/controller/appearanceSettings"));
-app.use("/organizer-dashboard-banner", require("./src/controller/organizerDashboardBanner"));
-app.use("/admin/organizer-dashboard-banner", require("./src/controller/organizerDashboardBanner"));
+app.use("/system-settings", require("./src/controller/systemSettings"));
 app.use("/layout-cache", require("./src/controller/layoutCache"));
+app.use("/homepage", require("./src/controller/homepage"));
 app.use("/layout", require("./src/controller/layout"));
 app.use("/scheduler", require("./src/controller/scheduler"));
 app.use("/support", require("./src/controller/support"));
@@ -90,8 +82,6 @@ app.use("/promo-code", require("./src/controller/promoCode"));
 app.use("/staff", require("./src/controller/staff"));
 app.use("/user", require("./src/controller/user"));
 app.use("/report", require("./src/controller/report"));
-app.use("/admin/reports", require("./src/controller/report"));
-
 app.get("/info", (req, res) => {
     res.status(200).json(new ApiResponse('Request successful!', appInfo));
 });

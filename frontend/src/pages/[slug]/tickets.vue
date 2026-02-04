@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -14,9 +15,11 @@
     meta: {
       layout: 'default',
       title: 'Tickets',
+      titleKey: 'pages.tickets.title',
     },
   })
 
+  const { t } = useI18n()
   const { xs } = useDisplay()
   const { rounded, size, variant, density } = useUiProps()
   const route = useRoute()
@@ -28,6 +31,8 @@
   const isLoading = ref(true)
   const isProcessingPayment = ref(false)
   const showCartDialog = ref(false)
+  const showClearCartDialog = ref(false)
+  const pendingAction = ref(null) // { type: 'ticket', item, quantity } or { type: 'product', item, quantity }
 
   const event = computed(() => store.state.event.event)
   const tickets = computed(() => store.state.ticket.tickets)
@@ -55,12 +60,11 @@
 
   // Get currency from event
   const eventCurrency = computed(() => {
-    // Check if event has currency field, otherwise default to XOF
     const currency = event.value?.currency
     if (currency && typeof currency === 'string' && currency.length === 3) {
       return currency.toUpperCase()
     }
-    return 'XOF'
+    return store.state.systemSettings?.settings?.localization?.defaultCurrency || 'XOF'
   })
 
   // Helper check for sale window
@@ -79,15 +83,15 @@
 
     const now = new Date()
     if (ticket.saleStartDate && new Date(ticket.saleStartDate) > now) {
-      return { label: 'Coming Soon', color: 'info', available: false }
+      return { label: t('pages.tickets.coming_soon'), color: 'info', available: false }
     }
     if (ticket.saleEndDate && new Date(ticket.saleEndDate) < now) {
-      return { label: 'Sale Ended', color: 'grey', available: false }
+      return { label: t('pages.tickets.sale_ended'), color: 'grey', available: false }
     }
     if (ticket.saleEndDate) {
       // Active with end date
       return {
-        label: `Ends ${new Date(ticket.saleEndDate).toLocaleDateString()}`,
+        label: `${t('pages.tickets.ends')} ${new Date(ticket.saleEndDate).toLocaleDateString()}`,
         color: 'warning',
         available: true,
         isEarlyBird: true,
@@ -101,7 +105,7 @@
       const savings = ticket.originalPrice - ticket.price
       const percent = Math.round((savings / ticket.originalPrice) * 100)
       if (percent >= 5) {
-        return `SAVE ${percent}%`
+        return `${t('pages.tickets.save')} ${percent}%`
       }
     }
     return null
@@ -144,7 +148,17 @@
     }
   }
 
-  function selectTicket (ticket, quantityChange = 1) {
+  async function selectTicket (ticket, quantityChange = 1, skipCheck = false) {
+    // Check for cart mismatch
+    if (!skipCheck) {
+      const result = await store.dispatch('checkout/checkMismatch', route.params.slug)
+      if (result.mismatch) {
+        pendingAction.value = { type: 'ticket', item: ticket, quantity: quantityChange }
+        showClearCartDialog.value = true
+        return
+      }
+    }
+
     const existingIndex = selectedTickets.value.findIndex(item => item.ticketId === ticket.id)
 
     if (existingIndex === -1) {
@@ -201,9 +215,19 @@
     store.dispatch('checkout/removeTicket', ticketId)
   }
 
-  function updateQuantity (ticketId, newQuantity) {
+  async function updateQuantity (ticketId, newQuantity, skipCheck = false) {
     const ticket = tickets.value.find(t => t.id === ticketId)
     if (!ticket) return
+
+    // Check for cart mismatch
+    if (!skipCheck) {
+      const result = await store.dispatch('checkout/checkMismatch', route.params.slug)
+      if (result.mismatch && newQuantity > 0) {
+        pendingAction.value = { type: 'ticket', item: ticket, quantity: newQuantity }
+        showClearCartDialog.value = true
+        return
+      }
+    }
 
     if (newQuantity <= 0) {
       store.dispatch('checkout/removeTicket', ticketId)
@@ -226,9 +250,19 @@
     }
   }
 
-  function updateProductQuantity (productId, newQuantity) {
+  async function updateProductQuantity (productId, newQuantity, skipCheck = false) {
     const product = eventProducts.value.find(p => p.id === productId)
     if (!product) return
+
+    if (newQuantity > 0 && !skipCheck) {
+      // Check for cart mismatch
+      const result = await store.dispatch('checkout/checkMismatch', route.params.slug)
+      if (result.mismatch) {
+        pendingAction.value = { type: 'product', item: product, quantity: newQuantity }
+        showClearCartDialog.value = true
+        return
+      }
+    }
 
     if (newQuantity <= 0) {
       // Remove from selected products - use the productId from the selected products array
@@ -256,6 +290,28 @@
     }
   }
 
+  async function confirmClearCart () {
+    const action = pendingAction.value
+    if (!action) return
+
+    // Clear the cart
+    await store.dispatch('checkout/clearCheckout')
+
+    // Set the new event slug
+    store.commit('checkout/setCartEventSlug', route.params.slug)
+
+    // Proceed with the pending action (with bypass)
+    if (action.type === 'ticket') {
+      await selectTicket(action.item, action.quantity, true)
+    } else if (action.type === 'product') {
+      await updateProductQuantity(action.item.id, action.quantity, true)
+    }
+
+    // Reset and close
+    pendingAction.value = null
+    showClearCartDialog.value = false
+  }
+
   function isTicketInCart (ticketId) {
     return selectedTickets.value.some(item => item.ticketId === ticketId)
   }
@@ -267,11 +323,11 @@
 
   function getButtonText (ticket) {
     if (ticket.currentStock === 0) {
-      return 'Sold Out'
+      return t('pages.tickets.sold_out')
     } else if (isTicketInCart(ticket.id)) {
-      return 'In Cart'
+      return t('pages.tickets.in_cart')
     } else {
-      return 'Add to Cart'
+      return t('pages.tickets.add_to_cart')
     }
   }
 
@@ -375,7 +431,8 @@
         :compact="true"
         :show-back-button="true"
         :subtitle="event?.name"
-        title="Available Tickets"
+        :title="t('pages.tickets.title')"
+        :title-key="'pages.tickets.title'"
       >
         <template #actions>
           <!-- Shop Button - Only show if merchandise shop is enabled -->
@@ -391,7 +448,7 @@
             <v-icon class="mr-2">
               mdi-package-variant
             </v-icon>
-            Browse Shop
+            {{ t('pages.tickets.browse_shop') }}
           </v-btn>
         </template>
       </PageTitle>
@@ -431,11 +488,10 @@
                 mdi-ticket-outline
               </v-icon>
               <h3 class="text-h5 mb-4">
-                No Tickets Available Yet
+                {{ t('pages.tickets.no_tickets_title') }}
               </h3>
               <p class="text-body-1 mb-4">
-                Tickets for this event have not been created by the organizer yet. Please check back later or contact
-                the event organizer for more information.
+                {{ t('pages.tickets.no_tickets_msg') }}
               </p>
               <v-btn
                 class="mt-4"
@@ -444,7 +500,7 @@
                 :size="size"
                 @click="goBack"
               >
-                Back to Event
+                {{ t('pages.tickets.back_to_event') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -483,7 +539,7 @@
                   variant="flat"
                 >
                   <v-icon size="14" start>mdi-check</v-icon>
-                  In Cart
+                  {{ t('pages.tickets.in_cart') }}
                 </v-chip>
               </div>
               <div class="d-flex align-center flex-wrap gap-2 mb-4">
@@ -512,7 +568,7 @@
                   size="x-small"
                   variant="flat"
                 >
-                  Early Bird
+                  {{ t('pages.tickets.early_bird') }}
                 </v-chip>
               </div>
 
@@ -526,7 +582,7 @@
                     {{ ticket.currentStock > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
                   </v-icon>
                   <span class="text-caption font-weight-bold text-uppercase letter-spacing-1 mr-3">
-                    {{ ticket.currentStock || 0 }} Available
+                    {{ ticket.currentStock || 0 }} {{ t('pages.tickets.available') }}
                   </span>
 
                   <!-- Sale Status Chip -->
@@ -559,7 +615,7 @@
                   rounded="xl"
                   @click="selectTicket(ticket, 1)"
                 >
-                  {{ isTicketSaleActive(ticket) ? 'Add to Cart' : (getTicketStatus(ticket)?.label || 'Unavailable') }}
+                  {{ isTicketSaleActive(ticket) ? t('pages.tickets.add_to_cart') : (getTicketStatus(ticket)?.label || t('pages.tickets.unavailable')) }}
                 </v-btn>
 
                 <div
@@ -640,10 +696,10 @@
             </div>
             <div class="ml-3">
               <div class="text-h6 font-weight-bold text-gradient">
-                Cart
+                {{ t('components.cart.header') }}
               </div>
               <div class="text-caption text-gradient">
-                {{ totalSelectedItems }} item{{ totalSelectedItems !== 1 ? 's' : '' }}
+                {{ totalSelectedItems }} {{ t('components.cart.ticket', totalSelectedItems) }}
               </div>
             </div>
           </div>
@@ -678,10 +734,10 @@
             </v-icon>
           </div>
           <h3 class="text-h6 text-grey-darken-1 mb-2 mt-4">
-            Your cart is empty
+            {{ t('components.cart.empty_title') }}
           </h3>
           <p class="text-body-2 text-grey-lighten-1 mb-6">
-            Select tickets or products to get started
+            {{ t('components.cart.empty_desc') }}
           </p>
           <v-btn
             class="continue-btn"
@@ -691,7 +747,7 @@
             :variant="variant"
             @click="showCartDialog = false"
           >
-            Continue Shopping
+            {{ t('components.cart.continue_shopping') }}
           </v-btn>
         </div>
 
@@ -712,7 +768,7 @@
                     {{ item.title }}
                   </h6>
                   <div class="item-price">
-                    {{ formatPrice(item.price, eventCurrency) }} each
+                    {{ formatPrice(item.price, eventCurrency) }} {{ t('components.cart.each') }}
                   </div>
                 </div>
 
@@ -796,7 +852,7 @@
                     {{ item.name }}
                   </h6>
                   <div class="item-price">
-                    {{ formatPrice(item.price, eventCurrency) }} each
+                    {{ formatPrice(item.price, eventCurrency) }} {{ t('components.cart.each') }}
                   </div>
                 </div>
 
@@ -916,6 +972,47 @@
               </v-btn>
             </div>
           </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <!-- Clear Cart Confirmation Dialog -->
+  <v-dialog v-model="showClearCartDialog" max-width="450" persistent>
+    <v-card class="modern-cart-dialog rounded-xl">
+      <v-card-title class="cart-header text-white pa-6 d-flex align-center">
+        <div class="cart-icon-wrapper mr-4">
+          <v-icon color="white">mdi-alert-circle</v-icon>
+        </div>
+        <span class="text-h6 font-weight-bold">Clear Your Cart?</span>
+      </v-card-title>
+      
+      <v-card-text class="pa-6 text-center">
+        <p class="text-body-1 mb-6">
+          Your cart already contains items from another event. 
+          To add items for <strong>{{ event?.name }}</strong>, your current cart must be cleared.
+        </p>
+        
+        <div class="d-flex flex-column gap-3">
+          <v-btn
+            color="primary"
+            class="checkout-btn py-6"
+            size="large"
+            block
+            @click="confirmClearCart"
+          >
+            Clear Cart and Add
+          </v-btn>
+          
+          <v-btn
+            variant="text"
+            class="continue-shopping-btn"
+            size="large"
+            block
+            @click="showClearCartDialog = false"
+          >
+            Cancel
+          </v-btn>
         </div>
       </v-card-text>
     </v-card>

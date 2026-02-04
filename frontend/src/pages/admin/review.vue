@@ -1,6 +1,7 @@
 <script setup>
   import { computed, ref } from 'vue'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -11,11 +12,13 @@
     meta: {
       layout: 'default',
       title: 'Organizer Review',
+      titleKey: 'pages.admin.review',
       requiresAdmin: true,
       requiresAuth: true,
     },
   })
-
+  
+  const { t } = useI18n()
   const store = useStore()
   const { rounded, size, variant, density } = useUiProps()
   const selectedTab = ref('all')
@@ -389,6 +392,7 @@
       :show-back-button="false"
       subtitle="Review and approve organizer identities"
       title="Organizer Review"
+      :title-key="'pages.admin.review'"
     />
 
     <!-- Tabs -->
@@ -1205,7 +1209,6 @@
 
 <style scoped>
 .admin-dashboard {
-  padding: 24px;
 }
 
 .pdf-viewer-container {

@@ -3,6 +3,7 @@
 
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
@@ -12,8 +13,8 @@
     name: 'credential-generate',
     meta: {
       layout: 'default',
-      title: 'Manage Organizers',
-      requiresAdmin: true,
+      title: 'Access Credential',
+      titleKey: 'pages.organizer.credential',
       requiresAuth: true,
     },
   })
@@ -21,6 +22,7 @@
   const store = useStore()
   const route = useRoute()
   const { rounded, density, variant, size } = useUiProps()
+  const { t } = useI18n()
 
   const organization = computed(() => store.getters['organization/getOrganizationById'](route.params.organizationId))
   const organizers = computed(() => store.state.appUser.admins || [])
@@ -134,9 +136,10 @@
   <v-container class="credentials-container">
     <!-- Header Section -->
     <PageTitle
-      :back-route="{ name: 'admin-organizations' }"
-      :subtitle="organization?.name"
-      title="Manage Organizers"
+      :back-route="{ name: 'dashboard-organizer' }"
+      subtitle="Manage API keys and access credentials"
+      title="Access Credential"
+      :title-key="'pages.organizer.credential'"
     />
 
     <!-- Organizers Table -->

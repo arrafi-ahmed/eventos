@@ -8,7 +8,7 @@ import {
 
 export const namespaced = true
 
-export function state () {
+export function state() {
   return {
     banners: [],
     activeBanners: [],
@@ -16,22 +16,22 @@ export function state () {
 }
 
 export const mutations = {
-  setBanners (state, payload) {
+  setBanners(state, payload) {
     state.banners = Array.isArray(payload) ? payload : []
   },
-  setActiveBanners (state, payload) {
+  setActiveBanners(state, payload) {
     state.activeBanners = Array.isArray(payload) ? payload : []
   },
 }
 
 export const actions = {
-  async fetchBanners ({ commit }) {
-    const response = await $axios.get('/admin/homepage/banners')
+  async fetchBanners({ commit }) {
+    const response = await $axios.get('/homepage/banners')
     commit('setBanners', response.data?.payload.banners || [])
     return response.data?.payload
   },
 
-  async fetchActiveBanners ({ commit }) {
+  async fetchActiveBanners({ commit }) {
     // Try cache first, but check if it's stale
     const cached = getCachedHomepageBanners()
     if (cached) {
@@ -65,8 +65,8 @@ export const actions = {
     }
   },
 
-  async createBanner ({ dispatch }, formData) {
-    await $axios.post('/admin/homepage/banners', formData, {
+  async createBanner({ dispatch }, formData) {
+    await $axios.post('/homepage/banners', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -76,8 +76,8 @@ export const actions = {
     return dispatch('fetchBanners')
   },
 
-  async updateBanner ({ dispatch }, { id, formData }) {
-    await $axios.put(`/admin/homepage/banners/${id}`, formData, {
+  async updateBanner({ dispatch }, { id, formData }) {
+    await $axios.put(`/homepage/banners/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -87,15 +87,15 @@ export const actions = {
     return dispatch('fetchBanners')
   },
 
-  async deleteBanner ({ dispatch }, id) {
-    await $axios.delete(`/admin/homepage/banners/${id}`)
+  async deleteBanner({ dispatch }, id) {
+    await $axios.delete(`/homepage/banners/${id}`)
     // Invalidate cache when admin updates
     invalidateCache()
     return dispatch('fetchBanners')
   },
 
-  async updateDisplayOrder ({ dispatch }, bannerOrders) {
-    await $axios.post('/admin/homepage/banners/reorder', { bannerOrders })
+  async updateDisplayOrder({ dispatch }, bannerOrders) {
+    await $axios.post('/homepage/banners/reorder', { bannerOrders })
     return dispatch('fetchBanners')
   },
 }

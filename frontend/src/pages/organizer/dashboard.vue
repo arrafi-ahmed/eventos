@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -14,16 +15,18 @@
     name: 'dashboard-organizer',
     meta: {
       layout: 'default',
-      title: 'Dashboard Organizer',
+      title: 'Organizer Dashboard',
+      titleKey: 'pages.organizer.dashboard',
       requiresOrganizer: true,
       requiresAuth: true,
     },
   })
 
   const { xs } = useDisplay()
-  const { rounded, size, density } = useUiProps()
+  const { rounded, size, density, variant } = useUiProps()
   const store = useStore()
   const router = useRouter()
+  const { t } = useI18n()
 
   const events = computed(() => store.state.event.events)
   const pagination = computed(() => store.state.event.pagination)
@@ -35,8 +38,8 @@
   const isVerified = computed(() => store.getters['auth/isOrganizerVerified'])
   const showVerificationBanner = computed(() => !isVerified.value)
 
-  // Get organizer dashboard banner settings from store
-  const organizerBanner = computed(() => store.state.organizerDashboardBanner?.settings || {
+  // Get organizer dashboard banner settings from unified systemSettings store
+  const organizerBanner = computed(() => store.getters['systemSettings/organizerDashboardBanner'] || {
     isEnabled: false,
     icon: null,
     title: null,
@@ -104,9 +107,9 @@
   onMounted(async () => {
     // Refresh current user data to get latest verification status
     await store.dispatch('auth/refreshCurrentUser')
-    // Fetch organizer dashboard banner settings if not already loaded
-    if (!store.state.organizerDashboardBanner?.settings) {
-      await store.dispatch('organizerDashboardBanner/fetchSettings')
+    // Fetch system settings (includes organizer dashboard banner) if not already loaded
+    if (!store.getters['systemSettings/organizerDashboardBanner']?.icon) {
+      await store.dispatch('systemSettings/fetchSettings')
     }
     await fetchData()
   })
@@ -136,32 +139,20 @@
             <div>
               <div class="text-h6 mb-1">
                 {{
-                  verificationStatus === 'pending' ? 'Identity Verification Pending' : 'Identity Verification Rejected'
+                  verificationStatus === 'pending' ? t('pages.organizer.identity_pending') : t('pages.organizer.identity_rejected')
                 }}
               </div>
-              <div class="text-body-2">
-                <span v-if="verificationStatus === 'pending'">
-                  Please upload your ID document to verify your identity. You cannot publish events until you are approved.
-                </span>
-                <span v-else>
-                  Your identity verification was rejected. Please upload a new ID document.
-                  <span v-if="currentUser?.rejection_reason" class="font-weight-bold">
-                    Reason: {{ currentUser.rejection_reason }}
-                  </span>
-                </span>
-              </div>
-            </div>
             <v-btn
-              color="primary"
-              prepend-icon="mdi-upload"
-              :rounded="rounded"
-              :size="size"
-              :to="{ name: 'organizer-verify' }"
+              class="mt-2"
+              :color="verificationStatus === 'pending' ? 'warning' : 'error'"
+              variant="outlined"
+              @click="showVerificationDialog = true"
             >
-              {{ currentUser?.id_document ? 'Update ID' : 'Upload ID' }}
+              {{ currentUser?.id_document ? t('pages.organizer.update_id') : t('pages.organizer.upload_id') }}
             </v-btn>
           </div>
-        </v-alert>
+        </div>
+      </v-alert>
       </v-col>
     </v-row>
 
@@ -217,8 +208,8 @@
     <!-- Header Section -->
     <PageTitle
       :show-back-button="false"
-      subtitle="Manage your event settings"
-      title="Organizer Dashboard"
+      :subtitle="t('pages.organizer.subtitle')"
+      :title="t('pages.organizer.dashboard')"
     >
       <template #actions>
         <v-btn
@@ -230,7 +221,7 @@
           :to="{ name: 'event-add' }"
           :variant="variant"
         >
-          Add Event
+          {{ t('pages.organizer.add_event.label') }}
         </v-btn>
       </template>
 
@@ -274,7 +265,7 @@
                 size="small"
                 variant="flat"
               >
-                {{ item.status === 'published' ? 'Published' : 'Draft' }}
+                {{ item.status === 'published' ? t('pages.organizer.published') : t('pages.organizer.draft') }}
               </v-chip>
 
               <!-- View Button (Top Right) -->
@@ -287,7 +278,7 @@
                 size="small"
                 variant="flat"
                 @click.stop="viewEventPage(item.slug)"
-              >View</v-btn>
+              >{{ t('pages.organizer.view') }}</v-btn>
 
               <template #placeholder>
                 <div class="d-flex align-center justify-center fill-height">
@@ -344,7 +335,7 @@
                   :to="{ name: 'event-attendees', params: { eventId: item.id } }"
                   variant="tonal"
                 >
-                  Attendees
+                  {{ t('pages.organizer.attendees') }}
                 </v-btn>
                 <v-btn
                   class="flex-grow-1"
@@ -356,7 +347,7 @@
                   :to="{ name: 'event-checkin', params: { eventId: item.id, variant: 'main' } }"
                   variant="tonal"
                 >
-                  Scanner
+                  {{ t('pages.organizer.scanner') }}
                 </v-btn>
 
                 <!-- Quick Actions Menu -->
@@ -376,18 +367,18 @@
                     density="compact"
                     elevation="8"
                     :rounded="rounded"
-                    width="280"
+                    width="320"
                   >
                     <!-- Group 1: Event Management -->
                     <v-list-subheader class="text-uppercase font-weight-bold letter-spacing-1 opacity-70" style="font-size: 0.65rem;">
-                      Event Management
+                      {{ t('pages.organizer.event_management') }}
                     </v-list-subheader>
 
                     <!-- Publish/Unpublish (Priority #1) -->
                     <v-list-item
                       v-if="item.status === 'draft'"
                       prepend-icon="mdi-publish"
-                      title="Publish Event"
+                      :title="t('pages.organizer.publish_event')"
                       @click="publishEvent(item.id)"
                     >
                       <template #append>
@@ -397,14 +388,14 @@
                           size="x-small"
                           variant="tonal"
                         >
-                          Public
+                          {{ t('pages.organizer.public') }}
                         </v-chip>
                       </template>
                     </v-list-item>
                     <v-list-item
                       v-else
                       prepend-icon="mdi-package-down"
-                      title="Unpublish Event"
+                      :title="t('pages.organizer.unpublish_event')"
                       @click="unpublishEvent(item.id)"
                     >
                       <template #append>
@@ -414,44 +405,44 @@
                           size="x-small"
                           variant="tonal"
                         >
-                          Private
+                          {{ t('pages.organizer.private') }}
                         </v-chip>
                       </template>
                     </v-list-item>
 
                     <v-list-item
                       prepend-icon="mdi-pencil"
-                      title="Edit Event"
+                      :title="t('pages.organizer.edit_event')"
                       @click="router.push({ name: 'event-edit', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-ticket"
-                      title="Manage Tickets"
+                      :title="t('pages.organizer.manage_tickets')"
                       @click="router.push({ name: 'event-tickets', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-plus"
-                      title="Import Attendees"
+                      :title="t('pages.organizer.import_attendees')"
                       @click="router.push({ name: 'import', params: { eventId: item.id, variant: 'main' } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-ticket-percent-outline"
-                      title="Promo Codes"
+                      :title="t('pages.organizer.promo_codes')"
                       @click="router.push({ name: 'event-promo-codes', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-cog"
-                      title="Event Configuration"
+                      :title="t('pages.organizer.config.title')"
                       @click="router.push({ name: 'event-config', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-account-group"
-                      title="Staff Management"
+                      :title="t('pages.organizer.staff_mgmt')"
                       @click="router.push({ name: 'event-staff', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-account-eye"
-                      title="View Visitors"
+                      :title="t('pages.organizer.view_visitors')"
                       @click="router.push({ name: 'event-visitors', params: { eventId: item.id } })"
                     >
                       <template #append>
@@ -461,7 +452,7 @@
                           size="x-small"
                           variant="tonal"
                         >
-                          Insights
+                          {{ t('pages.organizer.insights') }}
                         </v-chip>
                       </template>
                     </v-list-item>
@@ -470,16 +461,16 @@
 
                     <!-- Group 2: Commerce -->
                     <v-list-subheader class="text-uppercase font-weight-bold letter-spacing-1 opacity-70" style="font-size: 0.65rem;">
-                      Commerce
+                      {{ t('pages.organizer.commerce') }}
                     </v-list-subheader>
                     <v-list-item
                       prepend-icon="mdi-store"
-                      title="Manage Shop"
+                      :title="t('pages.organizer.manage_shop')"
                       @click="router.push({ name: 'event-manage-shop', params: { eventId: item.id } })"
                     />
                     <v-list-item
                       prepend-icon="mdi-package-variant"
-                      title="Product Orders"
+                      :title="t('pages.organizer.product_orders')"
                       @click="router.push({ name: 'dashboard-organizer-event-product-orders', params: { eventId: item.id } })"
                     />
 
@@ -487,14 +478,14 @@
 
                     <!-- Group 3: Danger Zone -->
                     <v-list-subheader class="text-uppercase font-weight-bold letter-spacing-1 text-error" style="font-size: 0.65rem;">
-                      Danger Zone
+                      {{ t('pages.organizer.danger_zone') }}
                     </v-list-subheader>
                     <confirmation-dialog @confirm="deleteEvent(item.id)">
                       <template #activator="{ onClick }">
                         <v-list-item
                           class="text-error"
                           prepend-icon="mdi-delete"
-                          title="Delete Event"
+                          :title="t('pages.organizer.delete_event')"
                           @click.stop="onClick"
                         />
                       </template>
@@ -531,8 +522,8 @@
         >
           <AppNoData
             icon="mdi-calendar-plus"
-            message="You haven't created any events yet. Start by creating your first event to reach your audience!"
-            title="No Events Found"
+            :message="t('pages.organizer.no_events_msg')"
+            :title="t('pages.organizer.no_events_title')"
           >
             <template #actions>
               <v-btn
@@ -542,7 +533,7 @@
                 :to="{ name: 'event-add' }"
                 variant="flat"
               >
-                Create Event
+                {{ t('pages.organizer.create_event') }}
               </v-btn>
             </template>
           </AppNoData>
@@ -554,7 +545,6 @@
 
 <style scoped>
 .organizer-dashboard {
-  padding: 24px;
   padding-bottom: 64px;
 }
 
@@ -659,7 +649,6 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .organizer-dashboard {
-    padding: 16px;
     padding-bottom: 32px;
   }
 

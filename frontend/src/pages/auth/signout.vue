@@ -6,7 +6,8 @@
     name: 'signout',
     meta: {
       layout: 'default',
-      title: 'Signout',
+      title: 'Sign Out',
+      titleKey: 'auth.signout.title',
       requiresAuth: true,
     },
   })

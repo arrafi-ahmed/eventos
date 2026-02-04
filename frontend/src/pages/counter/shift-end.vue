@@ -2,6 +2,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -12,12 +13,14 @@
     meta: {
       layout: 'default',
       title: 'End Shift',
+      titleKey: 'pages.counter.shift_end.title',
       requiresAuth: true,
       requiresCashier: true,
     },
   })
 
   const { rounded, density, variant } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
 
@@ -37,7 +40,7 @@
   })
 
   const currencyCode = computed(() => {
-    return (event.value?.currency || 'USD').toUpperCase()
+    return (event.value?.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'XOF').toUpperCase()
   })
 
   const discrepancy = computed(() => {
@@ -100,8 +103,8 @@
 <template>
   <v-container>
     <PageTitle
-      subtitle="Reconcile your cash balance and close the session"
-      title="End Shift"
+      :subtitle="t('pages.counter.shift_end.subtitle')"
+      :title="t('pages.counter.shift_end.title')"
     />
 
     <v-row justify="center">
@@ -116,16 +119,16 @@
               variant="tonal"
             >
               <div class="d-flex justify-space-between mb-1">
-                <span>Opening Cash:</span>
+                <span>{{ t('pages.counter.shift_end.opening_cash') }}</span>
                 <span class="font-weight-bold">{{ formatPrice(stats.openingCash, event?.currency) }}</span>
               </div>
               <div class="d-flex justify-space-between mb-1">
-                <span>Cash Sales:</span>
+                <span>{{ t('pages.counter.shift_end.cash_sales') }}</span>
                 <span class="font-weight-bold">{{ formatPrice(stats.cashSales, event?.currency) }}</span>
               </div>
               <v-divider class="my-2" />
               <div class="d-flex justify-space-between">
-                <span>Expected Cash Total:</span>
+                <span>{{ t('pages.counter.shift_end.expected_total') }}</span>
                 <span class="font-weight-bold text-h6">{{ formatPrice(stats.expectedCash, event?.currency) }}</span>
               </div>
             </v-alert>
@@ -134,14 +137,14 @@
               <v-text-field
                 v-model.number="closingData.closingCash"
                 :density="density"
-                label="Actual Closing Cash Balance"
+                :label="t('pages.counter.shift_end.actual_balance')"
                 :prefix="currencyCode"
                 prepend-inner-icon="mdi-cash-check"
                 required
                 :rounded="rounded"
                 :rules="[
-                  v => v !== null && v !== undefined || 'Closing cash is required',
-                  v => v >= 0 || 'Closing cash cannot be negative'
+                  v => v !== null && v !== undefined || t('pages.counter.shift_end.actual_balance_req'),
+                  v => v >= 0 || t('pages.counter.shift_end.actual_balance_neg')
                 ]"
                 type="number"
                 :variant="variant"
@@ -149,7 +152,7 @@
 
               <div v-if="stats" class="mb-6 px-4">
                 <div class="d-flex justify-space-between align-center">
-                  <span class="text-body-2">Discrepancy:</span>
+                  <span class="text-body-2">{{ t('pages.counter.shift_end.discrepancy') }}</span>
                   <span
                     class="font-weight-bold"
                     :class="discrepancy === 0 ? 'text-success' : 'text-error'"
@@ -162,8 +165,8 @@
               <v-textarea
                 v-model="closingData.notes"
                 :density="density"
-                label="Shift Notes (Optional)"
-                placeholder="Any issues or remarks about the shift..."
+                :label="t('pages.counter.shift_end.notes_label')"
+                :placeholder="t('pages.counter.shift_end.notes_placeholder')"
                 prepend-inner-icon="mdi-note-text-outline"
                 :rounded="rounded"
                 rows="3"
@@ -180,7 +183,7 @@
                     variant="outlined"
                     @click="router.push({ name: 'counter-pos' })"
                   >
-                    Back to POS
+                    {{ t('pages.counter.back_to_pos') }}
                   </v-btn>
                 </v-col>
                 <v-col cols="6">
@@ -193,7 +196,7 @@
                     type="submit"
                     variant="flat"
                   >
-                    End Session
+                    {{ t('pages.counter.end_session') }}
                   </v-btn>
                 </v-col>
               </v-row>

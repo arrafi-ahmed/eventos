@@ -62,14 +62,6 @@ router.post(
     },
 );
 
-router.post("/saveExtras", auth, isOrganizerEventAuthor, async (req, res, next) => {
-    try {
-        const results = await eventService.saveExtras({ payload: req.body });
-        res.status(200).json(new ApiResponse(null, results));
-    } catch (err) {
-        next(err);
-    }
-});
 
 router.get("/getAllEvents", async (req, res, next) => {
     try {
@@ -200,76 +192,6 @@ router.get("/removeEvent", auth, isOrganizerEventAuthor, async (req, res, next) 
     }
 });
 
-router.get(
-    "/removeExtras",
-    auth,
-    isOrganizerEventAuthor,
-    async (req, res, next) => {
-        try {
-            const results = await eventService.removeExtras({
-                extrasId: req.query.extrasId,
-                eventId: req.query.eventId,
-            });
-            res.status(200).json(new ApiResponse("Voucher deleted!", results));
-        } catch (err) {
-            next(err);
-        }
-    },
-);
-
-router.get("/getExtras", auth, isOrganizerEventAuthor, async (req, res, next) => {
-    try {
-        const results = await eventService.getExtras({
-            eventId: req.query.eventId,
-        });
-        res.status(200).json(new ApiResponse(null, results));
-    } catch (err) {
-        next(err);
-    }
-});
-
-router.get(
-    "/getExtrasByEventId",
-    auth,
-    isOrganizerEventAuthor,
-    async (req, res, next) => {
-        try {
-            const results = await eventService.getExtrasByEventId({
-                eventId: req.query.eventId,
-            });
-            res.status(200).json(new ApiResponse(null, results));
-        } catch (err) {
-            next(err);
-        }
-    },
-);
-
-router.get(
-    "/getExtrasByIds",
-    auth,
-    isOrganizerEventAuthor,
-    async (req, res, next) => {
-        try {
-            const results = await eventService.getExtrasByIds({
-                extrasIds: req.query.extrasIds,
-            });
-            res.status(200).json(new ApiResponse(null, results));
-        } catch (err) {
-            next(err);
-        }
-    },
-);
-
-router.post("/saveExtrasPurchase", auth, async (req, res, next) => {
-    try {
-        const results = await eventService.saveExtrasPurchase({
-            payload: req.body,
-        });
-        res.status(200).json(new ApiResponse(null, results));
-    } catch (err) {
-        next(err);
-    }
-});
 
 router.get("/getFirstEvent", async (req, res, next) => {
     try {

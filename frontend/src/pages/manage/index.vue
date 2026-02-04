@@ -4,6 +4,7 @@
     meta: {
       layout: 'default',
       title: 'Manage',
+      titleKey: 'pages.manage.title',
       requiresAuth: true,
       requiresOrganizer: true,
     },

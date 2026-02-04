@@ -1,7 +1,49 @@
 <script setup>
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useUiProps } from '@/composables/useUiProps'
+  import { formatEventDateDisplay } from '@/utils'
 
   const { rounded } = useUiProps()
+  const { t, locale } = useI18n()
+
+  const props = defineProps({
+    event: {
+      type: Object,
+      required: true,
+    },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+  })
+
+  // Reactive date display based on current locale
+  const formattedDate = computed(() => {
+    // Trigger reactivity when locale changes
+    const currentLocale = locale.value
+    return formatEventDateDisplay({
+      event: {
+        ...props.event,
+        config: { ...props.event.config, showEndTime: false },
+      },
+    })
+  })
+
+  // Status mapping
+  const statusMap = {
+    'Today': 'home.event.status.today',
+    'Tomorrow': 'home.event.status.tomorrow',
+    'This Week': 'home.event.status.this_week',
+    'Next Week': 'home.event.status.next_week',
+    'Upcoming': 'home.event.status.upcoming',
+    'Past': 'home.event.status.past',
+  }
+
+  const getStatusLabel = (status) => {
+    const key = statusMap[status]
+    return key ? t(key) : status
+  }
 
   // Get badge color based on status
   function getBadgeColor (status) {
@@ -30,43 +72,37 @@
     }
   }
 
-  const props = defineProps({
-    event: {
-      type: Object,
-      required: true,
-    },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
-  })
-
   const emit = defineEmits(['click'])
 
   function handleClick () {
     emit('click', props.event)
   }
+
+  // Computed UI handles the button
+  const ui = computed(() => ({
+    reserve_now: t('home.event.reserve_now'),
+  }))
 </script>
 
 <template>
   <div
     class="event-card"
-    :class="{ 'featured-glow': isFeatured || event.is_featured }"
+    :class="{ 'featured-glow': props.isFeatured || props.event.is_featured }"
     @click="handleClick"
   >
     <!-- Inset Accent Bar (Signature) -->
     <div
       class="event-accent-bar"
-      :class="{ 'accent-featured': isFeatured || event.is_featured }"
+      :class="{ 'accent-featured': props.isFeatured || props.event.is_featured }"
     />
 
     <div class="event-image-wrapper">
       <v-img
-        :alt="event.title"
+        :alt="props.event.title"
         class="event-img"
         cover
         eager
-        :src="event.banner"
+        :src="props.event.banner"
       >
         <template #placeholder>
           <div class="d-flex align-center justify-center fill-height bg-surface-variant-light">
@@ -76,39 +112,39 @@
 
         <!-- Glassmorphic Status Badge -->
         <div
-          v-if="event.eventStatus"
+          v-if="props.event.eventStatus"
           class="event-status-badge"
-          :class="`badge-${getBadgeColor(event.eventStatus)}`"
+          :class="`badge-${getBadgeColor(props.event.eventStatus)}`"
         >
-          {{ event.eventStatus }}
+          {{ getStatusLabel(props.event.eventStatus) }}
         </div>
       </v-img>
     </div>
 
     <div class="event-content">
       <h3 class="event-title text-truncate-2">
-        {{ event.title }}
+        {{ props.event.title }}
       </h3>
 
       <div class="event-meta">
         <div class="meta-item">
           <v-icon color="primary" size="18">mdi-calendar-range</v-icon>
-          <span class="meta-text">{{ event.date }}</span>
+          <span class="meta-text">{{ formattedDate }}</span>
         </div>
         <div
-          v-if="event.location && event.location.trim()"
+          v-if="props.event.location && props.event.location.trim()"
           class="meta-item mt-1"
         >
           <v-icon color="primary" size="18">mdi-map-marker-outline</v-icon>
-          <span class="meta-text text-truncate">{{ event.location }}</span>
+          <span class="meta-text text-truncate">{{ props.event.location }}</span>
         </div>
       </div>
 
       <p
-        v-if="event.description && event.description !== 'null'"
+        v-if="props.event.description && props.event.description !== 'null'"
         class="event-description text-truncate-3"
       >
-        {{ event.description }}
+        {{ props.event.description }}
       </p>
 
       <div class="card-footer mt-auto pt-4">
@@ -121,7 +157,7 @@
           rounded="xl"
           variant="tonal"
         >
-          Reserve Now
+          {{ ui.reserve_now }}
         </v-btn>
       </div>
     </div>
@@ -272,4 +308,3 @@
   }
 }
 </style>
- village

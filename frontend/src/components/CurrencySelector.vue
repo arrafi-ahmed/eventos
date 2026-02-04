@@ -5,7 +5,7 @@ import { useUiProps } from '@/composables/useUiProps'
 import { currencies } from '@/utils/currency-list'
 
 const props = defineProps({
-  modelValue: { type: String, default: 'XOF' },
+  modelValue: { type: String, default: 'USD' },
   label: { type: String, default: 'Currency' },
   required: { type: Boolean, default: true },
   customClass: { type: String, default: '' },

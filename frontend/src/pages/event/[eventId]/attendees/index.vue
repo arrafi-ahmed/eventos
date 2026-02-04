@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -26,6 +27,7 @@
   const router = useRouter()
   const { xs } = useDisplay()
   const { rounded, size, density, variant } = useUiProps()
+  const { t } = useI18n()
 
   const event = computed(() => store.state.event.event)
   const tickets = computed(() => store.state.ticket.tickets || [])
@@ -37,12 +39,12 @@
   const loading = ref(false)
   const headers = ref([
     {
-      title: 'ID',
+      title: t('pages.event.id'),
       align: 'start',
       key: 'registrationId',
     },
     {
-      title: 'Name',
+      title: t('pages.event.name'),
       align: 'start',
       key: 'name',
     },
@@ -50,17 +52,17 @@
 
   if (!xs.value) {
     headers.value.push({
-      title: 'Email',
+      title: t('pages.event.email'),
       align: 'start',
       key: 'email',
     }, {
-      title: 'Registration Time',
+      title: t('pages.event.reg_time'),
       align: 'start',
       key: 'registrationCreatedAt',
     })
   }
   headers.value.push({
-    title: 'Check-in Status',
+    title: t('pages.event.checkin_status'),
     align: 'start',
     key: 'checkinStatus',
   }, {
@@ -132,7 +134,6 @@
     checkinTime: null,
   }
 
-  const isExtraExists = computed(() => false) // Extras not implemented in flattened structure yet
 
   // Computed property to map checkinId to checkinItems value
   const currentCheckinStatus = computed({
@@ -307,7 +308,7 @@
     <PageTitle
       :compact="true"
       :subtitle="`${event?.name}${totalCount ? ' • ' + totalCount + ' Total' : ''}`"
-      title="Attendee List"
+      :title="t('pages.event.attendees_title')"
     >
       <template #actions>
         <v-btn
@@ -318,7 +319,7 @@
           :size="size"
           @click="handleDownload"
         >
-          Download
+          {{ t('pages.event.download') }}
         </v-btn>
       </template>
     </PageTitle>
@@ -331,7 +332,7 @@
         clearable
         :density="density"
         hide-details
-        label="Search by name/email/phone"
+        :label="t('pages.event.search_placeholder')"
         :rounded="rounded"
         single-line
         :variant="variant"
@@ -415,7 +416,9 @@
                     size="x-small"
                     variant="tonal"
                   >
-                    Primary Buyer
+                    variant="tonal"
+                  >
+                    {{ t('pages.event.primary_buyer') }}
                   </v-chip>
                   <v-chip
                     v-if="item.checkinId"
@@ -425,7 +428,9 @@
                     size="x-small"
                     variant="flat"
                   >
-                    Checked-in
+                    variant="flat"
+                  >
+                    {{ t('pages.event.checked_in') }}
                   </v-chip>
                 </v-list-item-title>
 
@@ -461,22 +466,22 @@
                       <v-list density="compact" :rounded="rounded">
                         <v-list-item
                           prepend-icon="mdi-card-account-details-outline"
-                          title="View Details"
+                          :title="t('pages.event.view_details')"
                           @click="openAttendeeDetailsDialog(item.attendeeId)"
                         />
                         <v-list-item
                           prepend-icon="mdi-email-fast"
-                          title="Email Ticket"
+                          :title="t('pages.event.email_ticket')"
                           @click="sendTicket(item.attendeeId)"
                         />
                         <v-list-item
                           prepend-icon="mdi-whatsapp"
-                          title="WhatsApp Ticket"
+                          :title="t('pages.event.whatsapp_ticket')"
                           @click="handleSendToWhatsapp(item)"
                         />
                         <v-list-item
                           prepend-icon="mdi-qrcode"
-                          title="QR Code Viewer"
+                          :title="t('pages.event.qr_viewer')"
                           @click="viewQr(item)"
                         />
                         <v-divider class="my-1" />
@@ -485,7 +490,7 @@
                             <v-list-item
                               class="text-error"
                               prepend-icon="mdi-account-remove"
-                              title="Delete Attendee"
+                              :title="t('pages.event.delete_attendee')"
                               @click.stop="onClick"
                             />
                           </template>
@@ -495,7 +500,7 @@
                             <v-list-item
                               class="text-error"
                               prepend-icon="mdi-delete-forever"
-                              title="Delete Entire Registration"
+                              :title="t('pages.event.delete_registration')"
                               @click.stop="onClick"
                             />
                           </template>
@@ -512,8 +517,8 @@
           <div v-else-if="!loading" class="py-10">
             <AppNoData
               icon="mdi-account-off-outline"
-              message="No attendees found for this event yet. Once people register, they will appear here."
-              title="No Attendees Found"
+              :message="t('pages.event.no_attendees_msg')"
+              :title="t('pages.event.no_attendees_title')"
             />
           </div>
 
@@ -544,7 +549,7 @@
     <v-card class="border" :rounded="rounded">
       <v-card-title class="pa-4 d-flex align-center bg-surface">
         <v-icon class="mr-2" color="primary" icon="mdi-account-details" />
-        <span class="text-h5 font-weight-bold">Attendee Profile</span>
+        <span class="text-h5 font-weight-bold">{{ t('pages.event.attendee_profile') }}</span>
         <v-spacer />
         <v-btn
           density="compact"
@@ -579,7 +584,8 @@
           <v-divider class="mb-6" />
 
           <!-- Tickets Section -->
-          <div class="section-label text-overline font-weight-bold text-primary mb-3">Ticket Information</div>
+          <v-divider class="mb-6" />
+          <div class="section-label text-overline font-weight-bold text-primary mb-3">{{ t('pages.event.ticket_info') }}</div>
           <!-- POS/Counter Sales: Multiple tickets via items array -->
           <template v-if="editingAttendee.items?.length > 0">
             <v-card
@@ -616,26 +622,28 @@
             </v-card>
           </template>
           <!-- No ticket data -->
+          <!-- No ticket data -->
           <div v-else class="text-body-2 text-grey pa-4 text-center border rounded-lg mb-6">
-            No ticket data available
+            {{ t('pages.event.no_ticket_data') }}
           </div>
 
           <v-divider class="my-6" />
 
+          <v-divider class="my-6" />
           <!-- Check-in Status Section -->
-          <div class="section-label text-overline font-weight-bold text-primary mb-3">Check-in Status</div>
+          <div class="section-label text-overline font-weight-bold text-primary mb-3">{{ t('pages.event.checkin_status') }}</div>
           <v-card class="border rounded-lg pa-4 elevation-1">
             <div class="d-flex align-center mb-4">
               <v-icon class="mr-3" :color="editingAttendee.checkinId ? 'success' : 'warning'" size="32">
                 {{ editingAttendee.checkinId ? 'mdi-check-circle' : 'mdi-clock-outline' }}
               </v-icon>
               <div class="text-h6 font-weight-bold">
-                {{ editingAttendee.checkinId ? 'Checked-in' : 'Pending' }}
+                {{ editingAttendee.checkinId ? t('pages.event.checked_in') : t('pages.event.pending') }}
               </div>
             </div>
 
             <div class="mb-4">
-              <div class="text-caption text-grey mb-1 ml-11">Update Status</div>
+              <div class="text-caption text-grey mb-1 ml-11">{{ t('pages.event.update_status') }}</div>
               <v-select
                 v-model="currentCheckinStatus"
                 density="compact"
@@ -651,7 +659,7 @@
             </div>
 
             <div v-if="editingAttendee.checkinTime" class="ml-11">
-              <div class="text-caption text-grey mb-1">Check-in Timestamp</div>
+              <div class="text-caption text-grey mb-1">{{ t('pages.event.checkin_timestamp') }}</div>
               <v-chip class="text-subtitle-1 font-weight-bold py-1 px-4 h-auto" color="success" variant="tonal">
                 {{ formatDateTime({
                   input: editingAttendee.checkinTime,
@@ -674,7 +682,7 @@
           variant="text"
           @click="attendeeDetailsDialog = false"
         >
-          Cancel
+          {{ t('pages.event.cancel') }}
         </v-btn>
         <v-btn
           class="px-6 ml-2"
@@ -686,7 +694,7 @@
             registrationId: editingAttendee.registrationId
           })"
         >
-          Update Record
+          {{ t('pages.event.update_record') }}
         </v-btn>
       </v-card-actions>
     </v-card>

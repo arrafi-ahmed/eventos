@@ -1,0 +1,80 @@
+{
+    "title": "Tableau de bord",
+    "subtitle": "Analyses et aperçus",
+    "filters": {
+        "btn": "Filtres",
+        "title": "Filtres du rapport",
+        "events": "Événements",
+        "counter": "Guichet",
+        "cashier": "Caissier",
+        "payment_method": "Moyen de paiement",
+        "date_range": "Période",
+        "custom_date_range": "Période personnalisée",
+        "reset": "Réinitialiser",
+        "apply": "Appliquer les filtres"
+    },
+    "actions": {
+        "download": "Télécharger",
+        "excel": "Excel",
+        "pdf": "PDF"
+    },
+    "loading": "Chargement des données du rapport...",
+    "stats": {
+        "events": "Événements",
+        "tickets": "Billets",
+        "organizers": "Organisateurs",
+        "attendance": "Présence",
+        "total_events": "Total des événements",
+        "total_tickets": "Total des billets vendus",
+        "total_organizers": "Total des organisateurs",
+        "attendance_rate": "Taux de présence global"
+    },
+    "charts": {
+        "checkin_status": "Statut de l'enregistrement",
+        "sales_channels": "Canaux de vente",
+        "no_checkin_data": "Aucune donnée d'enregistrement disponible",
+        "no_channel_data": "Aucune donnée de canal de vente disponible",
+        "capacity_details": "Détails de la capacité des billets",
+        "select_event_hint": "Veuillez sélectionner un événement spécifique dans les filtres pour afficher les graphiques détaillés et les tendances de capacité.",
+        "checked_in": "Présent",
+        "absent": "Absent"
+    },
+    "table": {
+        "breakdown": "Répartition par {type}",
+        "report_type": "Type de rapport",
+        "types": {
+            "event": "Par événement",
+            "counter": "Par guichet",
+            "cashier": "Par caissier",
+            "payment": "Par moyen de paiement"
+        },
+        "headers": {
+            "event_name": "Nom de l'événement",
+            "date": "Date",
+            "orders": "Commandes",
+            "revenue": "Revenu",
+            "counter_name": "Nom du guichet",
+            "location": "Lieu",
+            "cashier": "Caissier",
+            "counter": "Guichet",
+            "payment_method": "Moyen de paiement",
+            "currency": "Devise",
+            "transactions": "Transactions",
+            "amount": "Montant",
+            "percentage": "Pourcentage",
+            "ticket_type": "Type de billet",
+            "sold": "Vendu",
+            "remaining": "Restant",
+            "total_capacity": "Capacité totale",
+            "utilization": "Utilisation",
+            "cash": "Espèces",
+            "card": "Carte",
+            "free": "Gratuit"
+        }
+    },
+    "messages": {
+        "export_success": "Rapport exporté avec succès !",
+        "export_error": "Erreur lors de l'exportation du rapport",
+        "load_error": "Erreur lors du chargement des données du rapport"
+    }
+}

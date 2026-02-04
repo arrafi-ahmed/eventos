@@ -1,5 +1,6 @@
 <script setup>
   import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import PaymentStripe from '@/components/payment/PaymentStripe.vue'
@@ -14,9 +15,11 @@
     meta: {
       layout: 'default',
       title: 'Checkout',
+      titleKey: 'pages.tickets.checkout',
     },
   })
 
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
@@ -127,9 +130,9 @@
 
   // Shipping Logic
   const shippingOptions = computed(() => {
-    const options = [{ title: 'Pickup', value: 'pickup' }]
+    const options = [{ title: t('pages.checkout.pickup_option'), value: 'pickup' }]
     if (!event.value?.config?.disableDelivery) {
-      options.unshift({ title: 'Delivery', value: 'delivery' })
+      options.unshift({ title: t('pages.checkout.delivery_option'), value: 'delivery' })
     }
     return options
   })
@@ -148,8 +151,8 @@
     if (configMethods.includes('stripe')) {
       methods.push({ 
         value: 'stripe', 
-        label: 'Credit / Debit Card', 
-        desc: 'Secure payment via Stripe', 
+        label: t('pages.checkout.payment_stripe'), 
+        desc: t('pages.checkout.payment_stripe_desc'), 
         icon: 'mdi-credit-card', 
         color: 'primary' 
       })
@@ -159,8 +162,8 @@
     if (configMethods.includes('om') || configMethods.includes('orange_money')) {
       methods.push({ 
         value: 'orange_money', 
-        label: 'Orange Money', 
-        desc: 'Pay with OM mobile wallet', 
+        label: t('pages.checkout.payment_om'), 
+        desc: t('pages.checkout.payment_om_desc'), 
         icon: 'mdi-cellphone-check', 
         color: 'orange-darken-2' 
       })
@@ -269,7 +272,8 @@
       }
     } catch (error) {
       console.error('[Checkout] Init failed:', error)
-      store.commit('addSnackbar', { text: 'Failed to initialize payment', color: 'error' })
+      console.error('[Checkout] Init failed:', error)
+      store.commit('addSnackbar', { text: t('pages.checkout.init_error'), color: 'error' })
     } finally {
       isProcessingPayment.value = false
     }
@@ -322,7 +326,8 @@
           registration: registration.value,
           eventId: event.value?.id,
           returnUrl,
-          cancelUrl
+          cancelUrl,
+          promoCode: appliedPromoCodeDetails.value?.promoCode
         })
         
         if (initRes.data?.payload?.sessionId) {
@@ -335,7 +340,9 @@
         sessionId: sessionId.value,
       }
 
-      const res = await $axios.post('/registration/complete-free-registration', registrationData)
+      const res = await $axios.post('/registration/complete-free-registration', registrationData, {
+        headers: { 'X-Suppress-Toast': 'true' }
+      })
       if (res.data.payload?.registrationId) {
         store.dispatch('checkout/clearCheckout');
         
@@ -347,8 +354,6 @@
       }
     } catch (error) {
       console.error('Free registration failed:', error)
-      const msg = error.response?.data?.msg || 'Free registration failed'
-      store.commit('addSnackbar', { text: msg, color: 'error' })
     } finally {
       isProcessingPayment.value = false
     }
@@ -372,7 +377,7 @@
         const sessionEventId = tempData.eventId
         if (event.value && event.value.id && sessionEventId && sessionEventId !== event.value.id) {
           store.commit('addSnackbar', {
-            text: 'This checkout link is for a different event. Please select tickets for this event.',
+            text: t('pages.checkout.wrong_event'),
             color: 'warning',
           })
           return false
@@ -478,7 +483,7 @@
     } catch (error) {
       console.error('Error in checkout onMounted:', error)
       store.commit('addSnackbar', {
-        text: 'Failed to initialize checkout. Please try again.',
+        text: t('pages.checkout.init_fail'),
         color: 'error',
       })
     }
@@ -545,8 +550,6 @@
       }
     } catch (error) {
       console.error('Failed to apply promo code:', error)
-      const msg = error.response?.data?.msg || 'Invalid promo code'
-      store.commit('addSnackbar', { text: msg, color: 'error' })
     } finally {
       isApplyingPromoCode.value = false
     }
@@ -588,7 +591,8 @@
         :compact="true"
         :show-back-button="true"
         :subtitle="event?.name"
-        title="Checkout"
+        :title="t('pages.tickets.checkout')"
+        :title-key="'pages.tickets.checkout'"
       />
 
       <!-- Paid Session Recovery Banner -->
@@ -603,8 +607,8 @@
       >
         <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between">
           <div>
-            <h3 class="text-h6 font-weight-bold mb-1">Booking Already Successful!</h3>
-            <p class="text-body-2">We found a completed booking for this session. You can view your tickets now or start a new booking if this wasn't you.</p>
+            <h3 class="text-h6 font-weight-bold mb-1">{{ t('pages.checkout.booking_success_title') }}</h3>
+            <p class="text-body-2">{{ t('pages.checkout.booking_success_msg') }}</p>
           </div>
           <div class="mt-3 mt-sm-0 d-flex gap-2">
             <v-btn
@@ -614,7 +618,7 @@
               variant="flat"
               @click="goToSuccess(route.params.slug)"
             >
-              View Tickets
+              {{ t('pages.checkout.view_tickets') }}
             </v-btn>
             <v-btn
               color="white"
@@ -623,7 +627,7 @@
               variant="outlined"
               @click="clearRegistrationLocalData"
             >
-              Dismiss
+              {{ t('pages.checkout.dismiss') }}
             </v-btn>
           </div>
         </div>
@@ -646,10 +650,10 @@
                 mdi-cart-off
               </v-icon>
               <h3 class="text-h5 mb-2">
-                Your Cart is Empty
+                {{ t('pages.checkout.cart_empty_title') }}
               </h3>
               <p class="text-body-1 text-medium-emphasis mb-6">
-                You don't have any tickets or products in your cart. Please select items to continue with checkout.
+                {{ t('pages.checkout.cart_empty_desc') }}
               </p>
               <v-btn
                 color="primary"
@@ -661,7 +665,7 @@
                 <v-icon left>
                   mdi-account-plus
                 </v-icon>
-                Go to Registration
+                {{ t('pages.checkout.go_to_reg') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -683,7 +687,7 @@
             >
               <v-card-title class="text-h5 pa-4">
                 <v-icon left>mdi-cart</v-icon>
-                Order Summary
+                {{ t('pages.checkout.order_summary') }}
               </v-card-title>
 
               <v-card-text class="pa-4">
@@ -693,10 +697,10 @@
                     <div class="d-flex justify-space-between align-center">
                       <div>
                         <div class="d-flex align-center gap-2 mb-1">
-                          <v-chip color="primary" size="x-small" variant="flat">Ticket</v-chip>
+                          <v-chip color="primary" size="x-small" variant="flat">{{ t('pages.success.ticket') }}</v-chip>
                           <div class="text-subtitle-2 font-weight-medium">{{ item.title }}</div>
                         </div>
-                        <div class="text-caption text-medium-emphasis">Qty: {{ item.quantity }}</div>
+                        <div class="text-caption text-medium-emphasis">{{ t('pages.checkout.qty') }}: {{ item.quantity }}</div>
                       </div>
                       <div class="text-right">
                         <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(item.price * item.quantity, eventCurrency) }}</div>
@@ -711,10 +715,10 @@
                     <div class="d-flex justify-space-between align-center">
                       <div>
                         <div class="d-flex align-center gap-2 mb-1">
-                          <v-chip color="secondary" size="x-small" variant="flat">Product</v-chip>
+                          <v-chip color="secondary" size="x-small" variant="flat">{{ t('pages.success.product') }}</v-chip>
                           <div class="text-subtitle-2 font-weight-medium">{{ item.name }}</div>
                         </div>
-                        <div class="text-caption text-medium-emphasis">Qty: {{ item.quantity }}</div>
+                        <div class="text-caption text-medium-emphasis">{{ t('pages.checkout.qty') }}: {{ item.quantity }}</div>
                       </div>
                       <div class="text-right">
                         <div class="text-subtitle-2 font-weight-bold">{{ formatPrice(item.price * item.quantity, eventCurrency) }}</div>
@@ -725,25 +729,25 @@
 
                 <v-divider class="my-3" />
                 <div class="d-flex justify-space-between text-body-2 mb-1">
-                  <span class="text-medium-emphasis">Subtotal</span>
+                  <span class="text-medium-emphasis">{{ t('pages.checkout.subtotal') }}</span>
                   <span>{{ formatPrice(subtotalAmount, eventCurrency) }}</span>
                 </div>
                 <!-- Promo Discount -->
                 <div v-if="appliedPromoCodeDetails" class="d-flex justify-space-between text-body-2 mb-1 text-success font-weight-medium">
-                  <span>Discount ({{ appliedPromoCodeDetails.promoCode }})</span>
+                  <span>{{ t('pages.checkout.discount') }} ({{ appliedPromoCodeDetails.promoCode }})</span>
                   <span>-{{ formatPrice(promoDiscountAmount, eventCurrency) }}</span>
                 </div>
                 <div v-if="calculatedShippingCost > 0" class="d-flex justify-space-between text-body-2 mb-1">
-                  <span class="text-medium-emphasis">Shipping</span>
+                  <span class="text-medium-emphasis">{{ t('pages.checkout.shipping') }}</span>
                   <span>{{ formatPrice(calculatedShippingCost, eventCurrency) }}</span>
                 </div>
                 <div v-if="taxAmount > 0" class="d-flex justify-space-between text-body-2 mb-1">
-                  <span class="text-medium-emphasis">Tax</span>
+                  <span class="text-medium-emphasis">{{ t('pages.checkout.tax') }}</span>
                   <span>{{ formatPrice(taxAmount, eventCurrency) }}</span>
                 </div>
                 <v-divider class="my-3" />
                 <div class="d-flex justify-space-between align-center">
-                  <span class="text-h6 font-weight-bold">Total</span>
+                  <span class="text-h6 font-weight-bold">{{ t('pages.checkout.total') }}</span>
                   <span class="text-h5 font-weight-bold text-primary">{{ formatPrice(totalAmount, eventCurrency) }}</span>
                 </div>
               </v-card-text>
@@ -764,7 +768,7 @@
               <!-- Step 1: Order Details -->
               <v-stepper-vertical-item
                 :complete="checkoutStep > 1"
-                title="Order Options"
+                :title="t('pages.checkout.order_options')"
                 value="1"
               >
                 <div>
@@ -773,12 +777,12 @@
                   <div v-if="selectedProducts?.length" class="mb-6">
                     <div class="d-flex align-center mb-3">
                       <v-icon color="primary" class="mr-2">mdi-truck-delivery-outline</v-icon>
-                      <span class="text-subtitle-2 font-weight-bold">Shipping Selection</span>
+                      <span class="text-subtitle-2 font-weight-bold">{{ t('pages.checkout.shipping_selection') }}</span>
                     </div>
                     <v-select
                       v-model="selectedShippingOption"
                       :items="shippingOptions"
-                      label="Shipping Method"
+                      :label="t('pages.checkout.shipping_method')"
                       :rounded="rounded"
                       variant="outlined"
                       bg-color="surface"
@@ -787,7 +791,7 @@
                       :disabled="checkoutStep > 1"
                     />
                     <v-alert v-if="selectedShippingOption === 'pickup'" type="info" variant="tonal" class="mt-3 text-caption">
-                      <strong>Pickup:</strong> {{ event?.location || 'Event Venue' }}
+                      <strong>{{ t('pages.checkout.pickup') }}:</strong> {{ event?.location || 'Event Venue' }}
                     </v-alert>
                   </div>
 
@@ -795,13 +799,13 @@
                   <div v-if="subtotalAmount > 0" class="mb-6">
                     <div class="d-flex align-center mb-3">
                       <v-icon color="primary" class="mr-2">mdi-tag-outline</v-icon>
-                      <span class="text-subtitle-2 font-weight-bold">Promo Code</span>
+                      <span class="text-subtitle-2 font-weight-bold">{{ t('pages.checkout.promo_code_label') }}</span>
                     </div>
                     
                     <div v-if="!appliedPromoCodeDetails" class="d-flex gap-2">
                       <v-text-field
                         v-model="promoCodeInput"
-                        placeholder="Enter promo code"
+                        :placeholder="t('pages.checkout.promo_code_placeholder')"
                         variant="outlined"
                         density="comfortable"
                         hide-details
@@ -825,7 +829,7 @@
                     <div v-else class="applied-promo-premium pa-3 rounded-lg d-flex justify-space-between align-center">
                       <div class="d-flex align-center gap-2 text-success">
                         <v-icon>mdi-check-decagram</v-icon>
-                        <span class="font-weight-bold">{{ appliedPromoCodeDetails.promoCode }} Applied</span>
+                        <span class="font-weight-bold">{{ t('pages.checkout.promo_applied', { code: appliedPromoCodeDetails.promoCode }) }}</span>
                       </div>
                       <v-btn icon="mdi-close" size="x-small" variant="text" @click="removePromoCode" :disabled="checkoutStep > 1" />
                     </div>
@@ -841,7 +845,7 @@
                     :loading="isInitializingSession"
                     @click="handleContinueFromStep1"
                   >
-                    {{ totalAmount === 0 ? 'Review Free Order' : 'Continue to Payment Method' }}
+                    {{ totalAmount === 0 ? t('pages.checkout.review_free') : t('pages.checkout.continue_payment') }}
                     <v-icon end>{{ totalAmount === 0 ? 'mdi-magnify' : 'mdi-arrow-right' }}</v-icon>
                   </v-btn>
                 </div>
@@ -850,11 +854,11 @@
               <!-- Step 2: Payment Method Selection -->
               <v-stepper-vertical-item
                 :complete="checkoutStep > 2"
-                title="Payment Method"
+                :title="t('pages.checkout.choose_payment')"
                 value="2"
               >
                 <div>
-                  <div class="text-subtitle-1 font-weight-bold mb-4">Choose how to pay</div>
+                  <div class="text-subtitle-1 font-weight-bold mb-4">{{ t('pages.checkout.choose_payment') }}</div>
                   
                   <v-radio-group
                     v-model="selectedPaymentMethod"
@@ -898,7 +902,7 @@
                       :disabled="!selectedPaymentMethod"
                       @click="initializeCheckout()"
                     >
-                      Process Payment ({{ formatPrice(totalAmount, eventCurrency) }})
+                      {{ t('pages.checkout.process_payment') }} ({{ formatPrice(totalAmount, eventCurrency) }})
                     </v-btn>
                   </div>
                 </div>
@@ -906,22 +910,22 @@
 
               <!-- Step 3: Complete Payment -->
               <v-stepper-vertical-item
-                title="Complete Payment"
+                :title="t('pages.checkout.complete_payment')"
                 value="3"
               >
                 <div class="py-4">
                   <div v-if="isProcessingPayment && !clientSecret" class="text-center py-8">
                     <v-progress-circular indeterminate color="primary" size="48" />
-                    <p class="mt-4 text-medium-emphasis">Preparing your secure payment session...</p>
+                    <p class="mt-4 text-medium-emphasis">{{ t('pages.checkout.preparing_session') }}</p>
                   </div>
 
                   <template v-else-if="clientSecret || totalAmount === 0">
                     <!-- FREE ORDER CONFIRMATION -->
                     <div v-if="totalAmount === 0" class="text-center py-4">
                       <v-icon color="success" size="64" class="mb-4">mdi-ticket-percent-outline</v-icon>
-                      <h3 class="text-h5 font-weight-bold mb-2">Free Registration</h3>
+                      <h3 class="text-h5 font-weight-bold mb-2">{{ t('pages.checkout.free_reg_title') }}</h3>
                       <p class="text-body-1 text-medium-emphasis mb-6">
-                        No payment is required for this order. Click below to complete your registration.
+                        {{ t('pages.checkout.free_reg_desc') }}
                       </p>
                       
                       <v-btn
@@ -934,7 +938,7 @@
                         min-width="200"
                         class="font-weight-bold"
                       >
-                        Complete Registration <v-icon end>mdi-check</v-icon>
+                        {{ t('pages.checkout.complete_reg') }} <v-icon end>mdi-check</v-icon>
                       </v-btn>
                       
                       <div class="mt-4">
@@ -945,7 +949,7 @@
                           :rounded="rounded"
                           size="small"
                         >
-                          <v-icon start>mdi-arrow-left</v-icon> Back to Options
+                          <v-icon start>mdi-arrow-left</v-icon> {{ t('pages.checkout.back_options') }}
                         </v-btn>
                       </div>
                     </div>
@@ -968,7 +972,7 @@
                         ref="paymentComponent"
                         :session-id="sessionId"
                         :total-amount="totalAmount"
-                        :currency="event?.currency || 'USD'"
+                        :currency="event?.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'XOF'"
                         :payment-url="paymentUrl"
                         @error="store.commit('addSnackbar', { text: $event, color: 'error' })"
                         @loaded="paymentElementLoaded = true"
@@ -994,7 +998,7 @@
                         @click="handlePayment"
                       >
                         <v-icon start>mdi-lock-outline</v-icon>
-                        Complete Purchase
+                        {{ t('pages.checkout.complete_purchase') }}
                       </v-btn>
                     </div>
 

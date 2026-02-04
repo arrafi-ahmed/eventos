@@ -1,0 +1,159 @@
+{
+    "tickets": {
+        "title": "Available Tickets",
+        "subtitle": "Select your tickets",
+        "browse_shop": "Browse Shop",
+        "loading": "Loading tickets...",
+        "no_tickets": {
+            "title": "No Tickets Available Yet",
+            "desc": "Tickets for this event have not been created by the organizer yet. Please check back later or contact the event organizer for more information.",
+            "back_btn": "Back to Event"
+        },
+        "card": {
+            "in_cart": "In Cart",
+            "early_bird": "Early Bird",
+            "available": "{count} Available",
+            "status": {
+                "coming_soon": "Coming Soon",
+                "sale_ended": "Sale Ended",
+                "ends": "Ends {date}"
+            },
+            "discount": "SAVE {percent}%",
+            "add_to_cart": "Add to Cart",
+            "sold_out": "Sold Out",
+            "unavailable": "Unavailable"
+        },
+        "errors": {
+            "limit_reached": "You can select up to {max} tickets per registration"
+        }
+    },
+    "attendee": {
+        "title": "Attendee Information",
+        "subtitle": "Details for participants",
+        "progress": "Attendee {current} of {total}",
+        "form": {
+            "ticket_type": "Ticket Type",
+            "first_name": "First Name",
+            "last_name": "Last Name",
+            "email": "Email",
+            "phone": "Phone Number"
+        },
+        "buttons": {
+            "prev": "Previous",
+            "next": "Next Attendee",
+            "complete": "Complete Registration"
+        },
+        "rules": {
+            "ticket_required": "Ticket type is required",
+            "first_name_required": "First name is required",
+            "last_name_required": "Last name is required",
+            "email_required": "Email is required",
+            "email_invalid": "Email must be valid",
+            "max_length": "Must not exceed 50 characters"
+        },
+        "messages": {
+            "no_tickets": "No ticket data found. Please return to tickets page.",
+            "failed_proceed": "Failed to proceed to checkout. Please try again."
+        }
+    },
+    "checkout": {
+        "title": "Checkout",
+        "recovery": {
+            "title": "Booking Already Successful!",
+            "desc": "We found a completed booking for this session. You can view your tickets now or start a new booking if this wasn't you.",
+            "view_btn": "View Tickets",
+            "dismiss_btn": "Dismiss"
+        },
+        "empty": {
+            "title": "Your Cart is Empty",
+            "desc": "You don't have any tickets or products in your cart. Please select items to continue with checkout.",
+            "back_btn": "Go to Registration"
+        },
+        "summary": {
+            "title": "Order Summary",
+            "ticket": "Ticket",
+            "product": "Product",
+            "qty": "Qty: {count}",
+            "subtotal": "Subtotal",
+            "discount": "Discount ({code})",
+            "shipping": "Shipping",
+            "tax": "Tax",
+            "total": "Total"
+        },
+        "stepper": {
+            "step1": {
+                "title": "Order Options",
+                "shipping": {
+                    "title": "Shipping Selection",
+                    "label": "Shipping Method",
+                    "pickup": "Pickup: {location}"
+                },
+                "promo": {
+                    "title": "Promo Code",
+                    "apply": "Apply",
+                    "applied": "Applied: {code}",
+                    "remove": "Remove"
+                },
+                "continue": "Continue to Payment",
+                "confirm": "Proceed to Confirmation"
+            },
+            "step2": {
+                "title": "Payment Method",
+                "methods": {
+                    "card": {
+                        "label": "Credit / Debit Card",
+                        "desc": "Secure payment via Stripe"
+                    },
+                    "om": {
+                        "label": "Orange Money",
+                        "desc": "Pay with OM mobile wallet"
+                    }
+                },
+                "continue": "Continue",
+                "back": "Back"
+            },
+            "step3": {
+                "title": "Confirmation",
+                "pay_title": "Payment",
+                "pay_btn": "Complete Checkout",
+                "pay_amount": "Pay {amount}"
+            }
+        },
+        "messages": {
+            "init_failed": "Failed to initialize payment",
+            "wrong_event": "This checkout link is for a different event. Please select tickets for this event.",
+            "init_error": "Failed to initialize checkout. Please try again.",
+            "promo_error": "Failed to apply promo code"
+        }
+    },
+    "cart": {
+        "title": "Cart",
+        "items_count": "{count} item",
+        "items_count_plural": "{count} items",
+        "empty": {
+            "title": "Your cart is empty",
+            "subtitle": "Select tickets or products to get started",
+            "continue_btn": "Continue Shopping"
+        },
+        "item": {
+            "each": "each"
+        },
+        "summary": {
+            "subtotal": "Subtotal",
+            "shipping": "Shipping",
+            "total": "Total",
+            "checkout_btn": "Checkout",
+            "continue_btn": "Continue Shopping"
+        },
+        "bar": {
+            "tickets": "{count} ticket",
+            "tickets_plural": "{count} tickets",
+            "products": "{count} product",
+            "products_plural": "{count} products",
+            "selected": "selected",
+            "total": "Total: {amount}",
+            "continue_reg": "Continue to Registration",
+            "continue_short": "Continue?"
+        }
+    }
+}

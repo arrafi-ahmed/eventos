@@ -248,21 +248,6 @@
                     {{groupMessage}}</p>
             </div>
 
-            {{#if qrCodeExtras}}
-            <div class="qr-section">
-                <div class="section-title" style="color: {{header.primaryColor}}; justify-content: center;">🧧 Voucher
-                    QR Code</div>
-                {{#each extrasList}}
-                <div
-                    style="background: #f1f5f9; padding: 8px 16px; border-radius: 9999px; display: inline-block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">
-                    {{this.name}}</div>
-                {{/each}}
-                <br>
-                <div class="qr-container">
-                    <img src="cid:qrCodeExtras" alt="Voucher QR Code">
-                </div>
-            </div>
-            {{/if}}
         </div>
 
         <div class="footer">

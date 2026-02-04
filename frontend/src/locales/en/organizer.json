@@ -1,0 +1,91 @@
+{
+    "dashboard": {
+        "title": "Organizer Dashboard",
+        "subtitle": "Overview of your events and sales performance",
+        "create_event": "Create Event",
+        "no_events": "No events found. Start by creating your first event!"
+    },
+    "config": {
+        "title": "Event Configuration",
+        "loading": "Loading configuration...",
+        "sections": {
+            "tickets": "Tickets & Registration",
+            "schedule": "Schedule & Timing",
+            "commerce": "Commerce & Logistics",
+            "marketing": "Automated Marketing",
+            "payments": "Payment Methods"
+        },
+        "fields": {
+            "max_tickets": "Max Ticket Purchase Per Registration",
+            "unique_qr": "Unique QR Code per Ticket",
+            "unique_qr_hint": "When enabled, each ticket issues a unique QR code. When disabled, one QR code is issued for the entire group (Bulk Registration).",
+            "onsite_quota": "Enable On-site Quota Management",
+            "onsite_quota_hint": "When enabled, you can reserve a portion of ticket stock for on-site (box office) sales. Online sales will stop once the quota is reached.",
+            "default_quota": "Default On-site Quota (Ticket Count)",
+            "low_stock": "Default Low Stock Threshold (Ticket Count)",
+            "quota_defaults_hint": "These values will be applied as defaults to new tickets. You can still override them per ticket.",
+            "all_day": "All Day Event",
+            "all_day_hint": "Enable if this event lasts the entire day (no specific start or end time).",
+            "single_day": "Single Day Event",
+            "single_day_hint": "Turn off if this event continues for multiple days.",
+            "show_end_time": "Show End Time",
+            "show_end_time_hint": "When enabled, the event end time will be displayed on customer-facing pages.",
+            "date_format": "Date Format",
+            "date_format_hint": "Choose how dates will be displayed on customer-facing pages",
+            "enable_shop": "Enable Merchandise Shop",
+            "enable_shop_hint": "Displays a merchandise section on the event page so attendees can buy goods with their tickets.",
+            "disable_delivery": "Disable Delivery",
+            "disable_delivery_hint": "When enabled, only pickup option will be available during checkout and delivery will be disabled.",
+            "shipping_fee": "Shipping Fee",
+            "abandoned_cart": "Enable Abandoned Cart Email Reminders",
+            "abandoned_cart_hint": "When enabled, automated reminder emails will be sent to users who abandon their cart (expired temp registrations). Emails are sent via cron job every 6-12 hours.",
+            "payment_methods_desc": "Select the payment gateways you want to enable for this event.",
+            "payment_warning": "You must select at least one payment method for paid tickets.",
+            "stripe": "Stripe (Credit/Debit Cards, Google Pay, Apple Pay)",
+            "om": "Orange Money (Mobile Money)"
+        },
+        "save": "Save"
+    },
+    "add_event": {
+        "title": "Add Event",
+        "fields": {
+            "name": "Event Name",
+            "description": "Description (optional)",
+            "location": "Location (optional)",
+            "slug": "URL Slug (optional)",
+            "slug_hint": "Custom URL for your event (e.g., 'event-name-2024'). Leave empty to auto-generate from event name.",
+            "date": "Event Date",
+            "start_time": "Start Time",
+            "end_time": "End Time",
+            "tax_type": "Tax Type",
+            "tax_amount": "Tax Amount",
+            "banner": "Upload Banner",
+            "tax_types": {
+                "percent": "Percentage %",
+                "fixed": "Fixed amount"
+            }
+        },
+        "buttons": {
+            "config": "Configuration",
+            "create": "Create"
+        }
+    },
+    "counters": {
+        "title": "Ticket Counters",
+        "subtitle": "Manage physical points of sale for your organization",
+        "add": "Add Counter",
+        "edit": "Edit Counter",
+        "no_data_title": "No Counters Found",
+        "no_data": "No ticket counters found. Start by adding one to begin onsite sales.",
+        "form": {
+            "name": "Counter Name",
+            "status": "Counter Status (Active/Inactive)"
+        },
+        "table": {
+            "name": "Name",
+            "status": "Status",
+            "created": "Created",
+            "actions": "Actions"
+        }
+    }
+}

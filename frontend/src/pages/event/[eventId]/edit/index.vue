@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, reactive, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -18,6 +19,7 @@
     meta: {
       layout: 'default',
       title: 'Edit Event',
+      titleKey: 'pages.event.edit_title',
       requiresOrganizer: true,
       requiresAuth: true,
     },
@@ -28,6 +30,7 @@
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
+  const { t } = useI18n()
 
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
   const prefetchedEvent = computed(() => store.getters['event/getEventById'](route.params.eventId))
@@ -186,7 +189,7 @@
     <!-- Header Section -->
     <PageTitle
       :subtitle="event?.name"
-      title="Edit Event"
+      :title="t('pages.event.edit_title')"
     />
 
     <v-row v-if="isLoading" justify="center">
@@ -245,7 +248,7 @@
                 :variant="variant"
               >
                 <template #label>
-                  <span>Event Name</span>
+                  <span>{{ t('pages.event.name_label') }}</span>
                   <span class="text-error">*</span>
                 </template>
               </v-text-field>
@@ -256,7 +259,7 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Description (optional)"
+                :label="t('pages.event.desc_label')"
                 prepend-inner-icon="mdi-text-box"
                 :rounded="rounded"
                 rows="3"
@@ -269,7 +272,7 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Location (optional)"
+                :label="t('pages.event.loc_label')"
                 prepend-inner-icon="mdi-map-marker"
                 :rounded="rounded"
                 :variant="variant"
@@ -277,7 +280,7 @@
 
               <CurrencySelector
                 v-model="newEvent.currency"
-                label="Currency"
+                :label="t('pages.event.currency_label')"
                 :required="true"
               />
 
@@ -289,8 +292,8 @@
                 :density="density"
                 :disabled="!newEvent.name"
                 hide-details="auto"
-                hint="Custom URL for your event (e.g., 'conference-2024'). Leave empty to auto-generate from event name."
-                label="URL Slug (optional)"
+                :hint="t('pages.event.slug_hint')"
+                :label="t('pages.event.slug_label')"
                 persistent-hint
                 prepend-inner-icon="mdi-link"
                 :rounded="rounded"
@@ -352,7 +355,7 @@
                   <TimePicker
                     v-model="newEvent.startTime"
                     :density="density"
-                    label="Start Time"
+                    :label="t('pages.event.start_time')"
                     :rounded="rounded"
                     show-icon
                     :variant="variant"
@@ -362,7 +365,7 @@
                   <TimePicker
                     v-model="newEvent.endTime"
                     :density="density"
-                    label="End Time"
+                    :label="t('pages.event.end_time')"
                     :rounded="rounded"
                     show-icon
                     :variant="variant"
@@ -385,7 +388,7 @@
                       { value: 'percent', text: 'Percentage %' },
                       { value: 'fixed', text: 'Fixed amount' },
                     ]"
-                    label="Tax Type"
+                    :label="t('pages.event.tax_type')"
                     prepend-inner-icon="mdi-percent"
                     :rounded="rounded"
                     :variant="variant"
@@ -399,7 +402,7 @@
                     v-model.number="newEvent.taxAmount"
                     :density="density"
                     hide-details="auto"
-                    label="Tax Amount"
+                    :label="t('pages.event.tax_amount')"
                     prepend-inner-icon="mdi-currency-usd"
                     :rounded="rounded"
                     type="number"
@@ -422,7 +425,7 @@
                 density="compact"
                 :rounded="rounded"
                 show-size
-                title="Update Banner"
+                :title="t('pages.event.update_banner')"
                 :variant="variant"
                 @update:model-value="handleBannerUpdate"
               />
@@ -492,7 +495,7 @@
                   :to="{ name: 'event-config', params: { eventId: newEvent.id } }"
                   variant="outlined"
                 >
-                  Configuration
+                  {{ t('pages.event.configuration') }}
                 </v-btn>
                 <v-spacer />
                 <v-btn
@@ -501,7 +504,9 @@
                   :size="xs ? 'default' : 'large'"
                   type="submit"
                 >
-                  Save
+                  type="submit"
+                >
+                  {{ t('pages.event.save') }}
                 </v-btn>
               </div>
             </v-form>

@@ -53,9 +53,13 @@
             class="mb-4"
           >
             <DigitalTicketCard
+              :app-name="$store.state.systemSettings?.settings?.header?.organizationName"
               :attendee="attendee"
               :event-name="order.eventName"
               :location="order.eventLocation"
+              :logo="$store.state.systemSettings?.settings?.header?.logoImage ? `${$axios.defaults.baseURL}/header-logo/${$store.state.systemSettings.settings.header.logoImage}` : null"
+              :logo-position="$store.state.systemSettings?.settings?.header?.logoPosition || 'left'"
+              :primary-color="$store.state.systemSettings?.settings?.appearance?.lightColors?.primary || '#ED2939'"
               :qr-uuid="attendee.qrUuid"
               :registration-id="order.registrationId"
               :start-date="order.eventDate"

@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
@@ -13,9 +14,11 @@
     meta: {
       layout: 'default',
       title: 'Attendee Information',
+      titleKey: 'pages.tickets.attendee_form',
     },
   })
 
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
@@ -233,7 +236,8 @@
         :compact="true"
         :show-back-button="true"
         :subtitle="event?.name"
-        title="Attendee Details"
+        :title="t('pages.tickets.attendee_form')"
+        :title-key="'pages.tickets.attendee_form'"
       />
 
       <!-- Main Content -->

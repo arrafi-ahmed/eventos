@@ -1,0 +1,42 @@
+{
+    "title": "Profil",
+    "meta_title": "Profil",
+    "subtitle": "Gérez votre profil, votre thème et l'accès à votre compte",
+    "edit_organization": "Modifier l'organisation",
+    "sections": {
+        "update_profile": {
+            "title": "Mettre à jour le profil",
+            "password_hint": "La modification de votre e-mail ou de votre mot de passe nécessite votre mot de passe actuel.",
+            "no_changes": "Aucun changement détecté.",
+            "mismatch": "Les nouveaux mots de passe ne correspondent pas.",
+            "save_btn": "Enregistrer les modifications"
+        },
+        "appearance": {
+            "title": "Apparence",
+            "hint": "Les changements de thème s'appliquent instantanément et sont enregistrés sur votre compte.",
+            "dark_mode": "Mode sombre",
+            "dark_mode_desc": "Basculer entre l'expérience claire et sombre"
+        },
+        "delete_account": {
+            "title": "Supprimer le profil",
+            "hint": "Cette action est permanente. Toutes les données associées à votre compte seront supprimées si possible.",
+            "confirm_label": "Tapez votre e-mail ({email}) pour confirmer",
+            "confirm_required": "La confirmation est obligatoire",
+            "password_required": "Le mot de passe actuel est obligatoire",
+            "delete_btn": "Supprimer le compte",
+            "popup_title": "Supprimer le compte",
+            "popup_content": "Êtes-vous absolument sûr ? Cette action est irréversible.",
+            "confirm_email_hint": "Veuillez saisir votre e-mail pour confirmer la suppression."
+        }
+    },
+    "labels": {
+        "full_name": "Nom complet",
+        "email": "E-mail",
+        "current_password": "Mot de passe actuel",
+        "new_password": "Nouveau mot de passe",
+        "confirm_new_password": "Confirmer le nouveau mot de passe"
+    },
+    "rules": {
+        "name_required": "Le nom complet est obligatoire"
+    }
+}

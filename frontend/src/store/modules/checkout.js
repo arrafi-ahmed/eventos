@@ -131,10 +131,10 @@ export const mutations = {
 }
 
 export const actions = {
-  addTicket({ commit, state, rootState }, ticket) {
-    // If cart is empty, set the current event slug
-    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0 && !state.cartEventSlug) {
-      const currentSlug = rootState.route?.params?.slug
+  async addTicket({ commit, state, rootState, dispatch }, ticket) {
+    // Always sync slug if cart is empty
+    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0) {
+      const currentSlug = rootState.routeInfo?.to?.params?.slug
       if (currentSlug) {
         commit('setCartEventSlug', currentSlug)
       }
@@ -142,24 +142,21 @@ export const actions = {
 
     const existingIndex = state.selectedTickets.findIndex(t => t.ticketId === ticket.ticketId)
     if (existingIndex === -1) {
-      // Add new ticket
       commit('addTicket', ticket)
     } else {
-      // Update existing ticket
       const updatedTickets = [...state.selectedTickets]
       updatedTickets[existingIndex] = ticket
       commit('setSelectedTickets', updatedTickets)
     }
     commit('setCheckoutExists', true)
-    // Clear sessionId when items change
     localStorage.removeItem('tempSessionId')
     localStorage.removeItem('cartHash')
   },
 
-  addProduct({ commit, state, rootState }, product) {
-    // If cart is empty, set the current event slug
-    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0 && !state.cartEventSlug) {
-      const currentSlug = rootState.route?.params?.slug
+  async addProduct({ commit, state, rootState }, product) {
+    // Always sync slug if cart is empty
+    if (state.selectedTickets.length === 0 && state.selectedProducts.length === 0) {
+      const currentSlug = rootState.routeInfo?.to?.params?.slug
       if (currentSlug) {
         commit('setCartEventSlug', currentSlug)
       }
@@ -167,16 +164,13 @@ export const actions = {
 
     const existingIndex = state.selectedProducts.findIndex(p => p.productId === product.productId)
     if (existingIndex === -1) {
-      // Add new product
       commit('addProduct', product)
     } else {
-      // Update existing product
       const updatedProducts = [...state.selectedProducts]
       updatedProducts[existingIndex] = product
       commit('setSelectedProducts', updatedProducts)
     }
     commit('setCheckoutExists', true)
-    // Clear sessionId when items change
     localStorage.removeItem('tempSessionId')
     localStorage.removeItem('cartHash')
   },
@@ -185,7 +179,6 @@ export const actions = {
     const remainingTickets = state.selectedTickets.filter(t => t.ticketId !== ticketId)
     commit('removeTicket', ticketId)
     commit('setCheckoutExists', remainingTickets.length > 0 || state.selectedProducts.length > 0)
-    // Clear sessionId when items change
     localStorage.removeItem('tempSessionId')
     localStorage.removeItem('cartHash')
   },
@@ -194,37 +187,19 @@ export const actions = {
     const remainingProducts = state.selectedProducts.filter(p => p.productId !== productId)
     commit('removeProduct', productId)
     commit('setCheckoutExists', state.selectedTickets.length > 0 || remainingProducts.length > 0)
-    // Clear sessionId when items change
     localStorage.removeItem('tempSessionId')
     localStorage.removeItem('cartHash')
   },
 
   clearCheckout({ commit }) {
     commit('clearCheckout')
-
-    // Clear from localStorage
     const keysToRemove = [
-      'selectedTickets',
-      'selectedProducts',
-      'isCheckoutExist',
-      'totalAmount',
-      'attendeesData',
-      'registrationData',
-      'tempSessionId',
-      'cartHash',
-      'sponsorshipData',
-      'selectedShippingOption',
-      'shippingAddress',
-      'paymentIntentId',
-      'clientSecret',
+      'selectedTickets', 'selectedProducts', 'isCheckoutExist', 'totalAmount',
+      'attendeesData', 'registrationData', 'tempSessionId', 'cartHash',
+      'selectedShippingOption', 'shippingAddress', 'paymentIntentId', 'clientSecret',
     ]
-
     for (const key of keysToRemove) {
-      try {
-        localStorage.removeItem(key)
-      } catch (error) {
-        console.warn(`Failed to remove localStorage key: ${key}`, error)
-      }
+      try { localStorage.removeItem(key) } catch (error) { }
     }
   },
 
@@ -236,14 +211,43 @@ export const actions = {
     commit('setCartEventSlug', getFromStorage('cartEventSlug', null))
   },
 
-  // Clear all data and reset to initial state
   resetAll({ dispatch }) {
     dispatch('clearCheckout')
   },
 
-  // Handle routing logic for checkout/attendee-form
-  goToCheckout({ state, rootState, commit, dispatch }, { router, route }) {
-    // Load registration data from localStorage
+  checkMismatch({ state, getters }, currentSlug) {
+    if (!currentSlug) return { mismatch: false }
+
+    // Check if we have items
+    const hasItems = getters.totalItems > 0 ||
+      getFromStorage('selectedTickets', []).length > 0 ||
+      getFromStorage('selectedProducts', []).length > 0
+
+    let storedSlug = state.cartEventSlug || getFromStorage('cartEventSlug', null)
+
+    console.log('[checkMismatch] Checking:', { currentSlug, storedSlug, hasItems })
+
+    if (hasItems && storedSlug && String(storedSlug).trim() !== String(currentSlug).trim()) {
+      console.warn('[checkMismatch] MISMATCH FOUND:', { storedSlug, currentSlug })
+      return { mismatch: true, storedSlug }
+    }
+
+    return { mismatch: false }
+  },
+
+  enforceExclusivity({ commit, state, getters }, currentSlug) {
+    if (!currentSlug) return
+
+    const hasItems = getters.totalItems > 0 ||
+      getFromStorage('selectedTickets', []).length > 0 ||
+      getFromStorage('selectedProducts', []).length > 0
+
+    if (!hasItems) {
+      commit('setCartEventSlug', currentSlug)
+    }
+  },
+
+  goToCheckout({ state, rootState, commit }, { router, route }) {
     const storedData = localStorage.getItem('registrationData')
     const storedAttendee = localStorage.getItem('attendeesData')
 
@@ -253,81 +257,41 @@ export const actions = {
     }
 
     let registrationData
-    try {
-      registrationData = JSON.parse(storedData)
-    } catch {
-      commit('addSnackbar', {
-        text: 'Invalid registration data. Please complete the registration form again.',
-        color: 'error',
-      }, { root: true })
-      return
-    }
+    try { registrationData = JSON.parse(storedData) } catch { return }
 
-    // Validate registration data
-    if (!registrationData.eventId) {
-      commit('addSnackbar', { text: 'Please complete the registration form first', color: 'error' }, { root: true })
-      return
-    }
+    if (!registrationData.eventId) { return }
 
-    // Save tickets to localStorage
-    const transformedTickets = state.selectedTickets.map(ticket => {
-      return {
-        ticketId: ticket.ticketId,
-        title: ticket.title,
-        price: Number(ticket.price || 0),
-        quantity: Number(ticket.quantity || 1),
-      }
-    })
+    const transformedTickets = state.selectedTickets.map(ticket => ({
+      ticketId: ticket.ticketId,
+      title: ticket.title,
+      price: Number(ticket.price || 0),
+      quantity: Number(ticket.quantity || 1),
+    }))
     localStorage.setItem('selectedTickets', JSON.stringify(transformedTickets))
 
-    // Save products to localStorage
     const selectedProductItems = rootState.event.event?.config?.enableMerchandiseShop
-      ? state.selectedProducts.filter(item => item.quantity > 0).map(product => {
-        return {
-          productId: product.productId,
-          name: product.name,
-          price: Number(product.price || 0),
-          quantity: Number(product.quantity || 1),
-        }
-      })
+      ? state.selectedProducts.filter(item => item.quantity > 0).map(product => ({
+        productId: product.productId,
+        name: product.name,
+        price: Number(product.price || 0),
+        quantity: Number(product.quantity || 1),
+      }))
       : []
     localStorage.setItem('selectedProducts', JSON.stringify(selectedProductItems))
 
-    // Determine if we can skip the attendee-form
-    // If saveAllAttendeesDetails is false, we only ever need one (the primary) attendee's info
-    // which we already collected on the landing page.
     const saveAllAttendeesDetails = rootState.event.event?.config?.saveAllAttendeesDetails === true
-    const shouldSkipAttendeeForm = !saveAllAttendeesDetails
-
-    if (shouldSkipAttendeeForm) {
+    if (!saveAllAttendeesDetails) {
       const [parsedAttendee] = JSON.parse(storedAttendee)
-      // Single/Group order with simplified details: go directly to checkout
-      // Create a single attendee entry for the group from the primary attendee
-      const primaryAttendee = {
+      localStorage.setItem('attendeesData', JSON.stringify([{
         firstName: parsedAttendee.firstName || '',
         lastName: parsedAttendee.lastName || '',
         email: parsedAttendee.email || '',
         phone: parsedAttendee.phone || '',
         isPrimary: true,
-      }
-
-      localStorage.setItem('attendeesData', JSON.stringify([primaryAttendee]))
-
-      // Navigate to checkout
-      router.push({
-        name: 'checkout-slug',
-        params: {
-          slug: route.params.slug,
-        },
-      })
+      }]))
+      router.push({ name: 'checkout-slug', params: { slug: route.params.slug } })
     } else {
-      // Multi-attendee details enabled: go to attendee form page
-      router.push({
-        name: 'attendee-form-slug',
-        params: {
-          slug: route.params.slug,
-        },
-      })
+      router.push({ name: 'attendee-form-slug', params: { slug: route.params.slug } })
     }
   },
 }
@@ -337,5 +301,5 @@ export const getters = {
   selectedTickets: state => state.selectedTickets,
   selectedProducts: state => state.selectedProducts,
   totalAmount: state => state.totalAmount,
-  totalItems: state => state.selectedTickets.length + state.selectedProducts.length,
+  totalItems: state => (state.selectedTickets?.length || 0) + (state.selectedProducts?.length || 0),
 }

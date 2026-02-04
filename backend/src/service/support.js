@@ -1,6 +1,6 @@
-const {query} = require("../db");
+const { query } = require("../db");
 const CustomError = require("../model/CustomError");
-const {v4: uuidv4} = require("uuid");
+const { v4: uuidv4 } = require("uuid");
 const emailService = require("./email");
 const orderService = require("./order");
 const registrationService = require("./registration");
@@ -8,7 +8,7 @@ const attendeesService = require("./attendees");
 const eventService = require("./event");
 const checkinService = require("./checkin");
 const llmSupport = require("./llmSupport");
-const {hasAnyIntentWithOrderNumber} = require("../config/supportIntents");
+const { hasAnyIntentWithOrderNumber } = require("../config/supportIntents");
 
 // ============================================
 // SESSION MANAGEMENT
@@ -17,7 +17,7 @@ const {hasAnyIntentWithOrderNumber} = require("../config/supportIntents");
 /**
  * Get support session by session ID
  */
-exports.getSession = async ({sessionId}) => {
+exports.getSession = async ({ sessionId }) => {
     if (!sessionId) {
         return null;
     }
@@ -34,7 +34,7 @@ exports.getSession = async ({sessionId}) => {
  * Save support session (create or update)
  * Uses ON CONFLICT to handle upsert
  */
-exports.saveSession = async ({sessionId, userId = null, userEmail = null, summary = null, lastIntent = null, status = 'active'}) => {
+exports.saveSession = async ({ sessionId, userId = null, userEmail = null, summary = null, lastIntent = null, status = 'active' }) => {
     if (!sessionId) {
         // Generate new session ID if not provided
         sessionId = `support_${Date.now()}_${uuidv4()}`;
@@ -73,7 +73,7 @@ exports.saveSession = async ({sessionId, userId = null, userEmail = null, summar
 /**
  * Get session history (last N messages)
  */
-exports.getSessionHistory = async ({sessionId, limit = 10}) => {
+exports.getSessionHistory = async ({ sessionId, limit = 10 }) => {
     const result = await query(
         `SELECT role, content, intent, confidence, slots, created_at
          FROM support_messages
@@ -90,7 +90,7 @@ exports.getSessionHistory = async ({sessionId, limit = 10}) => {
 /**
  * Save message to session
  */
-exports.saveMessage = async ({sessionId, role, content, intent = null, confidence = null, slots = null}) => {
+exports.saveMessage = async ({ sessionId, role, content, intent = null, confidence = null, slots = null }) => {
     const result = await query(
         `INSERT INTO support_messages (session_id, role, content, intent, confidence, slots, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *`,
@@ -114,9 +114,9 @@ exports.saveMessage = async ({sessionId, role, content, intent = null, confidenc
  * Update session summary
  * Also updates last_summarized_message_count to current message_count
  */
-exports.updateSessionSummary = async ({sessionId, summary}) => {
-    const session = await exports.getSession({sessionId});
-    
+exports.updateSessionSummary = async ({ sessionId, summary }) => {
+    const session = await exports.getSession({ sessionId });
+
     if (!session) {
         throw new CustomError("Session not found", 404);
     }
@@ -144,7 +144,7 @@ exports.updateSessionSummary = async ({sessionId, summary}) => {
  * Uses incremental counter (message_count - last_summarized_message_count) instead of COUNT(*)
  * This scales efficiently to millions of messages without expensive queries
  */
-exports.summarizeIfNeeded = async ({sessionId}) => {
+exports.summarizeIfNeeded = async ({ sessionId }) => {
     // Get current message count and last summarized count (O(1) lookup, no COUNT query)
     const sessionResult = await query(
         `SELECT message_count, last_summarized_message_count, summary 
@@ -165,7 +165,7 @@ exports.summarizeIfNeeded = async ({sessionId}) => {
     // Summarize every 5 messages (threshold can be adjusted)
     // Using >= ensures we trigger if we've crossed the threshold (e.g., at 5, 10, 15, etc.)
     if (messageCount > 0 && messagesSinceLastSummary >= 5) {
-        const messages = await exports.getSessionHistory({sessionId, limit: 15});
+        const messages = await exports.getSessionHistory({ sessionId, limit: 15 });
         const formattedMessages = messages.map(m => ({
             role: m.role,
             content: m.content
@@ -176,7 +176,7 @@ exports.summarizeIfNeeded = async ({sessionId}) => {
             currentSummary: session.summary || null
         });
 
-        await exports.updateSessionSummary({sessionId, summary});
+        await exports.updateSessionSummary({ sessionId, summary });
         return summary;
     }
 
@@ -190,7 +190,7 @@ exports.summarizeIfNeeded = async ({sessionId}) => {
 /**
  * Find order by email and order number
  */
-exports.findOrderByEmailAndNumber = async ({email, orderNumber}) => {
+exports.findOrderByEmailAndNumber = async ({ email, orderNumber }) => {
     if (!email) {
         throw new CustomError("Email is required", 400);
     }
@@ -218,7 +218,7 @@ exports.findOrderByEmailAndNumber = async ({email, orderNumber}) => {
 /**
  * Find order by order number only
  */
-exports.findOrderByNumber = async ({orderNumber}) => {
+exports.findOrderByNumber = async ({ orderNumber }) => {
     if (!orderNumber) {
         throw new CustomError("Order number is required", 400);
     }
@@ -238,7 +238,7 @@ exports.findOrderByNumber = async ({orderNumber}) => {
  * Get recent order numbers for a user by email
  * Returns up to 3 most recent order numbers (human-readable, not IDs)
  */
-exports.getRecentOrderNumbers = async ({email, limit = 3}) => {
+exports.getRecentOrderNumbers = async ({ email, limit = 3 }) => {
     if (!email) {
         return [];
     }
@@ -264,7 +264,7 @@ exports.getRecentOrderNumbers = async ({email, limit = 3}) => {
 /**
  * Generate and store OTP
  */
-exports.generateOTP = async ({email, purpose, supportRequestId = null}) => {
+exports.generateOTP = async ({ email, purpose, supportRequestId = null }) => {
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -290,7 +290,7 @@ exports.generateOTP = async ({email, purpose, supportRequestId = null}) => {
 /**
  * Verify OTP
  */
-exports.verifyOTP = async ({email, purpose, code}) => {
+exports.verifyOTP = async ({ email, purpose, code }) => {
     const result = await query(
         `SELECT * FROM support_otp
          WHERE email = $1 AND purpose = $2 AND code = $3 AND is_used = false AND expires_at > NOW()`,
@@ -346,7 +346,7 @@ exports.createSupportRequest = async ({
 /**
  * Update support request result
  */
-exports.updateSupportRequest = async ({requestId, status, actionResult}) => {
+exports.updateSupportRequest = async ({ requestId, status, actionResult }) => {
     const result = await query(
         `UPDATE support_requests
          SET status = $1, action_result = $2, resolved_at = NOW()
@@ -364,8 +364,8 @@ exports.updateSupportRequest = async ({requestId, status, actionResult}) => {
 /**
  * 1. Resend Ticket
  */
-exports.handleResendTicket = async ({email, orderNumber, newEmail = null}) => {
-    const order = await exports.findOrderByEmailAndNumber({email, orderNumber});
+exports.handleResendTicket = async ({ email, orderNumber, newEmail = null }) => {
+    const order = await exports.findOrderByEmailAndNumber({ email, orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found with the provided information", 404);
@@ -394,8 +394,8 @@ exports.handleResendTicket = async ({email, orderNumber, newEmail = null}) => {
 /**
  * 2. Check Payment Status
  */
-exports.handleCheckPaymentStatus = async ({email, orderNumber}) => {
-    const order = await exports.findOrderByEmailAndNumber({email, orderNumber});
+exports.handleCheckPaymentStatus = async ({ email, orderNumber }) => {
+    const order = await exports.findOrderByEmailAndNumber({ email, orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found with the provided information", 404);
@@ -414,8 +414,8 @@ exports.handleCheckPaymentStatus = async ({email, orderNumber}) => {
 /**
  * 4. Check Check-in Status
  */
-exports.handleCheckCheckinStatus = async ({email, orderNumber}) => {
-    const order = await exports.findOrderByEmailAndNumber({email, orderNumber});
+exports.handleCheckCheckinStatus = async ({ email, orderNumber }) => {
+    const order = await exports.findOrderByEmailAndNumber({ email, orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found with the provided information", 404);
@@ -439,13 +439,13 @@ exports.handleCheckCheckinStatus = async ({email, orderNumber}) => {
         const firstName = (attendee.firstName || '').trim();
         const lastName = (attendee.lastName || '').trim();
         let name = `${firstName} ${lastName}`.trim();
-        
+
         // If name is empty or looks like invalid/test data (short lowercase names like "loop jki"), 
         // set to null so frontend can use email instead
         if (!name || name === 'Attendee' || (name.length < 10 && /^[a-z]+\s[a-z]+$/.test(name))) {
             name = null; // Let frontend decide to use email instead
         }
-        
+
         return {
             attendeeId: attendee.id,
             name: name, // null if invalid, so frontend can fallback to email
@@ -468,8 +468,8 @@ exports.handleCheckCheckinStatus = async ({email, orderNumber}) => {
 /**
  * 5. Track Shipment
  */
-exports.handleTrackShipment = async ({email, orderNumber}) => {
-    const order = await exports.findOrderByEmailAndNumber({email, orderNumber});
+exports.handleTrackShipment = async ({ email, orderNumber }) => {
+    const order = await exports.findOrderByEmailAndNumber({ email, orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found with the provided information", 404);
@@ -499,8 +499,8 @@ exports.handleTrackShipment = async ({email, orderNumber}) => {
 /**
  * 6. Update Shipping Address
  */
-exports.handleUpdateShippingAddress = async ({orderNumber, newAddress}) => {
-    const order = await exports.findOrderByNumber({orderNumber});
+exports.handleUpdateShippingAddress = async ({ orderNumber, newAddress }) => {
+    const order = await exports.findOrderByNumber({ orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found", 404);
@@ -528,8 +528,8 @@ exports.handleUpdateShippingAddress = async ({orderNumber, newAddress}) => {
 /**
  * 7. Update Attendee Info
  */
-exports.handleUpdateAttendeeInfo = async ({orderNumber, attendeeId, fieldToUpdate, newValue}) => {
-    const order = await exports.findOrderByNumber({orderNumber});
+exports.handleUpdateAttendeeInfo = async ({ orderNumber, attendeeId, fieldToUpdate, newValue }) => {
+    const order = await exports.findOrderByNumber({ orderNumber });
 
     if (!order) {
         throw new CustomError("Order not found", 404);
@@ -573,7 +573,7 @@ exports.handleUpdateAttendeeInfo = async ({orderNumber, attendeeId, fieldToUpdat
 /**
  * 9. View Order Details
  */
-exports.handleViewOrderDetails = async ({email, orderNumber}) => {
+exports.handleViewOrderDetails = async ({ email, orderNumber }) => {
     // Get order with event name in a single optimized query
     let sql = `
         SELECT o.*, 
@@ -620,7 +620,7 @@ exports.handleViewOrderDetails = async ({email, orderNumber}) => {
 /**
  * 10. Check Event Details
  */
-exports.handleCheckEventDetails = async ({eventSlug, orderNumber}) => {
+exports.handleCheckEventDetails = async ({ eventSlug, orderNumber }) => {
     // Either eventSlug or orderNumber must be provided
     if (!eventSlug && !orderNumber) {
         throw new CustomError("Either event slug/name or order number is required", 400);
@@ -630,20 +630,20 @@ exports.handleCheckEventDetails = async ({eventSlug, orderNumber}) => {
 
     // If orderNumber is provided, get event from order
     if (orderNumber) {
-        const order = await exports.findOrderByNumber({orderNumber});
+        const order = await exports.findOrderByNumber({ orderNumber });
         if (!order) {
             throw new CustomError("Order not found", 404);
         }
-        
+
         // Get event by ID from order's registration
-        event = await eventService.getEventById({eventId: order.eventId});
+        event = await eventService.getEventById({ eventId: order.eventId });
         if (!event) {
             throw new CustomError("Event not found for this order", 404);
         }
     } else if (eventSlug) {
         // Try to find by slug first
-        event = await eventService.getEventBySlug({slug: eventSlug});
-        
+        event = await eventService.getEventBySlug({ slug: eventSlug });
+
         // If not found by slug, try to find by name (case-insensitive partial match)
         if (!event) {
             const eventResult = await query(
@@ -679,7 +679,7 @@ exports.handleCheckEventDetails = async ({eventSlug, orderNumber}) => {
 /**
  * 10. Contact Us
  */
-exports.handleContactUs = async ({email, message, orderNumber = null}) => {
+exports.handleContactUs = async ({ email, message, orderNumber = null }) => {
     if (!email || !message) {
         throw new CustomError("Email and message are required", 400);
     }
@@ -702,9 +702,9 @@ exports.handleContactUs = async ({email, message, orderNumber = null}) => {
 /**
  * Handle chat message with LLM parsing
  */
-exports.handleChatMessage = async ({sessionId, message, context = {}}) => {
+exports.handleChatMessage = async ({ sessionId, message, context = {} }) => {
     // Get or create session
-    let session = await exports.getSession({sessionId});
+    let session = await exports.getSession({ sessionId });
 
     if (!session) {
         // Create new session
@@ -745,11 +745,11 @@ exports.handleChatMessage = async ({sessionId, message, context = {}}) => {
     }));
 
     const userEmail = context.userEmail || session.userEmail;
-    
+
     // Fetch order context if email exists and any intent uses orderNumber
     // This is data-driven from intent config, not hardcoded
     const recentOrderNumbers = (userEmail && hasAnyIntentWithOrderNumber())
-        ? await exports.getRecentOrderNumbers({email: userEmail, limit: 3})
+        ? await exports.getRecentOrderNumbers({ email: userEmail, limit: 3 })
         : [];
 
     // Generate hybrid response (natural text + JSON) using LLM
@@ -789,7 +789,7 @@ exports.handleChatMessage = async ({sessionId, message, context = {}}) => {
     });
 
     // Summarize if needed
-    await exports.summarizeIfNeeded({sessionId: session.sessionId});
+    await exports.summarizeIfNeeded({ sessionId: session.sessionId });
 
     return {
         sessionId: session.sessionId,

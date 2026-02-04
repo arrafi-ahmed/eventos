@@ -10,15 +10,17 @@
       :variant="variant"
       @click="$emit('select', intentKey)"
     >
-      {{ INTENT_CONFIG[intentKey].label }}
+      {{ t('components.support_bot.intents.' + intentKey) }}
     </v-btn>
   </div>
 </template>
 
 <script setup>
+  import { useI18n } from 'vue-i18n'
   import { useUiProps } from '@/composables/useUiProps'
   import { INTENT_CONFIG, SUPPORT_INTENTS } from '@/utils/supportIntents'
 
+  const { t } = useI18n()
   const { rounded, size, variant, density } = useUiProps()
 
   defineEmits(['select'])

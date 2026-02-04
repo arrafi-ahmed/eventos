@@ -1,0 +1,61 @@
+{
+    "cart": {
+        "title": "Cart",
+        "header": "Cart",
+        "tickets_selected": "ticket(s) selected",
+        "products_selected": "product(s) selected",
+        "selected": "selected",
+        "total": "Total",
+        "cart_btn": "Cart",
+        "continue_reg": "Continue to Registration",
+        "continue_short": "Continue?",
+        "empty_title": "Your cart is empty",
+        "empty_desc": "Select tickets or products to get started",
+        "continue_shopping": "Continue Shopping",
+        "each": "each",
+        "subtotal": "Subtotal",
+        "shipping": "Shipping",
+        "checkout": "Checkout",
+        "ticket": "ticket | tickets",
+        "product": "product | products",
+        "total_label": "Total",
+        "continue_xs": "Continue?",
+        "checkout_btn": "Checkout"
+    },
+    "support_bot": {
+        "loading": "Loading conversation...",
+        "welcome": "How can I help you today?",
+        "choose_option": "Choose an option:",
+        "need_help": "Need help? Try one of these:",
+        "input_placeholder": "Type your message...",
+        "intents": {
+            "resend_ticket": "I didn't receive my ticket",
+            "check_payment_status": "Check payment status",
+            "check_checkin_status": "Check check-in status",
+            "track_shipment": "Track shipment",
+            "update_shipping_address": "Update shipping address",
+            "update_attendee_info": "Update attendee information",
+            "view_order_details": "View order details",
+            "check_event_details": "Check event details",
+            "contact_us": "Contact us"
+        },
+        "form": {
+            "header": "Please provide the following:",
+            "cancel": "Cancel",
+            "submit": "Submit",
+            "fields": {
+                "first_name": "First Name",
+                "last_name": "Last Name",
+                "email": "Email",
+                "phone": "Phone"
+            }
+        }
+    },
+    "time": {
+        "just_now": "Just now",
+        "m_ago": "m ago",
+        "h_ago": "h ago",
+        "yesterday": "Yesterday",
+        "d_ago": "d ago"
+    }
+}

@@ -23,11 +23,11 @@
   const { rounded, density, variant, size } = useUiProps()
 
   const eventId = computed(() => route.params.eventId)
-  const staff = computed(() => store.state.staff.staff)
+  const staff = computed(() => (store.state.staff.staff || []).filter(u => Number(u.globalRole) !== 20))
   const loading = computed(() => store.state.staff.loading)
   const event = computed(() => store.state.event.event)
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
-  const organizationUsers = computed(() => store.state.appUser.users || [])
+  const organizationUsers = computed(() => (store.state.appUser.users || []).filter(u => Number(u.role) !== 20))
 
   const dialog = ref(false)
   const isFormValid = ref(true)
@@ -45,7 +45,6 @@
   })
 
   const roleOptions = [
-    { title: 'Admin', value: 20 },
     { title: 'Organizer', value: 30 },
     { title: 'Attendee', value: 40 },
     { title: 'Cashier', value: 50 },
@@ -299,7 +298,7 @@
               :variant="variant"
             >
               <template #item="{ props, item }">
-                <v-list-item v-bind="props" :subtitle="item.raw.email" />
+                <v-list-item v-bind="props" :subtitle="`${getRoleName(item.raw.role)} • ${item.raw.email}`" />
               </template>
             </v-autocomplete>
 

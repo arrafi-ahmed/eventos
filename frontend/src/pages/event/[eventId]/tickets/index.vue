@@ -44,7 +44,7 @@
     title: '',
     description: '',
     price: 0,
-    originalPrice: null,
+    originalPrice: 0,
     currentStock: 100,
     maxStock: 100,
     onSiteQuota: 0,
@@ -426,35 +426,32 @@
 
             <div class="d-flex gap-6 mb-4">
               <v-number-input
-                v-model.number="ticket.price"
+                v-model="ticket.price"
                 :density="density"
                 hide-details="auto"
                 label="Price"
                 min="0"
                 inset
-                :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"
                 control-variant="default"
                 :rounded="rounded"
                 class="flex-1"
-                :rules="[(v) => v >= 0 || 'Price must be non-negative']"
-                step="0.01"
+                :rules="[(v) => v >= 0 || 'Price must be non-negative']"                
                 :variant="variant"
               />
 
               <v-number-input
                 v-if="isLimitedTime"
-                v-model.number="ticket.originalPrice"
+                v-model="ticket.originalPrice"
                 :density="density"
                 hide-details="auto"
                 label="Original Price"
                 min="0"
                 placeholder="Optional"
                 inset
-                :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
-                control-variant="default"
+                :prefix="getCurrencySymbol({ code: event?.currency || 'USD', type: 'symbol' })"                
                 :rounded="rounded"
-                class="flex-1"
-                step="0.01"
+                class="flex-1"                
                 :variant="variant"
               />
             </div>
@@ -538,36 +535,38 @@
               </div>
             </div>
 
-            <div v-if="event?.config?.enableOnSiteQuota" class="d-flex gap-4 mb-6">
-              <v-number-input
-                v-model.number="ticket.onSiteQuota"
-                class="flex-1"
-                :density="density"
-                hide-details="auto"
-                label="On-site Quota"
-                inset
-                min="0"
-                control-variant="default"
-                prepend-inner-icon="mdi-store-clock"
-                :rounded="rounded"
-                :rules="[(v) => v >= 0 || 'Quota must be non-negative', (v) => v <= ticket.currentStock || 'Quota cannot exceed current stock']"
-                :variant="variant"
-              />
-              <v-number-input
-                v-model.number="ticket.lowStockThreshold"
-                class="flex-1"
-                :density="density"
-                hide-details="auto"
-                label="Low Stock Alert"
-                inset
-                min="0"
-                control-variant="default"
-                prepend-inner-icon="mdi-alert-circle-outline"
-                :rounded="rounded"
-                :rules="[(v) => v >= 0 || 'Threshold must be non-negative']"
-                :variant="variant"
-              />
-            </div>
+            <v-row v-if="event?.config?.enableOnSiteQuota" class="mb-4">
+              <v-col cols="12" sm="6">
+                <v-number-input
+                  v-model.number="ticket.onSiteQuota"
+                  :density="density"
+                  hide-details="auto"
+                  label="On-site Quota (Ticket Count)"
+                  inset
+                  min="0"
+                  control-variant="default"
+                  prepend-inner-icon="mdi-store-clock"
+                  :rounded="rounded"
+                  :rules="[(v) => v >= 0 || 'Quota must be non-negative', (v) => v <= ticket.currentStock || 'Quota cannot exceed current stock']"
+                  :variant="variant"
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-number-input
+                  v-model.number="ticket.lowStockThreshold"
+                  :density="density"
+                  hide-details="auto"
+                  label="Low Stock Alert (Ticket Count)"
+                  inset
+                  min="0"
+                  control-variant="default"
+                  prepend-inner-icon="mdi-alert-circle-outline"
+                  :rounded="rounded"
+                  :rules="[(v) => v >= 0 || 'Threshold must be non-negative']"
+                  :variant="variant"
+                />
+              </v-col>
+            </v-row>
 
             <v-alert
               v-if="ticket.price > 0"

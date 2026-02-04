@@ -2,6 +2,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import TicketDisplayDialog from '@/components/counter/TicketDisplayDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
@@ -12,12 +13,14 @@
     meta: {
       layout: 'default',
       title: 'Point of Sale',
+      titleKey: 'pages.counter.pos_title',
       requiresAuth: true,
       requiresCashier: true,
     },
   })
 
   const { rounded, density, variant, size } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
 
@@ -225,10 +228,11 @@
 </script>
 
 <template>
-  <v-container fluid>
+  <v-container>
     <PageTitle
-      :subtitle="`${activeSession?.ticketCounterName || 'Counter'} • ${activeSession?.eventName || event?.name || 'Loading...'}`"
-      title="Point of Sale"
+      :subtitle="`${activeSession?.ticketCounterName || t('pages.counter.shift_start.counter_label')} • ${activeSession?.eventName || event?.name || t('home.loading_events')}`"
+      :title="t('pages.counter.pos_title')"
+      :title-key="'pages.counter.pos_title'"
     >
       <template #actions>
         <v-btn
@@ -240,7 +244,7 @@
           variant="text"
           @click="router.push({ name: 'counter-shift-end' })"
         >
-          End Shift
+          {{ t('pages.counter.end_session') }}
         </v-btn>
       </template>
     </PageTitle>
@@ -250,8 +254,8 @@
       <v-col cols="12" md="8">
         <v-card class="mt-4" elevation="1" :rounded="rounded">
           <v-tabs v-model="tab" color="primary">
-            <v-tab value="tickets">Tickets</v-tab>
-            <v-tab value="products">Merchandise</v-tab>
+            <v-tab value="tickets">{{ t('pages.counter.tickets_tab') }}</v-tab>
+            <v-tab value="products">{{ t('pages.counter.merch_tab') }}</v-tab>
           </v-tabs>
 
           <v-window v-model="tab">
@@ -262,7 +266,8 @@
                     v-for="ticket in tickets"
                     :key="ticket.id"
                     cols="12"
-                    lg="4"
+                    lg="3"
+                    md="4"
                     sm="6"
                   >
                     <v-card border elevation="0" :rounded="rounded" @click="addToCart(ticket, 'ticket')">
@@ -292,7 +297,8 @@
                     v-for="product in products"
                     :key="product.id"
                     cols="12"
-                    lg="4"
+                    lg="3"
+                    md="4"
                     sm="6"
                   >
                     <v-card border elevation="0" :rounded="rounded" @click="addToCart(product, 'product')">
@@ -319,7 +325,7 @@
       <v-col cols="12" md="4">
         <v-card class="h-100 d-flex flex-column" elevation="2" :rounded="rounded">
           <v-card-title class="pa-4 d-flex justify-space-between align-center">
-            <span>Cart</span>
+            <span>{{ t('pages.counter.cart_title') }}</span>
             <v-btn
               color="grey"
               density="compact"
@@ -368,7 +374,7 @@
             </v-list>
             <div v-else class="text-center py-10">
               <v-icon color="grey-lighten-1" size="48">mdi-cart-outline</v-icon>
-              <p class="text-grey-darken-1 mt-2">Cart is empty</p>
+              <p class="text-grey-darken-1 mt-2">{{ t('pages.counter.empty_cart') }}</p>
             </div>
           </v-card-text>
 
@@ -376,15 +382,15 @@
 
           <v-card-actions class="pa-4 flex-column align-stretch">
             <div class="d-flex justify-space-between mb-1">
-              <span class="text-body-2 text-grey">Subtotal</span>
+              <span class="text-body-2 text-grey">{{ t('pages.counter.subtotal') }}</span>
               <span class="text-body-2 text-grey">{{ formatPrice(cart.reduce((sum, item) => sum + item.price * item.quantity, 0), event?.currency) }}</span>
             </div>
             <div v-if="appliedPromo" class="d-flex justify-space-between mb-1">
-              <span class="text-body-2 text-success">Discount</span>
+              <span class="text-body-2 text-success">{{ t('pages.counter.discount') }}</span>
               <span class="text-body-2 text-success">-{{ appliedPromo.discountType === 'percentage' ? appliedPromo.discountValue + '%' : formatPrice(appliedPromo.discountValue, event?.currency) }}</span>
             </div>
             <div class="d-flex justify-space-between mb-4">
-              <span class="text-h6">Total</span>
+              <span class="text-h6">{{ t('pages.counter.total') }}</span>
               <span class="text-h6 color-primary font-weight-bold">{{ formatPrice(totalAmount, event?.currency) }}</span>
             </div>
             <v-btn
@@ -396,7 +402,7 @@
               variant="flat"
               @click="checkoutDialog = true"
             >
-              Checkout
+              {{ t('pages.counter.checkout_btn') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -407,7 +413,7 @@
       <v-card :rounded="rounded">
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon class="mr-2" color="primary">mdi-check-circle-outline</v-icon>
-          Complete Sale
+          {{ t('pages.counter.complete_sale') }}
           <v-spacer />
           <v-btn icon="mdi-close" variant="text" @click="checkoutDialog = false" />
         </v-card-title>
@@ -417,7 +423,7 @@
         <v-card-text class="pa-0">
           <!-- Summary Area -->
           <div class="bg-surface-variant pa-6 text-center">
-            <div class="text-overline mb-1">Amount Due</div>
+            <div class="text-overline mb-1">{{ t('pages.counter.amount_due') }}</div>
             
             <div class="d-flex flex-column align-center">
               <div v-if="appliedPromo" class="text-body-2 text-medium-emphasis text-decoration-line-through mb-1">
@@ -445,7 +451,7 @@
           <div class="pa-6">
             <!-- Payment Method Section -->
             <div class="mb-6">
-              <p class="text-subtitle-2 font-weight-bold mb-3">Payment Method</p>
+              <p class="text-subtitle-2 font-weight-bold mb-3">{{ t('pages.counter.payment_method') }}</p>
               <v-btn-toggle
                 v-model="paymentMethod"
                 block
@@ -454,23 +460,23 @@
                 variant="outlined"
               >
                 <v-btn class="flex-grow-1" prepend-icon="mdi-cash" value="cash">
-                  Cash
+                  {{ t('pages.counter.cash') }}
                 </v-btn>
                 <v-btn class="flex-grow-1" prepend-icon="mdi-credit-card" value="card">
-                  Card
+                  {{ t('pages.counter.card') }}
                 </v-btn>
               </v-btn-toggle>
             </div>
 
             <!-- Customer Email Section -->
             <div class="mb-6">
-              <p class="text-subtitle-2 font-weight-bold mb-3">Customer Email (Optional)</p>
+              <p class="text-subtitle-2 font-weight-bold mb-3">{{ t('pages.counter.customer_email') }}</p>
               <v-text-field
                 v-model="customerEmail"
                 :density="density"
                 hide-details="auto"
-                label="Email"
-                placeholder="For sending digital ticket"
+                :label="t('pages.counter.email_label')"
+                :placeholder="t('pages.counter.email_placeholder')"
                 prepend-inner-icon="mdi-email-outline"
                 :rounded="rounded"
                 type="email"
@@ -480,13 +486,13 @@
 
             <!-- Promo Code Section -->
             <div>
-              <p class="text-subtitle-2 font-weight-bold mb-3">Promo Code</p>
+              <p class="text-subtitle-2 font-weight-bold mb-3">{{ t('pages.counter.promo_code') }}</p>
               <v-text-field
                 v-model="promoCode"
                 :density="density"
                 hide-details="auto"
-                label="Apply Code"
-                placeholder="Enter discount code"
+                :label="t('pages.counter.apply_code_label')"
+                :placeholder="t('pages.counter.apply_code_placeholder')"
                 prepend-inner-icon="mdi-ticket-outline"
                 :rounded="rounded"
                 variant="outlined"
@@ -502,14 +508,14 @@
                     variant="flat"
                     @click="handleApplyPromoCode"
                   >
-                    {{ appliedPromo ? 'Applied' : 'Apply' }}
+                    {{ appliedPromo ? t('pages.counter.applied_label') : t('pages.counter.apply_btn') }}
                   </v-btn>
                 </template>
               </v-text-field>
               
               <div v-if="appliedPromo" class="mt-2 text-success text-caption d-flex align-center">
                 <v-icon class="mr-1" size="small">mdi-check-circle-outline</v-icon>
-                Code applied successfully
+                {{ t('pages.counter.code_success') }}
               </div>
             </div>
           </div>
@@ -534,7 +540,7 @@
             variant="flat"
             @click="handleProcessSale"
           >
-            Confirm Sale
+            {{ t('pages.counter.confirm_sale') }}
           </v-btn>
         </v-card-actions>
       </v-card>

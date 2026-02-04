@@ -1,20 +1,31 @@
 <script setup>
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'privacy',
     meta: {
       layout: 'default',
       title: 'Privacy Policy',
+      titleKey: 'pages.privacy.title',
     },
   })
+
+  const ui = computed(() => ({
+    title: t('footer.privacy_policy'),
+    subtitle: t('common.legal.privacy_subtitle'),
+  }))
 </script>
 
 <template>
   <v-container class="privacy-container">
     <PageTitle
-      subtitle="How we collect, use, and protect your personal information"
-      title="Privacy Policy"
+      :subtitle="ui.subtitle"
+      :title="ui.title"
+      :title-key="'pages.privacy.title'"
     />
 
     <v-row justify="center">
@@ -182,7 +193,6 @@
 <style scoped>
 .privacy-container {
   min-height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 .privacy-content {
@@ -197,9 +207,4 @@
   margin-bottom: 8px;
 }
 
-@media (max-width: 768px) {
-  .privacy-container {
-    padding: 16px;
-  }
-}
 </style>

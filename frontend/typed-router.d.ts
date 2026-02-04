@@ -50,7 +50,6 @@ declare module 'vue-router/auto-routes' {
     'event-checkin': RouteRecordInfo<'event-checkin', '/event/:eventId/checkin', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-config': RouteRecordInfo<'event-config', '/event/:eventId/config', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-edit': RouteRecordInfo<'event-edit', '/event/:eventId/edit', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
-    'event-extras': RouteRecordInfo<'event-extras', '/event/:eventId/extras', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'import': RouteRecordInfo<'import', '/event/:eventId/import', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-landing-config': RouteRecordInfo<'event-landing-config', '/event/:eventId/landing-config', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-manage-shop': RouteRecordInfo<'event-manage-shop', '/event/:eventId/manage-shop', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
@@ -58,15 +57,12 @@ declare module 'vue-router/auto-routes' {
     'event-promo-codes': RouteRecordInfo<'event-promo-codes', '/event/:eventId/promo-codes', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     '/event/[eventId]/qr/': RouteRecordInfo<'/event/[eventId]/qr/', '/event/:eventId/qr', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'qr-viewer': RouteRecordInfo<'qr-viewer', '/event/:eventId/qr/:registrationId/:attendeeId/:qrUuid', { eventId: ParamValue<true>, registrationId: ParamValue<true>, attendeeId: ParamValue<true>, qrUuid: ParamValue<true> }, { eventId: ParamValue<false>, registrationId: ParamValue<false>, attendeeId: ParamValue<false>, qrUuid: ParamValue<false> }>,
-    'event-sponsorship-packages': RouteRecordInfo<'event-sponsorship-packages', '/event/:eventId/sponsorship-packages', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
-    'event-sponsorships': RouteRecordInfo<'event-sponsorships', '/event/:eventId/sponsorships', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-staff': RouteRecordInfo<'event-staff', '/event/:eventId/staff', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-statistics': RouteRecordInfo<'event-statistics', '/event/:eventId/statistics', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-tickets': RouteRecordInfo<'event-tickets', '/event/:eventId/tickets', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-visitors': RouteRecordInfo<'event-visitors', '/event/:eventId/visitors', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     'event-add': RouteRecordInfo<'event-add', '/event/add', Record<never, never>, Record<never, never>>,
     'events-browse': RouteRecordInfo<'events-browse', '/events', Record<never, never>, Record<never, never>>,
-    'extras-purchase': RouteRecordInfo<'extras-purchase', '/ExtrasPurchase', Record<never, never>, Record<never, never>>,
     'form-builder': RouteRecordInfo<'form-builder', '/form-builder', Record<never, never>, Record<never, never>>,
     'manage-index': RouteRecordInfo<'manage-index', '/manage', Record<never, never>, Record<never, never>>,
     'manage-sales-logs': RouteRecordInfo<'manage-sales-logs', '/manage/sales-logs', Record<never, never>, Record<never, never>>,
@@ -86,7 +82,7 @@ declare module 'vue-router/auto-routes' {
     '/staff/': RouteRecordInfo<'/staff/', '/staff', Record<never, never>, Record<never, never>>,
     'staff-dashboard': RouteRecordInfo<'staff-dashboard', '/staff/dashboard', Record<never, never>, Record<never, never>>,
     'staff-checkin': RouteRecordInfo<'staff-checkin', '/staff/scanner', Record<never, never>, Record<never, never>>,
-    '/support/': RouteRecordInfo<'/support/', '/support', Record<never, never>, Record<never, never>>,
+    'support': RouteRecordInfo<'support', '/support', Record<never, never>, Record<never, never>>,
     'terms': RouteRecordInfo<'terms', '/terms', Record<never, never>, Record<never, never>>,
   }
 
@@ -229,10 +225,6 @@ declare module 'vue-router/auto-routes' {
       routes: 'event-edit'
       views: never
     }
-    'src/pages/event/[eventId]/extras/index.vue': {
-      routes: 'event-extras'
-      views: never
-    }
     'src/pages/event/[eventId]/import/index.vue': {
       routes: 'import'
       views: never
@@ -261,14 +253,6 @@ declare module 'vue-router/auto-routes' {
       routes: 'qr-viewer'
       views: never
     }
-    'src/pages/event/[eventId]/sponsorship-packages/index.vue': {
-      routes: 'event-sponsorship-packages'
-      views: never
-    }
-    'src/pages/event/[eventId]/sponsorships/index.vue': {
-      routes: 'event-sponsorships'
-      views: never
-    }
     'src/pages/event/[eventId]/staff/index.vue': {
       routes: 'event-staff'
       views: never
@@ -291,10 +275,6 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/events/index.vue': {
       routes: 'events-browse'
-      views: never
-    }
-    'src/pages/ExtrasPurchase.vue': {
-      routes: 'extras-purchase'
       views: never
     }
     'src/pages/form-builder.vue': {
@@ -374,7 +354,7 @@ declare module 'vue-router/auto-routes' {
       views: never
     }
     'src/pages/support/index.vue': {
-      routes: '/support/'
+      routes: 'support'
       views: never
     }
     'src/pages/terms.vue': {

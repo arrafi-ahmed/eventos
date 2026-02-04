@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, reactive, ref, toRaw } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -13,6 +14,7 @@
     meta: {
       layout: 'default',
       title: 'Form Builder',
+      titleKey: 'pages.form_builder.title',
       requiresOrganizer: true,
       requiresAuth: true,
     },
@@ -22,6 +24,7 @@
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
+  const { t } = useI18n()
 
   const newFormQuestions = ref([])
 
@@ -132,6 +135,7 @@
     <PageTitle
       :subtitle="event?.name"
       title="Form Builder"
+      :title-key="'pages.form_builder.title'"
     />
 
     <div class="d-flex justify-end">

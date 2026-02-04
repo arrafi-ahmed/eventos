@@ -1,6 +1,7 @@
 <script setup>
   import { computed, ref } from 'vue'
   import { useTheme } from 'vuetify'
+  import { useStore } from 'vuex'
   import DigitalTicketCard from '@/components/ticket/DigitalTicketCard.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -8,6 +9,7 @@
 
   const { rounded, density, variant } = useUiProps()
   const theme = useTheme()
+  const store = useStore()
 
   const props = defineProps({
     modelValue: Boolean,
@@ -68,12 +70,12 @@
       @page { size: auto; margin: 10mm; }
       body { margin: 0; padding: 0; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .printable-tickets { padding: 0 !important; }
-      .digital-ticket-wrapper { box-shadow: none !important; filter: none !important; margin-bottom: 30px; page-break-inside: avoid; page-break-after: always; }
-      .digital-ticket { border: 1px solid #eee !important; }
-      .bg-surface-light { background-color: #f8fafc !important; }
-      .text-primary { color: #ED2939 !important; }
-      .v-icon { color: #ED2939 !important; }
-      .border-t { border-top: 1px solid #eee !important; }
+      .premium-ticket-wrapper { box-shadow: none !important; filter: none !important; margin-bottom: 40px; page-break-inside: avoid; page-break-after: always; width: 100% !important; max-width: 700px !important; margin-left: auto !important; margin-right: auto !important; }
+      .premium-ticket { border: 1px solid #000000 !important; background: white !important; color: #000000 !important; }
+      .ticket-body { background: white !important; }
+      .ticket-line { border-bottom: 2px dashed #000000 !important; }
+      .ticket-cutout { background: white !important; border: 1px solid #000000 !important; }
+      .qr-frame { border: 1px solid #000000 !important; box-shadow: none !important; }
     </style>
   `
 
@@ -152,11 +154,15 @@
       <v-card-text class="pa-0 bg-surface-variant ticket-preview-content">
         <!-- Ticket Container -->
         <div class="tickets-preview-wrapper pa-6 pa-md-8 printable-tickets">
-          <div v-for="attendee in saleData?.attendees" :key="attendee.id" class="mb-4 digital-ticket-wrapper">
+          <div v-for="attendee in saleData?.attendees" :key="attendee.id" class="mb-4 premium-ticket-outer">
             <DigitalTicketCard
+              :app-name="store.state.systemSettings?.settings?.header?.organizationName"
               :attendee="attendee"
               :event-name="event?.name || 'Event'"
               :location="event?.location"
+              :logo="store.state.systemSettings?.settings?.header?.logoImage ? `${$axios.defaults.baseURL}/header-logo/${store.state.systemSettings.settings.header.logoImage}` : null"
+              :logo-position="store.state.systemSettings?.settings?.header?.logoPosition || 'left'"
+              :primary-color="store.state.systemSettings?.settings?.appearance?.lightColors?.primary || '#ED2939'"
               :qr-uuid="attendee.qrUuid"
               :registration-id="saleData?.registrationId"
               :start-date="event?.startDatetime || event?.startDate || event?.start_datetime"

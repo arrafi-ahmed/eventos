@@ -5,7 +5,6 @@ export const namespaced = true
 export const state = {
   events: [],
   event: {},
-  extras: [],
   pagination: {
     totalItems: 0,
     page: 1,
@@ -15,16 +14,16 @@ export const state = {
 }
 
 export const mutations = {
-  setEvents (state, payload) {
+  setEvents(state, payload) {
     state.events = payload
   },
-  setPagination (state, payload) {
+  setPagination(state, payload) {
     state.pagination = payload
   },
-  setEvent (state, payload) {
+  setEvent(state, payload) {
     state.event = payload
   },
-  saveEvent (state, payload) {
+  saveEvent(state, payload) {
     const foundIndex = state.events.findIndex(item => item.id == payload.id)
     if (foundIndex === -1) {
       state.events.unshift(payload)
@@ -32,39 +31,22 @@ export const mutations = {
       state.events[foundIndex] = payload
     }
   },
-  saveExtras (state, payload) {
-    const foundIndex = state.extras.findIndex(item => item.id == payload.id)
-    if (foundIndex === -1) {
-      state.extras.unshift(payload)
-    } else {
-      state.extras[foundIndex] = payload
-    }
-  },
-  removeEvent (state, payload) {
+  removeEvent(state, payload) {
     const foundIndex = state.events.findIndex(item => item.id == payload.eventId)
     if (foundIndex !== -1) {
       state.events.splice(foundIndex, 1)
     }
   },
-  removeExtras (state, payload) {
-    const foundIndex = state.extras.findIndex(item => item.id == payload.extrasId)
-    if (foundIndex !== -1) {
-      state.extras.splice(foundIndex, 1)
-    }
-  },
-  setExtras (state, payload) {
-    state.extras = payload
-  },
-  clearEvent (state) {
+  clearEvent(state) {
     state.event = {}
   },
-  clearEvents (state) {
+  clearEvents(state) {
     state.events = []
   },
 }
 
 export const actions = {
-  setEvents ({ commit }, request) {
+  setEvents({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getAllEvents', {
@@ -90,7 +72,7 @@ export const actions = {
         })
     })
   },
-  setPublishedEvents ({ commit }, request) {
+  setPublishedEvents({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getPublishedEvents', { params: { organizationId: request } })
@@ -103,7 +85,7 @@ export const actions = {
         })
     })
   },
-  searchPublishedEvents ({ commit }, request) {
+  searchPublishedEvents({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/searchPublishedEvents', {
@@ -128,7 +110,7 @@ export const actions = {
         })
     })
   },
-  setActiveEvents ({ commit }, request) {
+  setActiveEvents({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getAllActiveEvents', {
@@ -146,7 +128,7 @@ export const actions = {
         })
     })
   },
-  setEvent ({ commit }, request) {
+  setEvent({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getEvent', {
@@ -161,7 +143,7 @@ export const actions = {
         })
     })
   },
-  setEventBySlug ({ commit }, request) {
+  setEventBySlug({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getEventBySlug', {
@@ -176,7 +158,7 @@ export const actions = {
         })
     })
   },
-  getFirstEvent ({ commit }) {
+  getFirstEvent({ commit }) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getFirstEvent')
@@ -189,7 +171,7 @@ export const actions = {
         })
     })
   },
-  setEventByEventIdnOrganizationId ({ commit }, { eventId, organizationId }) {
+  setEventByEventIdnOrganizationId({ commit }, { eventId, organizationId }) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getEventByEventIdnOrganizationId', {
@@ -204,7 +186,7 @@ export const actions = {
         })
     })
   },
-  setAssignedEvents ({ commit }, { role } = {}) {
+  setAssignedEvents({ commit }, { role } = {}) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/staff/getAssignedEvents', {
@@ -219,7 +201,7 @@ export const actions = {
         })
     })
   },
-  save ({ commit }, request) {
+  save({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/save', request)
@@ -232,7 +214,7 @@ export const actions = {
         })
     })
   },
-  saveConfig ({ commit }, request) {
+  saveConfig({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/saveConfig', request)
@@ -245,7 +227,7 @@ export const actions = {
         })
     })
   },
-  saveLandingConfig ({ commit }, request) {
+  saveLandingConfig({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/saveLandingConfig', request)
@@ -258,7 +240,7 @@ export const actions = {
         })
     })
   },
-  removeEvent ({ commit }, request) {
+  removeEvent({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/removeEvent', {
@@ -273,48 +255,7 @@ export const actions = {
         })
     })
   },
-  removeExtras ({ commit }, request) {
-    return new Promise((resolve, reject) => {
-      $axios
-        .get('/event/removeExtras', {
-          params: { extrasId: request.extrasId, eventId: request.eventId },
-        })
-        .then(response => {
-          commit('removeExtras', request)
-          resolve(response)
-        })
-        .catch(error => {
-          reject(error)
-        })
-    })
-  },
-  saveExtras ({ commit }, request) {
-    return new Promise((resolve, reject) => {
-      $axios
-        .post('/event/saveExtras', request)
-        .then(response => {
-          commit('saveExtras', response.data?.payload)
-          resolve(response)
-        })
-        .catch(error => {
-          reject(error)
-        })
-    })
-  },
-  setExtras ({ commit }, request) {
-    return new Promise((resolve, reject) => {
-      $axios
-        .get('/event/getExtras', { params: { eventId: request } })
-        .then(response => {
-          commit('setExtras', response.data?.payload)
-          resolve(response)
-        })
-        .catch(error => {
-          reject(error)
-        })
-    })
-  },
-  publishEvent ({ commit }, request) {
+  publishEvent({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/publishEvent', { eventId: request.eventId })
@@ -327,7 +268,7 @@ export const actions = {
         })
     })
   },
-  unpublishEvent ({ commit }, request) {
+  unpublishEvent({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/unpublishEvent', { eventId: request.eventId })
@@ -346,5 +287,5 @@ export const getters = {
   getEventById: state => id => {
     return state.events.find(item => item.id == id)
   },
-  isEventFree: () => {},
+  isEventFree: () => { },
 }

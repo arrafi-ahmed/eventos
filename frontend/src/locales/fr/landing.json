@@ -1,0 +1,25 @@
+{
+    "title": "Complétez votre inscription",
+    "subtitle": "Entrez vos coordonnées pour procéder à la sélection des billets",
+    "meta_title": "Inscription à l'événement",
+    "prefilled_alert": "Le formulaire a été pré-rempli avec vos données précédentes",
+    "form": {
+        "first_name": "Prénom",
+        "last_name": "Nom",
+        "email": "E-mail",
+        "phone": "Numéro de téléphone",
+        "first_name_required": "Le prénom est obligatoire",
+        "last_name_required": "Le nom est obligatoire",
+        "email_required": "L'e-mail est obligatoire",
+        "email_invalid": "L'e-mail doit être valide"
+    },
+    "loading_event": "Chargement des informations sur l'événement...",
+    "processing": "Traitement en cours...",
+    "continue": "Continuer",
+    "errors": {
+        "fill_required": "Veuillez remplir correctement tous les champs obligatoires.",
+        "registration_failed": "L'inscription a échoué. Veuillez réessayer.",
+        "event_info_missing": "Informations sur l'événement non disponibles. Veuillez réessayer.",
+        "event_not_found": "Événement non trouvé !"
+    }
+}

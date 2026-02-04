@@ -2,6 +2,7 @@
   import { computed, onMounted, ref, watch } from 'vue'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -11,6 +12,7 @@
     meta: {
       layout: 'default',
       title: 'Dashboard',
+      titleKey: 'dashboard.title',
       requiresAdmin: true,
       requiresAuth: true,
     },
@@ -18,7 +20,87 @@
 
   const { xs } = useDisplay()
   const store = useStore()
-  const { rounded, variant, density } = useUiProps()
+  const { t } = useI18n()
+  const { rounded, variant, density, size } = useUiProps()
+
+  const ui = computed(() => ({
+    titleKey: 'dashboard.title',
+    title: t('dashboard.title'),
+    subtitle: t('dashboard.subtitle'),
+    filters: {
+        btn: t('dashboard.filters.btn'),
+        title: t('dashboard.filters.title'),
+        events: t('dashboard.filters.events'),
+        counter: t('dashboard.filters.counter'),
+        cashier: t('dashboard.filters.cashier'),
+        payment_method: t('dashboard.filters.payment_method'),
+        date_range: t('dashboard.filters.date_range'),
+        custom_date_range: t('dashboard.filters.custom_date_range'),
+        reset: t('dashboard.filters.reset'),
+        apply: t('dashboard.filters.apply'),
+    },
+    actions: {
+        download: t('dashboard.actions.download'),
+        excel: t('dashboard.actions.excel'),
+        pdf: t('dashboard.actions.pdf'),
+    },
+    loading: t('dashboard.loading'),
+    stats: {
+        events: t('dashboard.stats.events'),
+        tickets: t('dashboard.stats.tickets'),
+        organizers: t('dashboard.stats.organizers'),
+        attendance: t('dashboard.stats.attendance'),
+        total_events: t('dashboard.stats.total_events'),
+        total_tickets: t('dashboard.stats.total_tickets'),
+        total_organizers: t('dashboard.stats.total_organizers'),
+        attendance_rate: t('dashboard.stats.attendance_rate'),
+    },
+    charts: {
+        checkin_status: t('dashboard.charts.checkin_status'),
+        sales_channels: t('dashboard.charts.sales_channels'),
+        no_checkin_data: t('dashboard.charts.no_checkin_data'),
+        no_channel_data: t('dashboard.charts.no_channel_data'),
+        capacity_details: t('dashboard.charts.capacity_details'),
+        select_event_hint: t('dashboard.charts.select_event_hint'),
+        checked_in: t('dashboard.charts.checked_in'),
+        absent: t('dashboard.charts.absent'),
+    },
+    table: {
+        breakdown: (type) => t('dashboard.table.breakdown', { type: t(`dashboard.table.types.${type}`) }),
+        report_type: t('dashboard.table.report_type'),
+        types: {
+            event: t('dashboard.table.types.event'),
+            counter: t('dashboard.table.types.counter'),
+            cashier: t('dashboard.table.types.cashier'),
+            payment: t('dashboard.table.types.payment'),
+        },
+        headers: {
+            event_name: t('dashboard.table.headers.event_name'),
+            date: t('dashboard.table.headers.date'),
+            orders: t('dashboard.table.headers.orders'),
+            revenue: t('dashboard.table.headers.revenue'),
+            counter_name: t('dashboard.table.headers.counter_name'),
+            location: t('dashboard.table.headers.location'),
+            cashier: t('dashboard.table.headers.cashier'),
+            counter: t('dashboard.table.headers.counter'),
+            payment_method: t('dashboard.table.headers.payment_method'),
+            currency: t('dashboard.table.headers.currency'),
+            transactions: t('dashboard.table.headers.transactions'),
+            amount: t('dashboard.table.headers.amount'),
+            percentage: t('dashboard.table.headers.percentage'),
+            ticket_type: t('dashboard.table.headers.ticket_type'),
+            sold: t('dashboard.table.headers.sold'),
+            remaining: t('dashboard.table.headers.remaining'),
+            total_capacity: t('dashboard.table.headers.total_capacity'),
+            utilization: t('dashboard.table.headers.utilization'),
+        }
+    },
+    messages: {
+        export_success: t('dashboard.messages.export_success'),
+        export_error: t('dashboard.messages.export_error'),
+        load_error: t('dashboard.messages.load_error'),
+    }
+  }))
 
   // State
   const reportType = ref('event')
@@ -53,11 +135,11 @@
   const events = ref([])
   const counters = ref([])
   const cashiers = ref([])
-  const paymentMethods = [
-    { title: 'Cash', value: 'cash' },
-    { title: 'Card', value: 'card' },
-    { title: 'Free', value: 'free' },
-  ]
+  const paymentMethods = computed(() => [
+    { title: t('dashboard.table.headers.cash'), value: 'cash' },
+    { title: t('dashboard.table.headers.card'), value: 'card' },
+    { title: t('dashboard.table.headers.free'), value: 'free' },
+  ])
   const overallSummary = ref({
     orders: 0,
     tickets: 0,
@@ -82,14 +164,14 @@
   const tableData = ref([])
 
   // Date presets
-  const datePresets = [
-    { title: 'Today', value: 'today' },
-    { title: 'Last 7 Days', value: 'week' },
-    { title: 'Last 30 Days', value: 'month' },
-    { title: 'This Month', value: 'thisMonth' },
-    { title: 'Last Month', value: 'lastMonth' },
-    { title: 'Custom Range', value: 'custom' },
-  ]
+  const datePresets = computed(() => [
+    { title: t('common.date_presets.today'), value: 'today' },
+    { title: t('common.date_presets.week'), value: 'week' },
+    { title: t('common.date_presets.month'), value: 'month' },
+    { title: t('common.date_presets.thisMonth'), value: 'thisMonth' },
+    { title: t('common.date_presets.lastMonth'), value: 'lastMonth' },
+    { title: t('common.date_presets.custom'), value: 'custom' },
+  ])
 
   const selectedDatePreset = ref('month')
 
@@ -104,35 +186,35 @@
     switch (reportType.value) {
       case 'event': {
         return [
-          { title: 'Event Name', key: 'eventName', sortable: true },
-          { title: 'Date', key: 'eventDate', sortable: true },
-          { title: 'Orders', key: 'totalOrders', sortable: true },
-          { title: 'Revenue', key: 'totalRevenue', sortable: true },
+          { title: ui.value.table.headers.event_name, key: 'eventName', sortable: true },
+          { title: ui.value.table.headers.date, key: 'eventDate', sortable: true },
+          { title: ui.value.table.headers.orders, key: 'totalOrders', sortable: true },
+          { title: ui.value.table.headers.revenue, key: 'totalRevenue', sortable: true },
         ]
       }
       case 'counter': {
         return [
-          { title: 'Counter Name', key: 'counterName', sortable: true },
-          { title: 'Location', key: 'location', sortable: true },
-          { title: 'Orders', key: 'totalOrders', sortable: true },
-          { title: 'Revenue', key: 'totalRevenue', sortable: true },
+          { title: ui.value.table.headers.counter_name, key: 'counterName', sortable: true },
+          { title: ui.value.table.headers.location, key: 'location', sortable: true },
+          { title: ui.value.table.headers.orders, key: 'totalOrders', sortable: true },
+          { title: ui.value.table.headers.revenue, key: 'totalRevenue', sortable: true },
         ]
       }
       case 'cashier': {
         return [
-          { title: 'Cashier', key: 'cashierName', sortable: true },
-          { title: 'Counter', key: 'counterName', sortable: true },
-          { title: 'Orders', key: 'totalOrders', sortable: true },
-          { title: 'Revenue', key: 'totalRevenue', sortable: true },
+          { title: ui.value.table.headers.cashier, key: 'cashierName', sortable: true },
+          { title: ui.value.table.headers.counter, key: 'counterName', sortable: true },
+          { title: ui.value.table.headers.orders, key: 'totalOrders', sortable: true },
+          { title: ui.value.table.headers.revenue, key: 'totalRevenue', sortable: true },
         ]
       }
       case 'payment': {
         return [
-          { title: 'Payment Method', key: 'paymentMethod', sortable: true },
-          { title: 'Currency', key: 'currency', sortable: true },
-          { title: 'Transactions', key: 'totalOrders', sortable: true },
-          { title: 'Amount', key: 'totalRevenue', sortable: true },
-          { title: 'Percentage', key: 'percentage', sortable: true },
+          { title: ui.value.table.headers.payment_method, key: 'paymentMethod', sortable: true },
+          { title: ui.value.table.headers.currency, key: 'currency', sortable: true },
+          { title: ui.value.table.headers.transactions, key: 'totalOrders', sortable: true },
+          { title: ui.value.table.headers.amount, key: 'totalRevenue', sortable: true },
+          { title: ui.value.table.headers.percentage, key: 'percentage', sortable: true },
         ]
       }
       default: {
@@ -242,7 +324,7 @@
         params.endDate = (dateRange.value[1] || dateRange.value[0])?.toISOString().split('T')[0]
       }
 
-      const response = await $axios.get('/admin/reports/summary', { params })
+      const response = await $axios.get('/report/summary', { params })
 
       // Only update cards/charts if not tableOnly
       if (!isTableOnly) {
@@ -291,8 +373,8 @@
         const absentCount = Math.max(0, totalTickets - checkedInCount)
 
         checkinData.value = [
-          { key: 'checked-in', title: 'Checked In', value: checkedInCount, color: '#2E7D32' },
-          { key: 'absent', title: 'Absent', value: absentCount, color: '#ED2939' },
+          { key: 'checked-in', title: ui.value.charts.checked_in, value: checkedInCount, color: '#2E7D32' },
+          { key: 'absent', title: ui.value.charts.absent, value: absentCount, color: '#ED2939' },
         ]
       }
 
@@ -301,7 +383,7 @@
     } catch (error) {
       console.error('Error fetching report data:', error)
       store.commit('addSnackbar', {
-        text: error.response?.data?.message || 'Error loading report data',
+        text: error.response?.data?.message || ui.value.messages.load_error,
         color: 'error',
       })
     } finally {
@@ -328,7 +410,7 @@
         params.append('endDate', (dateRange.value[1] || dateRange.value[0])?.toISOString().split('T')[0])
       }
 
-      const response = await $axios.get(`/admin/reports/export?${params.toString()}`, {
+      const response = await $axios.get(`/report/export?${params.toString()}`, {
         responseType: 'blob',
       })
 
@@ -345,13 +427,13 @@
       window.URL.revokeObjectURL(url)
 
       store.commit('addSnackbar', {
-        text: 'Report exported successfully!',
+        text: ui.value.messages.export_success,
         color: 'success',
       })
     } catch (error) {
       console.error('Error exporting report:', error)
       store.commit('addSnackbar', {
-        text: error.response?.data?.message || 'Error exporting report',
+        text: error.response?.data?.message || ui.value.messages.export_error,
         color: 'error',
       })
     } finally {
@@ -476,7 +558,7 @@
     
     // Fetch overall summary once for the top cards
     try {
-      const response = await $axios.get('/admin/reports/summary', { params: { isOverall: true } })
+      const response = await $axios.get('/report/summary', { params: { isOverall: true } })
       const data = response.data?.payload?.summary || {}
       const revenues = data.revenues || []
       const primaryRevenue = revenues.find(r => r.amount > 0) || revenues[0] || { amount: 0, currency: 'XOF' }
@@ -504,8 +586,9 @@
       >
         <PageTitle
           :show-back-button="false"
-          subtitle="Analytics & insights"
-          title="Dashboard"
+          :title-key="ui.titleKey"
+          :subtitle="ui.subtitle"
+          :title="ui.title"
         >
           <template #actions>
             <v-btn
@@ -517,7 +600,7 @@
               variant="tonal"
               @click="openFilterDialog"
             >
-              Filters
+              {{ ui.filters.btn }}
             </v-btn>
             <v-menu location="bottom end">
               <template #activator="{ props }">
@@ -533,18 +616,18 @@
                   variant="flat"
                   v-bind="props"
                 >
-                  Download
+                  {{ ui.actions.download }}
                 </v-btn>
               </template>
               <v-list density="compact">
                 <v-list-item
                   prepend-icon="mdi-file-excel"
-                  title="Excel"
+                  :title="ui.actions.excel"
                   @click="exportReport('excel')"
                 />
                 <v-list-item
                   prepend-icon="mdi-file-pdf-box"
-                  title="PDF"
+                  :title="ui.actions.pdf"
                   @click="exportReport('pdf')"
                 />
               </v-list>
@@ -561,7 +644,7 @@
           <v-card :rounded="rounded">
             <v-card-title class="pa-6 pb-2 d-flex align-center">
               <v-icon class="me-2">mdi-filter-variant</v-icon>
-              Report Filters
+              {{ ui.filters.title }}
               <v-spacer />
               <v-btn
                 icon="mdi-close"
@@ -585,7 +668,7 @@
                     item-title="name"
                     item-value="id"
                     :items="events"
-                    label="Events"
+                    :label="ui.filters.events"
                     :loading="isLoadingEvents"
                     multiple
                     prepend-inner-icon="mdi-calendar"
@@ -614,7 +697,7 @@
                     item-title="name"
                     item-value="id"
                     :items="counters"
-                    label="Ticket Counter"
+                    :label="ui.filters.counter"
                     :loading="isLoadingCounters"
                     prepend-inner-icon="mdi-store"
                     :rounded="rounded"
@@ -634,7 +717,7 @@
                     item-title="full_name"
                     item-value="id"
                     :items="cashiers"
-                    label="Cashier"
+                    :label="ui.filters.cashier"
                     :loading="isLoadingCashiers"
                     prepend-inner-icon="mdi-account-cash"
                     :rounded="rounded"
@@ -648,7 +731,7 @@
                     :density="'comfortable'"
                     hide-details="auto"
                     :items="paymentMethods"
-                    label="Payment Method"
+                    :label="ui.filters.payment_method"
                     prepend-inner-icon="mdi-credit-card"
                     :rounded="rounded"
                     :variant="variant"
@@ -662,7 +745,7 @@
                     :density="'comfortable'"
                     hide-details="auto"
                     :items="datePresets"
-                    label="Date Range"
+                    :label="ui.filters.date_range"
                     prepend-inner-icon="mdi-calendar-range"
                     :rounded="rounded"
                     :variant="variant"
@@ -674,7 +757,7 @@
                     color="primary"
                     :density="'comfortable'"
                     hide-details="auto"
-                    label="Custom Date Range"
+                    :label="ui.filters.custom_date_range"
                     multiple="range"
                     prepend-icon=""
                     prepend-inner-icon="mdi-calendar-range"
@@ -693,7 +776,7 @@
                 variant="text"
                 @click="resetFilters"
               >
-                Reset
+                {{ ui.filters.reset }}
               </v-btn>
               <v-spacer />
               <v-btn
@@ -702,7 +785,7 @@
                 variant="flat"
                 @click="applyFilters"
               >
-                Apply Filters
+                {{ ui.filters.apply }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -716,7 +799,7 @@
               indeterminate
               size="64"
             />
-            <p class="mt-4 text-body-1">Loading report data...</p>
+            <p class="mt-4 text-body-1">{{ ui.loading }}</p>
           </v-col>
         </v-row>
 
@@ -731,14 +814,14 @@
                     <v-icon color="secondary" size="32">mdi-calendar-check</v-icon>
                     <v-spacer />
                     <v-chip color="secondary" size="small" variant="flat">
-                      Events
+                      {{ ui.stats.events }}
                     </v-chip>
                   </div>
                   <div class="text-h4 font-weight-bold text-secondary">
                     {{ (overallSummary.events || 0).toLocaleString() }}
                   </div>
                   <div class="text-caption text-medium-emphasis mt-1">
-                    Total Events
+                    {{ ui.stats.total_events }}
                   </div>
                 </v-card-text>
               </v-card>
@@ -752,14 +835,14 @@
                     <v-icon color="primary" size="32">mdi-ticket</v-icon>
                     <v-spacer />
                     <v-chip color="primary" size="small" variant="flat">
-                      Tickets
+                      {{ ui.stats.tickets }}
                     </v-chip>
                   </div>
                   <div class="text-h4 font-weight-bold text-primary">
                     {{ (overallSummary.tickets || 0).toLocaleString() }}
                   </div>
                   <div class="text-caption text-medium-emphasis mt-1">
-                    Total Tickets Sold
+                    {{ ui.stats.total_tickets }}
                   </div>
                 </v-card-text>
               </v-card>
@@ -773,14 +856,14 @@
                     <v-icon color="info" size="32">mdi-account-group</v-icon>
                     <v-spacer />
                     <v-chip color="info" size="small" variant="flat">
-                      Organizers
+                      {{ ui.stats.organizers }}
                     </v-chip>
                   </div>
                   <div class="text-h4 font-weight-bold text-info">
                     {{ (overallSummary.organizers || 0).toLocaleString() }}
                   </div>
                   <div class="text-caption text-medium-emphasis mt-1">
-                    Total Organizers
+                    {{ ui.stats.total_organizers }}
                   </div>
                 </v-card-text>
               </v-card>
@@ -794,14 +877,14 @@
                     <v-icon color="warning" size="32">mdi-trending-up</v-icon>
                     <v-spacer />
                     <v-chip color="warning" size="small" variant="flat">
-                      Attendance
+                      {{ ui.stats.attendance }}
                     </v-chip>
                   </div>
                   <div class="text-h4 font-weight-bold text-warning">
                     {{ Math.round((overallSummary.checkedIn / (overallSummary.tickets || 1)) * 100) }}%
                   </div>
                   <div class="text-caption text-medium-emphasis mt-1">
-                    Overall Attendance
+                    {{ ui.stats.attendance_rate }}
                   </div>
                 </v-card-text>
               </v-card>
@@ -815,7 +898,7 @@
                 <v-card class="chart-card" elevation="2" :rounded="rounded">
                   <v-card-title class="pa-6 pb-2">
                     <v-icon class="me-2" color="primary">mdi-account-check</v-icon>
-                    Check-in Status
+                    {{ ui.charts.checkin_status }}
                   </v-card-title>
                   <v-card-text class="pa-6 pt-2">
                     <div class="d-flex justify-center py-4">
@@ -832,7 +915,7 @@
                       />
                     </div>
                     <div v-if="checkinData.length === 0" class="text-center py-8 text-medium-emphasis">
-                      No check-in data available
+                      {{ ui.charts.no_checkin_data }}
                     </div>
                   </v-card-text>
                 </v-card>
@@ -842,7 +925,7 @@
                 <v-card class="chart-card" elevation="2" :rounded="rounded">
                   <v-card-title class="pa-6 pb-2">
                     <v-icon class="me-2" color="primary">mdi-chart-donut</v-icon>
-                    Sales Channels
+                    {{ ui.charts.sales_channels }}
                   </v-card-title>
                   <v-card-text class="pa-6 pt-2">
                     <div class="d-flex justify-center py-4">
@@ -864,7 +947,7 @@
                       />
                     </div>
                     <div v-if="salesByChannelData.length === 0" class="text-center py-8 text-medium-emphasis">
-                      No channel data available
+                      {{ ui.charts.no_channel_data }}
                     </div>
                   </v-card-text>
                 </v-card>
@@ -877,17 +960,17 @@
                 <v-card elevation="2" :rounded="rounded">
                   <v-card-title class="pa-6 pb-2">
                     <v-icon class="me-2" color="primary">mdi-ticket-percent</v-icon>
-                    Ticket Capacity Details
+                    {{ ui.charts.capacity_details }}
                   </v-card-title>
                   <v-card-text class="pa-6 pt-0">
                     <v-table density="comfortable">
                       <thead>
                         <tr>
-                          <th class="text-left">Ticket Type</th>
-                          <th class="text-center">Sold</th>
-                          <th class="text-center">Remaining</th>
-                          <th class="text-center">Total Capacity</th>
-                          <th class="text-right">Utilization</th>
+                          <th class="text-left">{{ ui.table.headers.ticket_type }}</th>
+                          <th class="text-center">{{ ui.table.headers.sold }}</th>
+                          <th class="text-center">{{ ui.table.headers.remaining }}</th>
+                          <th class="text-center">{{ ui.table.headers.total_capacity }}</th>
+                          <th class="text-right">{{ ui.table.headers.utilization }}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -917,7 +1000,7 @@
           <v-row v-else class="mb-6">
             <v-col class="text-center" cols="12">
               <div class="text-body-1 text-medium-emphasis py-4">
-                Please select a specific event from the filters to view detailed charts and capacity trends.
+                {{ ui.charts.select_event_hint }}
               </div>
             </v-col>
           </v-row>
@@ -928,19 +1011,19 @@
               <v-card elevation="2" :rounded="rounded">
                 <v-card-title class="pa-6 pb-2 d-flex align-center">
                   <v-icon class="me-2" color="primary">mdi-table</v-icon>
-                  {{ reportType.charAt(0).toUpperCase() + reportType.slice(1) }} Breakdown
+                  {{ ui.table.breakdown(reportType) }}
                   <v-spacer />
                   <v-select
                     v-model="reportType"
                     density="compact"
                     hide-details
                     :items="[
-                      { title: 'By Event', value: 'event' },
-                      { title: 'By Counter', value: 'counter' },
-                      { title: 'By Cashier', value: 'cashier' },
-                      { title: 'By Payment Method', value: 'payment' }
+                      { title: ui.table.types.event, value: 'event' },
+                      { title: ui.table.types.counter, value: 'counter' },
+                      { title: ui.table.types.cashier, value: 'cashier' },
+                      { title: ui.table.types.payment, value: 'payment' }
                     ]"
-                    label="Report Type"
+                    :label="ui.table.report_type"
                     style="max-width: 200px"
                     variant="outlined"
                     @update:model-value="fetchReportData(false, true)"
@@ -978,7 +1061,6 @@
 <style scoped>
 .reports-container {
   max-width: 1400px;
-  padding: 24px;
 }
 
 .stat-card,
@@ -1029,7 +1111,6 @@
 
 @media (max-width: 768px) {
   .reports-container {
-    padding: 16px;
   }
 }
 </style>

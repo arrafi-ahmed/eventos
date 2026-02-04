@@ -259,7 +259,21 @@ exports.scanByRegistrationId = async ({ qrCodeData, eventId, userId }) => {
     const itemsResult = await query(itemsSql, [attendee.orderId]);
     const itemsTicket = itemsResult.rows?.[0]?.itemsTicket || [];
     const itemsProduct = itemsResult.rows?.[0]?.itemsProduct || [];
-    const items = [...itemsTicket, ...itemsProduct];
+
+    let filteredTickets = itemsTicket;
+    if (saveAllAttendees && attendee.ticketId) {
+        // Find specifically the ticket that this attendee has
+        const attendeeTicket = itemsTicket.find(t => t.ticketId === attendee.ticketId || t.ticket?.id === attendee.ticketId);
+
+        if (attendeeTicket) {
+            filteredTickets = [{
+                ...attendeeTicket,
+                quantity: 1 // Force 1 for individual scan
+            }];
+        }
+    }
+
+    const items = [...filteredTickets, ...itemsProduct];
 
     return {
         ...attendee,

@@ -72,7 +72,8 @@ definePage({
   name: 'payment-return',
   meta: {
     layout: 'headerless',
-    title: 'Verifying Payment',
+    title: 'Payment Return',
+    titleKey: 'pages.payment.return',
   },
 })
 

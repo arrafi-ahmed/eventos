@@ -1,6 +1,8 @@
 const CustomError = require("../model/CustomError");
 const { query } = require("../db");
+const systemSettingsService = require('./systemSettings');
 const { removeImages, ifAdmin } = require("../utils/common");
+
 const { v4: uuidv4 } = require("uuid");
 
 // Helper function to generate slug from event name
@@ -124,6 +126,9 @@ exports.save = async ({ payload, files, currentUser }) => {
                                created_by, registration_count, config)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *
         `;
+        const systemSettings = await systemSettingsService.getSystemSettings();
+        const appearance = systemSettings.appearance;
+        const finalCurrency = newEvent.currency || appearance.defaultCurrency || 'USD';
         const values = [
             newEvent.name,
             newEvent.description,
@@ -132,7 +137,7 @@ exports.save = async ({ payload, files, currentUser }) => {
             newEvent.location,
             newEvent.banner,
             newEvent.slug,
-            newEvent.currency || 'XOF',
+            finalCurrency,
             newEvent.taxType,
             newEvent.taxAmount,
             newEvent.organizationId,
@@ -159,6 +164,9 @@ exports.save = async ({ payload, files, currentUser }) => {
                 config         = $12
             WHERE id = $13 RETURNING *
         `;
+        const systemSettings = await systemSettingsService.getSystemSettings();
+        const appearance = systemSettings.appearance;
+        const finalCurrency = newEvent.currency || systemSettings.localization?.defaultCurrency || 'USD';
         const values = [
             newEvent.name,
             newEvent.description,
@@ -168,7 +176,7 @@ exports.save = async ({ payload, files, currentUser }) => {
             newEvent.banner,
             newEvent.landingConfig,
             newEvent.slug,
-            newEvent.currency || 'XOF',
+            finalCurrency,
             newEvent.taxType,
             newEvent.taxAmount,
             newEvent.config,
@@ -179,137 +187,6 @@ exports.save = async ({ payload, files, currentUser }) => {
     }
 };
 
-exports.saveExtras = async ({ payload: { newExtras }, currentUser }) => {
-    // Remove Stripe-related fields since we're not creating products anymore
-    delete newExtras.stripeProductId;
-    delete newExtras.stripePriceId;
-
-    // save in db
-    const savedExtras = await exports.upsertExtras({
-        payload: newExtras,
-    });
-    return savedExtras;
-};
-
-exports.upsertExtras = async ({ payload }) => {
-    const { id, ...extrasData } = payload;
-
-    if (id) {
-        const sql = `
-            INSERT INTO extras (id, name, description, price, currency, content, event_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO
-            UPDATE SET
-                name = EXCLUDED.name,
-                description = EXCLUDED.description,
-                price = EXCLUDED.price,
-                currency = EXCLUDED.currency,
-                content = EXCLUDED.content,
-                event_id = EXCLUDED.event_id
-                RETURNING *
-        `;
-        const values = [
-            id,
-            extrasData.name,
-            extrasData.description,
-            extrasData.price,
-            extrasData.currency,
-            JSON.stringify(extrasData.content),
-            extrasData.eventId,
-        ];
-        const result = await query(sql, values);
-        return result.rows[0];
-    } else {
-        const sql = `
-            INSERT INTO extras (name, description, price, currency, content, event_id)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
-        `;
-        const values = [
-            extrasData.name,
-            extrasData.description,
-            extrasData.price,
-            extrasData.currency,
-            JSON.stringify(extrasData.content),
-            extrasData.eventId,
-        ];
-        const result = await query(sql, values);
-        return result.rows[0];
-    }
-};
-
-exports.saveExtrasPurchase = async ({
-    extrasIds,
-    registrationId,
-    status = false,
-}) => {
-    const extras = await exports.getExtrasByIds({ extrasIds });
-    const newExtrasPurchase = {
-        extrasData: [],
-        status,
-        qrUuid: uuidv4(),
-        scannedAt: null,
-        registrationId,
-    };
-    newExtrasPurchase.extrasData = extras.map((item, index) => ({
-        name: item.name,
-        price: item.price,
-        content: item.content,
-    }));
-
-    const sql = `
-        INSERT INTO extras_purchase (extras_data, status, qr_uuid, scanned_at, registration_id)
-        VALUES ($1, $2, $3, $4, $5) RETURNING *
-    `;
-    const values = [
-        JSON.stringify(newExtrasPurchase.extrasData),
-        newExtrasPurchase.status,
-        newExtrasPurchase.qrUuid,
-        newExtrasPurchase.scannedAt,
-        newExtrasPurchase.registrationId,
-    ];
-    const result = await query(sql, values);
-    return result.rows[0];
-};
-
-exports.updateExtrasPurchaseStatus = async ({ payload: { id, status } }) => {
-    const sql = `
-        UPDATE extras_purchase
-        SET status     = $1,
-            scanned_at = CASE
-                             WHEN $1 = TRUE THEN NOW() -- Set to current timestamp if status is true
-                             ELSE scanned_at -- Otherwise, keep its existing value
-                END
-        WHERE id = $2 RETURNING *;
-    `;
-    const extras = await query(sql, [status, id]);
-    return extras.rows[0];
-};
-
-exports.getExtrasById = async ({ extrasId }) => {
-    const sql = `
-        SELECT *
-        FROM extras
-        WHERE id = $1`;
-    const extras = await query(sql, [extrasId]);
-    return extras.rows[0];
-};
-
-exports.getExtrasByIds = async ({ extrasIds }) => {
-    const sql = `
-        SELECT *
-        FROM extras
-        WHERE id IN ($1)`;
-    const extras = await query(sql, [extrasIds]);
-    return extras.rows;
-};
-
-exports.getExtrasByEventId = async ({ eventId }) => {
-    const sql = `
-        SELECT *
-        FROM extras
-        WHERE event_id = $1`;
-    const extras = await query(sql, [eventId]);
-    return extras.rows;
-};
 
 exports.removeEvent = async ({ eventId, organizationId }) => {
     const sql = `
@@ -326,16 +203,6 @@ exports.removeEvent = async ({ eventId, organizationId }) => {
     return deletedEvent.rows[0];
 };
 
-exports.removeExtras = async ({ eventId, extrasId }) => {
-    const sql = `
-        DELETE
-        FROM extras
-        WHERE id = $1
-          AND event_id = $2 RETURNING *;`;
-    const deletedExtras = await query(sql, [extrasId, eventId]);
-
-    return deletedExtras.rows[0];
-};
 
 exports.getEventById = async ({ eventId }) => {
     const sql = `

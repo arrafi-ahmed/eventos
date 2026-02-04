@@ -2,6 +2,7 @@
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -12,11 +13,13 @@
     meta: {
       layout: 'default',
       title: 'Session History',
+      titleKey: 'pages.counter.history.title',
       requiresAuth: true,
     },
   })
 
   const { rounded, density, variant } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
 
@@ -25,13 +28,13 @@
   const downloadingId = ref(null)
 
   const headers = [
-    { title: 'Opening Time', key: 'openingTime', sortable: true },
-    { title: 'Closing Time', key: 'closingTime', sortable: true },
-    { title: 'Event', key: 'eventName' },
-    { title: 'Cashier', key: 'cashierName' },
-    { title: 'Status', key: 'status', align: 'center' },
-    { title: 'Closing Cash', key: 'closingCash', align: 'end' },
-    { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+    { key: 'openingTime', sortable: true },
+    { key: 'closingTime', sortable: true },
+    { key: 'eventName' },
+    { key: 'cashierName' },
+    { key: 'status', align: 'center' },
+    { key: 'closingCash', align: 'end' },
+    { key: 'actions', sortable: false, align: 'end' },
   ]
 
   async function fetchSessions () {
@@ -41,7 +44,7 @@
       sessions.value = response.data?.payload || []
     } catch (error) {
       console.error('Failed to fetch sessions:', error)
-      store.commit('addSnackbar', { text: 'Failed to load session history', color: 'error' })
+      store.commit('addSnackbar', { text: t('common.error_load'), color: 'error' })
     } finally {
       loading.value = false
     }
@@ -66,7 +69,7 @@
       window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Download failed:', error)
-      store.commit('addSnackbar', { text: 'Failed to download report', color: 'error' })
+      store.commit('addSnackbar', { text: t('common.error_download'), color: 'error' })
     } finally {
       downloadingId.value = null
     }
@@ -88,8 +91,9 @@
 <template>
   <v-container>
     <PageTitle
-      subtitle="View and download reports for past cash sessions"
-      title="Session History"
+      :subtitle="t('pages.counter.history.subtitle')"
+      :title="t('pages.counter.history.title')"
+      :title-key="'pages.counter.history.title'"
     />
 
     <v-card class="mt-4" elevation="2" :rounded="rounded">
@@ -100,6 +104,10 @@
         :items="sessions"
         :loading="loading"
       >
+        <!-- Re-mapping header titles in template for cleaner script -->
+        <template v-for="h in headers" :key="h.key" #[`header.${h.key}`]>
+          {{ t(`pages.counter.history.headers.${h.key}`) }}
+        </template>
         <template #item.openingTime="{ item }">
           <div class="font-weight-medium">{{ formatDate(item.openingTime, item.timezone) }}</div>
         </template>
@@ -123,7 +131,7 @@
           <span v-if="item.status === 'closed'" class="font-weight-bold">
             {{ formatPrice(item.closingCash, item.currency) }}
           </span>
-          <span v-else class="text-grey italic">Active</span>
+          <span v-else class="text-grey italic">{{ t('pages.counter.history.active') }}</span>
         </template>
 
         <template #item.actions="{ item }">
@@ -133,7 +141,7 @@
             icon="mdi-file-download"
             :loading="downloadingId === item.id"
             size="small"
-            title="Download Report"
+            :title="t('pages.counter.history.download')"
             variant="text"
             @click="downloadReport(item)"
           />
@@ -142,8 +150,8 @@
         <template #no-data>
           <div class="py-12 text-center text-grey">
             <v-icon class="mb-4" size="64">mdi-history</v-icon>
-            <div class="text-h6">No sessions found</div>
-            <div class="text-caption">Your session history will appear here</div>
+            <div class="text-h6">{{ t('pages.counter.history.no_sessions') }}</div>
+            <div class="text-caption">{{ t('pages.counter.history.history_hint') }}</div>
           </div>
         </template>
       </v-data-table>

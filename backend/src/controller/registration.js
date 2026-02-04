@@ -296,21 +296,6 @@ router.post("/sendTicketsByRegistrationId", async (req, res, next) => {
     }
 });
 
-router.post(
-    "/scanByExtrasPurchaseId",
-    auth,
-    isOrganizerEventAuthor,
-    async (req, res, next) => {
-        try {
-            const results = await registrationService.scanByExtrasPurchaseId({
-                ...req.body.payload,
-            });
-            res.status(200).json(new ApiResponse("Ticket sent to email!", results));
-        } catch (err) {
-            next(err);
-        }
-    },
-);
 
 // Cleanup expired data (admin only)
 router.post("/cleanup", auth, isOrganizerEventAuthor, async (req, res, next) => {

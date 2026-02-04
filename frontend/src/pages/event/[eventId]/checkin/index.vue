@@ -3,6 +3,7 @@
   import { QrcodeStream } from 'vue-qrcode-reader'
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { formatDateTime, formatPrice } from '@/utils'
@@ -12,12 +13,14 @@
     meta: {
       layout: 'default',
       title: 'Event Check-in',
+      titleKey: 'scanner.title',
       requiresOrganizer: true,
       requiresAuth: true,
     },
   })
 
   const store = useStore()
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
@@ -103,7 +106,7 @@
 
       latestResult.value = {
         success: true,
-        message: 'Successfully checked in',
+        message: t('scanner.scanner.checked_in_overlay'),
         attendee: result,
       }
 
@@ -142,7 +145,7 @@
     console.error('Scanner error:', err)
     latestResult.value = {
       success: false,
-      message: 'Scanner error: ' + (err.message || 'Unknown error'),
+      message: t('scanner.scanner.invalid_code_overlay') + ': ' + (err.message || 'Unknown error'),
     }
   }
 
@@ -151,7 +154,7 @@
       console.error('Scanner init error:', error)
       latestResult.value = {
         success: false,
-        message: 'Camera initialization failed',
+        message: t('scanner.scanner.invalid_code_overlay'),
       }
     })
   }
@@ -303,7 +306,7 @@
   <v-container>
     <PageTitle
       :subtitle="event?.name"
-      title="Scanner"
+      :title="t('scanner.title')"
     />
 
     <v-row>
@@ -314,19 +317,19 @@
           <v-card-text>
             <div class="text-subtitle-2 font-weight-bold mb-4 d-flex align-center">
               <v-icon class="mr-2" color="primary" size="small">mdi-chart-box-outline</v-icon>
-              Attendance Stats
+              {{ t('scanner.stats.title') }}
             </div>
             <div class="stats-container">
               <div class="d-flex justify-space-between mb-2">
-                <span class="text-body-2">Total Expected</span>
+                <span class="text-body-2">{{ t('scanner.stats.total_expected') }}</span>
                 <span class="font-weight-bold">{{ statistics.totalAttendees }}</span>
               </div>
               <div class="d-flex justify-space-between mb-2 text-success">
-                <span class="text-body-2">Checked-in</span>
+                <span class="text-body-2">{{ t('scanner.stats.checked_in') }}</span>
                 <span class="font-weight-bold">{{ statistics.totalCheckedInAttendees }}</span>
               </div>
               <div class="d-flex justify-space-between mb-4 text-warning">
-                <span class="text-body-2">Remaining</span>
+                <span class="text-body-2">{{ t('scanner.stats.remaining') }}</span>
                 <span class="font-weight-bold">{{ remainingAttendees }}</span>
               </div>
 
@@ -337,7 +340,7 @@
                 rounded
               />
               <div class="text-center text-caption mt-1">
-                {{ Math.round(checkinProgress) }}% Complete
+                {{ Math.round(checkinProgress) }}% {{ t('scanner.stats.complete') }}
               </div>
             </div>
           </v-card-text>
@@ -349,7 +352,7 @@
             <v-card-text class="pa-3">
               <div class="text-subtitle-2 font-weight-bold mb-3 d-flex align-center text-success">
                 <v-icon class="mr-2" size="small">mdi-account-check</v-icon>
-                Recently Scanned
+                {{ t('scanner.scanner.recent_scanned') }}
               </div>
 
               <div class="d-flex align-center mb-3">
@@ -387,9 +390,9 @@
       <v-col class="order-1 order-md-2" cols="12" md="8">
         <v-card class="interaction-card overflow-hidden" elevation="1" :rounded="rounded">
           <v-tabs v-model="activeTab" border-bottom fixed-tabs>
-            <v-tab prepend-icon="mdi-qrcode-scan" value="scanner">Scanner</v-tab>
-            <v-tab prepend-icon="mdi-account-search" value="search">Search</v-tab>
-            <v-tab prepend-icon="mdi-history" value="history">History</v-tab>
+            <v-tab prepend-icon="mdi-qrcode-scan" value="scanner">{{ t('scanner.scanner_tab') }}</v-tab>
+            <v-tab prepend-icon="mdi-account-search" value="search">{{ t('scanner.search_tab') }}</v-tab>
+            <v-tab prepend-icon="mdi-history" value="history">{{ t('scanner.history_tab') }}</v-tab>
           </v-tabs>
 
           <v-card-text class="pa-0">
@@ -415,7 +418,7 @@
                         <div v-if="latestResult" class="scanner-result-overlay d-flex align-center justify-center">
                           <div v-if="latestResult.success" class="result-box success-box text-center pa-6 rounded-xl elevation-12">
                             <v-icon class="mb-4 animate-bounce" color="success" size="80">mdi-check-circle</v-icon>
-                            <div class="text-h5 font-weight-black text-success line-height-1 mb-1">CHECKED IN</div>
+                            <div class="text-h5 font-weight-black text-success line-height-1 mb-1">{{ t('scanner.scanner.checked_in_overlay') }}</div>
                             <template v-if="latestResult.attendee">
                               <div class="text-h6 font-weight-bold text-high-emphasis">{{ latestResult.attendee.firstName }} {{ latestResult.attendee.lastName }}</div>
                               <div class="text-caption font-weight-medium text-medium-emphasis">{{ latestResult.attendee.ticket?.title || latestResult.attendee.ticketTitle }}</div>
@@ -425,14 +428,14 @@
                           <!-- Duplicate / Already Checked-in State -->
                           <div v-else-if="latestResult.isDuplicate" class="result-box error-box text-center pa-6 rounded-xl elevation-12">
                             <v-icon class="mb-4 animate-shake" color="error" size="80">mdi-alert-circle</v-icon>
-                            <div class="text-h5 font-weight-black text-error line-height-1 mb-1">ALREADY CHECKED-IN</div>
+                            <div class="text-h5 font-weight-black text-error line-height-1 mb-1">{{ t('scanner.scanner.already_checked_overlay') }}</div>
                             <div class="text-body-2 font-weight-bold text-medium-emphasis">{{ latestResult.message }}</div>
                           </div>
 
                           <!-- Invalid State -->
                           <div v-else class="result-box error-box text-center pa-6 rounded-xl elevation-12">
                             <v-icon class="mb-4 animate-shake" color="error" size="80">mdi-close-circle</v-icon>
-                            <div class="text-h5 font-weight-black text-error line-height-1 mb-1">INVALID CODE</div>
+                            <div class="text-h5 font-weight-black text-error line-height-1 mb-1">{{ t('scanner.scanner.invalid_code_overlay') }}</div>
                             <div class="text-body-2 font-weight-bold text-medium-emphasis">{{ latestResult.message }}</div>
                           </div>
                         </div>
@@ -461,10 +464,10 @@
                     :disabled="!selectedEventId"
                     append-inner-icon="mdi-magnify"
                     hide-details
-                    label="Search Attendee"
+                    :label="t('scanner.search.label')"
                     :loading="loading"
                     class="mb-4"
-                    placeholder="Name or email (Press Enter to search)"
+                    :placeholder="t('scanner.search.placeholder')"
                     prepend-inner-icon="mdi-account-search"
                     :rounded="rounded"
                     :variant="variant"
@@ -498,14 +501,14 @@
                           v-if="!attendee.checkinId"
                           color="success"
                           prepend-icon="mdi-check-circle-outline"
-                          :rounded="rounded"
+                           :rounded="rounded"
                           variant="tonal"
                           @click.stop="handleManualCheckin(attendee)"
                         >
-                          Check-in
+                          {{ t('scanner.search.checkin_btn') }}
                         </v-btn>
                         <v-chip v-else color="success" prepend-icon="mdi-check" variant="flat">
-                          Checked-in
+                          {{ t('scanner.search.checked_in_chip') }}
                         </v-chip>
                       </template>
                     </v-list-item>
@@ -513,11 +516,11 @@
                     <v-fade-transition hide-on-leave>
                       <div v-if="attendees.length === 0 && hasSearched && !loading" class="py-12 text-center">
                         <v-icon color="grey" size="48">mdi-account-search-outline</v-icon>
-                        <div class="text-grey mt-2 font-weight-medium">No results for "{{ searchKeyword }}"</div>
+                        <div class="text-grey mt-2 font-weight-medium">{{ t('scanner.search.no_results', { keyword: searchKeyword }) }}</div>
                       </div>
                       <div v-else-if="!loading && attendees.length === 0" class="py-12 text-center">
                         <v-icon color="grey" size="48">mdi-magnify</v-icon>
-                        <div class="text-grey mt-2 font-weight-medium">Enter name or email and press search</div>
+                        <div class="text-grey mt-2 font-weight-medium">{{ t('scanner.search.empty_state') }}</div>
                       </div>
                     </v-fade-transition>
                   </v-list>
@@ -539,14 +542,14 @@
                         {{ item.firstName }} {{ item.lastName }}
                       </v-list-item-title>
                       <v-list-item-subtitle class="text-caption">
-                        Checked in at {{ formatDate(item.checkinTime || item.createdAt) }} • {{ item.email }}
+                        {{ t('scanner.history.checked_in_at', { time: formatDate(item.checkinTime || item.createdAt), email: item.email }) }}
                       </v-list-item-subtitle>
                     </v-list-item>
                   </v-list>
                   <div v-else class="py-12 text-center text-grey">
                     <v-icon class="mb-4" size="64">mdi-history</v-icon>
-                    <div class="text-h6">No recent check-ins</div>
-                    <div class="text-caption">Successful scans will appear here</div>
+                    <div class="text-h6">{{ t('scanner.history.no_history_title') }}</div>
+                    <div class="text-caption">{{ t('scanner.history.no_history_msg') }}</div>
                   </div>
                 </div>
               </v-window-item>
@@ -560,7 +563,7 @@
     <v-dialog v-model="detailsDialog" max-width="500">
       <v-card v-if="selectedAttendee" :rounded="rounded">
         <v-card-title class="font-weight-bold d-flex align-center">
-          Attendee Details
+          {{ t('scanner.details.title') }}
           <v-spacer />
           <v-btn icon="mdi-close" size="small" variant="text" @click="detailsDialog = false" />
         </v-card-title>
@@ -571,35 +574,34 @@
             </v-avatar>
             <div>
               <div class="text-h6 font-weight-bold">{{ selectedAttendee.firstName }} {{ selectedAttendee.lastName }}</div>
-              <div class="text-body-2 text-grey">Status: <span :class="selectedAttendee.checkinId ? 'text-success font-weight-bold' : 'text-warning font-weight-bold'">{{ selectedAttendee.checkinId ? 'Checked In' : 'Pending' }}</span></div>
+              <div class="text-body-2 text-grey">{{ t('scanner.details.status') }}: <span :class="selectedAttendee.checkinId ? 'text-success font-weight-bold' : 'text-warning font-weight-bold'">{{ selectedAttendee.checkinId ? t('scanner.details.checked_in') : t('scanner.details.pending') }}</span></div>
             </div>
           </div>
 
           <v-row class="mb-4" dense>
             <v-col v-if="selectedAttendee.email" cols="12" sm="6">
-              <div class="text-caption text-grey">Email</div>
-              <div class="text-body-2 font-weight-medium">{{ selectedAttendee.email }}</div>
+              <div class="text-caption text-grey">{{ t('scanner.details.email') }}</div>
+              <div class="text-body-2 font-medium">{{ selectedAttendee.email }}</div>
             </v-col>
             <v-col v-if="selectedAttendee.phone" cols="12" sm="6">
-              <div class="text-caption text-grey">Phone</div>
+              <div class="text-caption text-grey">{{ t('scanner.details.phone') }}</div>
               <div class="text-body-2 font-weight-medium">{{ selectedAttendee.phone }}</div>
             </v-col>
           </v-row>
 
           <v-divider class="mb-3" />
-
-          <div class="text-overline font-weight-bold mb-1">Ticket Information</div>
+          <div class="text-overline font-weight-bold mb-1">{{ t('scanner.details.ticket_info') }}</div>
           <v-card class="pa-3" color="primary" variant="tonal">
             <template v-if="selectedAttendee.items && selectedAttendee.items.length > 0">
               <div v-for="(item, index) in selectedAttendee.items" :key="index" class="d-flex align-center mb-2">
                 <v-icon class="mr-3" color="primary">mdi-ticket-account</v-icon>
                 <div>
-                  <div class="text-subtitle-2 font-weight-bold">
-                    {{ item.ticket?.title || item.title || item.name || item.ticketTitle || item.ticket_title || getTicketTitle(item.ticketId) || 'Ticket' }}
-                    <span v-if="item.quantity >= 1" class="text-caption ml-1">x{{ item.quantity }}</span>
+                    <div class="text-subtitle-2 font-weight-bold">
+                      {{ item.ticket?.title || item.title || item.name || item.ticketTitle || item.ticket_title || getTicketTitle(item.ticketId) || 'Ticket' }}
+                      <span v-if="item.quantity >= 1" class="text-caption ml-1">x{{ item.quantity }}</span>
+                    </div>
+                    <div class="text-caption">{{ t('scanner.details.price') }}: {{ item.price > 0 ? formatPrice(item.price) : t('scanner.details.free') }}</div>
                   </div>
-                  <div class="text-caption">Price: {{ item.price > 0 ? formatPrice(item.price) : 'Free' }}</div>
-                </div>
               </div>
             </template>
             <div v-else class="d-flex align-center">
@@ -623,7 +625,7 @@
             variant="flat"
             @click="handleManualCheckin(selectedAttendee)"
           >
-            Check-in Attendee
+            {{ t('scanner.details.checkin_btn') }}
           </v-btn>
           <v-btn
             v-else
@@ -632,7 +634,7 @@
             :rounded="rounded"
             variant="tonal"
           >
-            Already Checked-in
+            {{ t('scanner.details.already_checked_btn') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -641,7 +643,7 @@
     <!-- Manual Check-in Confirmation Dialog -->
     <v-dialog v-model="checkinDialog" max-width="500">
       <v-card v-if="selectedAttendee" :rounded="rounded">
-        <v-card-title class="font-weight-bold">Confirm Check-in</v-card-title>
+        <v-card-title class="font-weight-bold">{{ t('scanner.confirm.title') }}</v-card-title>
         <v-card-text class="py-4">
           <div class="d-flex align-center mb-6">
             <v-avatar class="mr-4" color="primary" size="64">
@@ -655,18 +657,18 @@
 
           <v-row dense>
             <v-col v-if="selectedAttendee.email" cols="12" sm="6">
-              <div class="text-caption text-grey">Email</div>
-              <div class="text-body-2 font-weight-medium">{{ selectedAttendee.email }}</div>
+              <div class="text-caption text-grey">{{ t('scanner.details.email') }}</div>
+              <div class="text-body-2 font-medium">{{ selectedAttendee.email }}</div>
             </v-col>
             <v-col v-if="selectedAttendee.phone" cols="12" sm="6">
-              <div class="text-caption text-grey">Phone</div>
+              <div class="text-caption text-grey">{{ t('scanner.details.phone') }}</div>
               <div class="text-body-2 font-weight-medium">{{ selectedAttendee.phone }}</div>
             </v-col>
           </v-row>
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
-          <v-btn color="grey" :rounded="rounded" variant="text" @click="checkinDialog = false">Cancel</v-btn>
+          <v-btn color="grey" :rounded="rounded" variant="text" @click="checkinDialog = false">{{ t('scanner.confirm.cancel') }}</v-btn>
           <v-spacer />
           <v-btn
             color="success"
@@ -676,7 +678,7 @@
             variant="flat"
             @click="confirmCheckin"
           >
-            Confirm Check-in
+            {{ t('scanner.confirm.confirm_btn') }}
           </v-btn>
         </v-card-actions>
       </v-card>

@@ -63,13 +63,16 @@ const props = defineProps({
   },
   currency: {
     type: String,
-    default: 'USD'
+    default: null
   },
   paymentUrl: {
     type: String,
     default: ''
   }
 })
+
+const store = useStore()
+const displayCurrency = computed(() => props.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD')
 
 const emit = defineEmits(['processing', 'error', 'loaded'])
 

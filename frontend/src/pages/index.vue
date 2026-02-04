@@ -3,6 +3,7 @@
   import { useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import { useUiProps } from '@/composables/useUiProps'
 
   import EventCard from '@/components/EventCard.vue'
@@ -18,12 +19,14 @@
     meta: {
       layout: 'default',
       title: 'Home',
+      titleKey: 'home.title',
     },
   })
 
   const router = useRouter()
   const store = useStore()
   const theme = useTheme()
+  const { t } = useI18n()
 
   // Reactive data
   const isLoading = ref(true)
@@ -46,87 +49,24 @@
 
   // Features data - ordered by importance and popularity
   const features = [
-    {
-      icon: 'mdi-calendar-multiple',
-      title: 'Event Management',
-      description: 'Create and manage events with ease',
-    },
-    {
-      icon: 'mdi-store',
-      title: 'On-Site Sales',
-      description: 'Walk-in ticket sales with cash/card payments',
-    },
-    {
-      icon: 'mdi-cash-register',
-      title: 'Ticket Counter Management',
-      description: 'Multiple counters with cash session tracking',
-    },
-    {
-      icon: 'mdi-currency-usd',
-      title: 'Online Payments',
-      description: 'Stripe integration with multi-currency',
-    },
-    {
-      icon: 'mdi-qrcode-scan',
-      title: 'QR Check-In',
-      description: 'Fast scanning with check-in agent access',
-    },
-    {
-      icon: 'mdi-robot',
-      title: 'AI Chatbot',
-      description: 'AI-powered after-sales support chatbot',
-    },
-    {
-      icon: 'mdi-account-multiple',
-      title: 'Attendee Management',
-      description: 'Complete attendee dashboard and tools',
-    },
-    {
-      icon: 'mdi-chart-line',
-      title: 'Sales Analytics',
-      description: 'Track online vs. on-site performance',
-    },
-    {
-      icon: 'mdi-shopping',
-      title: 'Merchandise Shop',
-      description: 'Sell products and track orders',
-    },
-    {
-      icon: 'mdi-file-document-edit',
-      title: 'Form Builder',
-      description: 'Custom registration forms',
-    },
-    {
-      icon: 'mdi-shield-account',
-      title: 'Role-Based Access',
-      description: 'Roles for cashiers, agents, and organizers',
-    },
-    {
-      icon: 'mdi-palette-swatch',
-      title: 'Custom Branding',
-      description: 'Customize theme, colors, logo, and more',
-    },
-    {
-      icon: 'mdi-account-search',
-      title: 'Visitor Tracking',
-      description: 'Track landing page visitors',
-    },
-    {
-      icon: 'mdi-bell-ring',
-      title: 'Cart Recovery',
-      description: 'Automated abandoned cart reminders',
-    },
-    {
-      icon: 'mdi-ticket-percent',
-      title: 'Promo Codes',
-      description: 'Discount codes with usage limits and tracking',
-    },
-    {
-      icon: 'mdi-clock-fast',
-      title: 'Early Bird Pricing',
-      description: 'Time-based pricing tiers for tickets',
-    },
+    { icon: 'mdi-calendar-multiple', key: 'event_management' },
+    { icon: 'mdi-store', key: 'onsite_sales' },
+    { icon: 'mdi-cash-register', key: 'counter_management' },
+    { icon: 'mdi-currency-usd', key: 'online_payments' },
+    { icon: 'mdi-qrcode-scan', key: 'qr_checkin' },
+    { icon: 'mdi-robot', key: 'ai_chatbot' },
+    { icon: 'mdi-account-multiple', key: 'attendee_management' },
+    { icon: 'mdi-chart-line', key: 'sales_analytics' },
+    { icon: 'mdi-shopping', key: 'merchandise_shop' },
+    { icon: 'mdi-file-document-edit', key: 'form_builder' },
+    { icon: 'mdi-shield-account', key: 'role_access' },
+    { icon: 'mdi-palette-swatch', key: 'custom_branding' },
+    { icon: 'mdi-account-search', key: 'visitor_tracking' },
+    { icon: 'mdi-bell-ring', key: 'cart_recovery' },
+    { icon: 'mdi-ticket-percent', key: 'promo_codes' },
+    { icon: 'mdi-clock-fast', key: 'early_bird' },
   ]
+
 
   // Format event data for display
   function formatEventData (events) {
@@ -367,34 +307,36 @@
                 xl="9"
               >
                 <div class="hero-content">
-                  <h2 class="text-h4 text-md-h3 text-lg-h2 font-weight-bold mb-4 mb-md-5 hero-title">
-                    Sell Tickets, Manage Events, Track Everything
-                  </h2>
-                  <p class="text-h6 text-md-h5 mb-6 mb-md-8 hero-subtitle">
-                    Everything you need to run successful events—from ticket sales to QR check-in, all in one platform
+                  <h1 class="hero-title text-h4 text-md-h3 text-lg-h2 text-xl-h1 font-weight-black mb-4 mb-md-6">
+                    {{ t('home.hero_title') }}
+                  </h1>
+                  <p class="hero-subtitle text-body-1 text-md-h6 text-lg-h5 text-wrap mb-8 mb-md-10 opacity-90 mx-auto">
+                    {{ t('home.hero_subtitle') }}
                   </p>
-                  <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 gap-md-4 justify-center hero-actions">
+                  <div class="hero-actions d-flex flex-column flex-sm-row justify-center">
                     <v-btn
                       v-if="!isAuthenticated"
-                      class="hero-btn hero-btn-mobile"
+                      class="hero-btn hero-btn-active mb-3 mb-sm-0"
                       color="primary"
-                      prepend-icon="mdi-rocket-launch"
+                      elevation="8"
+                      prepend-icon="mdi-plus-circle-outline"
                       rounded="xl"
                       size="large"
-                      :to="{ name: 'signin' }"
+                      :to="{ name: 'event-add' }"
                     >
-                      Create Your First Event
+                      {{ t('home.create_event') }}
                     </v-btn>
                     <v-btn
                       v-else
-                      class="hero-btn hero-btn-mobile"
+                      class="hero-btn hero-btn-active mb-3 mb-sm-0"
                       color="primary"
-                      prepend-icon="mdi-view-dashboard"
+                      elevation="8"
+                      prepend-icon="mdi-view-dashboard-outline"
                       rounded="xl"
                       size="large"
                       :to="calcHome"
                     >
-                      Go to Dashboard
+                      {{ t('home.go_to_dashboard') }}
                     </v-btn>
                     <v-btn
                       class="hero-btn hero-btn-mobile ml-2"
@@ -405,7 +347,7 @@
                       :to="{ name: 'events-browse' }"
                       variant="outlined"
                     >
-                      Browse Events
+                      {{ t('home.browse_events') }}
                     </v-btn>
                   </div>
                 </div>
@@ -425,10 +367,10 @@
 
           <div class="text-center mb-8 mb-md-12">
             <h2 class="text-h5 text-md-h4 text-lg-h3 text-xl-h2 font-weight-bold mb-3 mb-md-4">
-              Upcoming Events
+              {{ t('home.upcoming_events') }}
             </h2>
             <p class="text-body-1 text-md-h6 text-lg-h5 text-medium-emphasis mb-4 mb-md-6">
-              Join us for these inspiring experiences
+              {{ t('home.join_us') }}
             </p>
             <v-btn
               class="browse-events-btn"
@@ -439,7 +381,7 @@
               variant="outlined"
               @click="navigateToBrowseEvents"
             >
-              Browse All Events
+              {{ t('home.browse_all_events') }}
             </v-btn>
           </div>
 
@@ -454,7 +396,7 @@
               size="64"
             />
             <p class="text-h6 mt-4 text-medium-emphasis">
-              Loading events...
+              {{ t('home.loading_events') }}
             </p>
           </div>
 
@@ -506,10 +448,10 @@
               mdi-calendar-outline
             </v-icon>
             <h3 class="text-h5 mb-2">
-              No upcoming events
+              {{ t('home.no_upcoming_events') }}
             </h3>
             <p class="text-body-1 text-medium-emphasis">
-              Check back soon for new events and concerts.
+              {{ t('home.check_back_soon') }}
             </p>
           </div>
         </section>
@@ -518,10 +460,10 @@
         <section class="features-section py-8 py-md-16">
           <div class="text-center mb-3 mb-md-4">
             <h2 class="text-h5 text-md-h4 text-lg-h3 text-xl-h2 font-weight-bold mb-3 mb-md-4">
-              Powerful Features
+              {{ t('home.powerful_features') }}
             </h2>
             <p class="text-body-1 text-md-h6 text-lg-h5 text-medium-emphasis">
-              Everything you need to manage events seamlessly
+              {{ t('home.everything_you_need') }}
             </p>
           </div>
 
@@ -549,10 +491,10 @@
                     />
                   </div>
                   <h3 class="text-subtitle-1 text-md-h6 font-weight-bold mb-2 mb-md-3">
-                    {{ feature.title }}
+                    {{ t(`home.features.${feature.key}.title`) }}
                   </h3>
                   <p class="text-caption text-md-body-2 text-medium-emphasis">
-                    {{ feature.description }}
+                    {{ t(`home.features.${feature.key}.desc`) }}
                   </p>
                 </v-card-text>
               </v-card>
@@ -586,10 +528,10 @@
                       />
                     </div>
                     <h3 class="text-h6 font-weight-bold mb-3">
-                      {{ feature.title }}
+                      {{ t(`home.features.${feature.key}.title`) }}
                     </h3>
                     <p class="text-body-2 text-medium-emphasis">
-                      {{ feature.description }}
+                      {{ t(`home.features.${feature.key}.desc`) }}
                     </p>
                   </v-card-text>
                 </v-card>
@@ -610,11 +552,10 @@
                 variant="tonal"
               >
                 <v-card-title class="text-h5 text-md-h4 text-lg-h3 text-xl-h2 text-wrap my-3 my-md-4">
-                  Ready to Start Selling Tickets?
+                  {{ t('home.ready_to_start') }}
                 </v-card-title>
                 <v-card-text class="text-body-1 text-md-h6 text-lg-h5">
-                  Join thousands of organizers who trust our platform to manage their events, sell tickets, and track
-                  attendees seamlessly.
+                  {{ t('home.join_thousands') }}
                 </v-card-text>
                 <v-card-actions class="justify-center">
                   <v-btn
@@ -626,7 +567,7 @@
                     :size="size"
                     :to="{ name: 'register' }"
                   >
-                    Sign Up Free
+                    {{ t('home.signup_free') }}
                   </v-btn>
                   <v-btn
                     v-else
@@ -637,7 +578,7 @@
                     :size="size"
                     :to="calcHome"
                   >
-                    Go to Dashboard
+                    {{ t('home.go_to_dashboard') }}
                   </v-btn>
                 </v-card-actions>
               </v-card>

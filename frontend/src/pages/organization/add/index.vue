@@ -1,5 +1,6 @@
 <script setup>
-  import { reactive, ref } from 'vue'
+  import { onMounted, reactive, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
@@ -12,6 +13,7 @@
     meta: {
       layout: 'default',
       title: 'Add Organization',
+      titleKey: 'pages.organizer.add',
       requiresAdmin: true,
       requiresAuth: true,
     },
@@ -20,6 +22,7 @@
   const { mobile } = useDisplay()
   const router = useRouter()
   const store = useStore()
+  const { t } = useI18n()
   const { rounded, density, variant, size } = useUiProps()
 
   const newOrganizationInit = {
@@ -60,9 +63,10 @@
 <template>
   <v-container class="organization-add-container">
     <PageTitle
-      :back-route="{ name: 'admin-organizations' }"
-      subtitle="Create a new organization and set up its details"
+      :back-route="{ name: 'dashboard-organizer' }"
+      :compact="true"
       title="Add Organization"
+      :title-key="'pages.organizer.add'"
     />
 
     <v-row justify="center">
@@ -150,12 +154,10 @@
 <style scoped>
 .organization-add-container {
   min-height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 @media (max-width: 768px) {
   .organization-add-container {
-    padding: 16px;
   }
 }
 </style>

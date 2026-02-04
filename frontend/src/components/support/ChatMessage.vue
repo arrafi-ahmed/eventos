@@ -10,6 +10,10 @@
 </template>
 
 <script setup>
+  import { useI18n } from 'vue-i18n'
+ 
+  const { t } = useI18n()
+ 
   const props = defineProps({
     message: {
       type: Object,
@@ -29,15 +33,15 @@
 
       // Show relative time for recent messages
       if (diffMins < 1) {
-        return 'Just now'
+        return t('components.time.just_now')
       } else if (diffMins < 60) {
-        return `${diffMins}m ago`
+        return `${diffMins}${t('components.time.m_ago')}`
       } else if (diffHours < 24) {
-        return `${diffHours}h ago`
+        return `${diffHours}${t('components.time.h_ago')}`
       } else if (diffDays === 1) {
-        return 'Yesterday'
+        return t('components.time.yesterday')
       } else if (diffDays < 7) {
-        return `${diffDays}d ago`
+        return `${diffDays}${t('components.time.d_ago')}`
       }
 
       // For older messages, show date and time

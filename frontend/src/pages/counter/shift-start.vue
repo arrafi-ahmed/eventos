@@ -1,7 +1,8 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { useRouter, useRoute } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { getCurrencySymbol } from '@/utils'
@@ -11,14 +12,17 @@
     meta: {
       layout: 'default',
       title: 'Start Shift',
+      titleKey: 'pages.counter.shift_start.title',
       requiresAuth: true,
       requiresCashier: true,
     },
   })
 
   const { rounded, density, variant } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   const router = useRouter()
+  const route = useRoute()
 
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
   const organizationId = computed(() => currentUser.value?.organizationId)
@@ -39,7 +43,7 @@
 
   const selectedEvent = computed(() => events.value.find(e => e.id === shiftData.value.eventId))
   const currencyCode = computed(() => {
-    return (selectedEvent.value?.currency || 'USD').toUpperCase()
+    return (selectedEvent.value?.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'XOF').toUpperCase()
   })
 
   async function handleStartShift () {
@@ -86,6 +90,11 @@
         else if (events.value.length === 1) {
           shiftData.value.eventId = events.value[0].id
         }
+
+        // 3. Auto-select ticket counter if only one available
+        if (ticketCounters.value.length === 1) {
+          shiftData.value.ticketCounterId = ticketCounters.value[0].id
+        }
       })
       .catch(error => {
         console.error('Error loading shift data:', error)
@@ -111,8 +120,9 @@
 <template>
   <v-container>
     <PageTitle
-      subtitle="Open a new cash session to start selling tickets"
-      title="Start Your Shift"
+      :subtitle="t('pages.counter.shift_start.subtitle')"
+      :title="t('pages.counter.shift_start.title')"
+      :title-key="'pages.counter.shift_start.title'"
     />
 
     <v-row justify="center">
@@ -126,12 +136,12 @@
                 item-title="name"
                 item-value="id"
                 :items="events"
-                label="Select Event"
+                :label="t('pages.counter.shift_start.event_label')"
                 :loading="loading"
                 prepend-inner-icon="mdi-calendar"
                 required
                 :rounded="rounded"
-                :rules="[v => !!v || 'Please select an event']"
+                :rules="[v => !!v || t('pages.counter.shift_start.event_req')]"
                 :variant="variant"
               />
 
@@ -141,26 +151,26 @@
                 item-title="name"
                 item-value="id"
                 :items="ticketCounters"
-                label="Select Ticket Counter"
+                :label="t('pages.counter.shift_start.counter_label')"
                 :loading="loading"
                 prepend-inner-icon="mdi-store"
                 required
                 :rounded="rounded"
-                :rules="[v => !!v || 'Please select a ticket counter']"
+                :rules="[v => !!v || t('pages.counter.shift_start.counter_req')]"
                 :variant="variant"
               />
 
               <v-text-field
                 v-model.number="shiftData.openingCash"
                 :density="density"
-                label="Opening Cash Balance"
+                :label="t('pages.counter.shift_start.opening_label')"
                 :prefix="currencyCode"
                 prepend-inner-icon="mdi-cash-multiple"
                 required
                 :rounded="rounded"
                 :rules="[
-                  v => v !== null && v !== undefined || 'Opening cash is required',
-                  v => v >= 0 || 'Opening cash cannot be negative'
+                  v => v !== null && v !== undefined || t('pages.counter.shift_start.opening_req'),
+                  v => v >= 0 || t('pages.counter.shift_start.opening_neg')
                 ]"
                 type="number"
                 :variant="variant"
@@ -177,7 +187,7 @@
                 type="submit"
                 variant="flat"
               >
-                Start Session
+                {{ t('pages.counter.shift_start.start_btn') }}
               </v-btn>
             </v-form>
           </v-card-text>

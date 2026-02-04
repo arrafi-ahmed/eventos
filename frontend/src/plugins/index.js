@@ -9,8 +9,9 @@ import router from '../router'
 import store from '../store'
 // Plugins
 import vuetify from './vuetify'
+import i18n from './i18n'
 
-function handleAuthRoutes (to, isSignedin, userRole) {
+function handleAuthRoutes(to, isSignedin, userRole) {
   // 1. Handle pages that require NO authentication (e.g., login, register)
   if (to.matched.some(record => record.meta.requiresNoAuth) && isSignedin) {
     return store.getters['auth/calcHome']
@@ -53,7 +54,7 @@ function handleAuthRoutes (to, isSignedin, userRole) {
   return null
 }
 
-export function registerPlugins (app) {
+export function registerPlugins(app) {
   router.beforeEach((to, from, next) => {
     if (
       handleRedirect({
@@ -85,6 +86,7 @@ export function registerPlugins (app) {
 
   app
     .use(vuetify)
+    .use(i18n)
     .use(router)
     .use(store)
 
@@ -96,7 +98,7 @@ export function registerPlugins (app) {
     (state, getters) => getters['auth/signedin'],
     signedIn => {
       if (signedIn) {
-        store.dispatch('preferences/syncThemeFromServer').catch(() => {})
+        store.dispatch('preferences/syncThemeFromServer').catch(() => { })
       } else {
         store.dispatch('preferences/resetTheme')
       }

@@ -1,0 +1,42 @@
+{
+    "title": "Profile",
+    "meta_title": "Profile",
+    "subtitle": "Manage your profile, theme, and account access",
+    "edit_organization": "Edit Organization",
+    "sections": {
+        "update_profile": {
+            "title": "Update Profile",
+            "password_hint": "Changing your email or password requires your current password.",
+            "no_changes": "No changes detected.",
+            "mismatch": "New passwords do not match.",
+            "save_btn": "Save Changes"
+        },
+        "appearance": {
+            "title": "Appearance",
+            "hint": "Theme changes apply instantly and are saved to your account.",
+            "dark_mode": "Dark mode",
+            "dark_mode_desc": "Toggle between light and dark experience"
+        },
+        "delete_account": {
+            "title": "Delete Profile",
+            "hint": "This action is permanent. All data associated with your account will be removed if possible.",
+            "confirm_label": "Type your email ({email}) to confirm",
+            "confirm_required": "Confirmation is required",
+            "password_required": "Current password is required",
+            "delete_btn": "Delete Account",
+            "popup_title": "Delete Account",
+            "popup_content": "Are you absolutely sure? This action cannot be undone.",
+            "confirm_email_hint": "Please type your email to confirm deletion."
+        }
+    },
+    "labels": {
+        "full_name": "Full Name",
+        "email": "Email",
+        "current_password": "Current Password",
+        "new_password": "New Password",
+        "confirm_new_password": "Confirm New Password"
+    },
+    "rules": {
+        "name_required": "Full name is required"
+    }
+}

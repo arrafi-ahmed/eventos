@@ -21,58 +21,66 @@ exports.save = async ({ payload }) => {
     }
 
     const dv = discountType === 'free' ? 0 : discountValue;
+    const isUpdate = !!id;
 
-    if (id) {
-        const sql = `
-            UPDATE promo_code
-            SET code = $1,
-                discount_type = $2,
-                discount_value = $3,
-                usage_limit = $4,
-                valid_from = $5,
-                valid_until = $6,
-                is_active = $7,
-                event_id = $8,
-                updated_at = NOW()
-            WHERE id = $9 AND organization_id = $10
-            RETURNING *;
-        `;
-        const values = [
-            code.toUpperCase(),
-            discountType,
-            dv,
-            usageLimit || null,
-            validFrom || null,
-            validUntil || null,
-            isActive !== undefined ? isActive : true,
-            eventId || null,
-            id,
-            organizationId
-        ];
-        const result = await query(sql, values);
-        if (result.rows.length === 0) {
-            throw new CustomError("Promo code not found or access denied", 404);
+    try {
+        if (isUpdate) {
+            const sql = `
+                UPDATE promo_code
+                SET code = $1,
+                    discount_type = $2,
+                    discount_value = $3,
+                    usage_limit = $4,
+                    valid_from = $5,
+                    valid_until = $6,
+                    is_active = $7,
+                    event_id = $8,
+                    updated_at = NOW()
+                WHERE id = $9 AND organization_id = $10
+                RETURNING *;
+            `;
+            const values = [
+                code.toUpperCase(),
+                discountType,
+                dv,
+                usageLimit || null,
+                validFrom || null,
+                validUntil || null,
+                isActive !== undefined ? isActive : true,
+                eventId || null,
+                id,
+                organizationId
+            ];
+            const result = await query(sql, values);
+            if (result.rows.length === 0) {
+                throw new CustomError("Promo code not found or access denied", 404);
+            }
+            return result.rows[0];
+        } else {
+            const sql = `
+                INSERT INTO promo_code (code, discount_type, discount_value, organization_id, event_id, usage_limit, valid_from, valid_until, is_active, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                RETURNING *;
+            `;
+            const values = [
+                code.toUpperCase(),
+                discountType,
+                dv,
+                organizationId,
+                eventId || null,
+                usageLimit || null,
+                validFrom || null,
+                validUntil || null,
+                isActive !== undefined ? isActive : true
+            ];
+            const result = await query(sql, values);
+            return result.rows[0];
         }
-        return result.rows[0];
-    } else {
-        const sql = `
-            INSERT INTO promo_code (code, discount_type, discount_value, organization_id, event_id, usage_limit, valid_from, valid_until, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-            RETURNING *;
-        `;
-        const values = [
-            code.toUpperCase(),
-            discountType,
-            dv,
-            organizationId,
-            eventId || null,
-            usageLimit || null,
-            validFrom || null,
-            validUntil || null,
-            isActive !== undefined ? isActive : true
-        ];
-        const result = await query(sql, values);
-        return result.rows[0];
+    } catch (error) {
+        if (error.code === '23505' && (error.constraint === 'promo_code_code_key' || error.detail?.includes('already exists'))) {
+            throw new CustomError("Promo code already exists", 400);
+        }
+        throw error;
     }
 };
 

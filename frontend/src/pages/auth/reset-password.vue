@@ -1,15 +1,19 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import { useUiProps } from '@/composables/useUiProps'
   import { isValidPass } from '@/utils/common'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'reset-password',
     meta: {
       layout: 'default',
       title: 'Reset Password',
+      titleKey: 'auth.reset_password.meta_title',
       requiresNoAuth: true,
     },
   })
@@ -18,6 +22,19 @@
   const router = useRouter()
   const store = useStore()
   const { rounded, size, variant, density } = useUiProps()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('auth.reset_password.title'),
+    subtitle: t('auth.reset_password.subtitle'),
+    new_password: t('auth.labels.new_password'),
+    confirm_new_password: t('auth.labels.confirm_new_password'),
+    please_confirm: t('auth.rules.please_confirm_password'),
+    mismatch: t('auth.rules.passwords_mismatch'),
+    reset_btn: t('auth.reset_password.title'),
+    back_to_login: t('auth.reset_password.back_to_login'),
+    invalid_token: t('auth.reset_password.invalid_token'),
+  }))
 
   const token = computed(() => route.query.token)
   const password = ref('')
@@ -30,7 +47,7 @@
 
   onMounted(() => {
     if (!token.value) {
-      store.commit('addSnackbar', { text: 'Invalid or missing reset token', color: 'error' })
+      store.commit('addSnackbar', { text: ui.value.invalid_token, color: 'error' })
       router.push({ name: 'signin' })
     }
   })
@@ -61,10 +78,10 @@
       <v-col :cols="12" :lg="6" :md="7" :sm="8">
         <v-card :rounded="rounded" class="mx-auto pa-4 pa-md-8 my-2 my-md-5" elevation="0" max-width="700">
           <v-card-title class="text-center font-weight-bold pb-2">
-            <h1>Reset Password</h1>
+            <h1>{{ ui.title }}</h1>
           </v-card-title>
           <v-card-subtitle class="text-center text-wrap pb-6">
-            Please enter your new password below
+            {{ ui.subtitle }}
           </v-card-subtitle>
 
           <v-card-text>
@@ -77,7 +94,7 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="New Password"
+                :label="ui.new_password"
                 required
                 :rounded="rounded"
                 :rules="isValidPass"
@@ -94,12 +111,12 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Confirm New Password"
+                :label="ui.confirm_new_password"
                 required
                 :rounded="rounded"
                 :rules="[
-                  v => !!v || 'Please confirm your password',
-                  v => v === password || 'Passwords do not match'
+                  v => !!v || ui.please_confirm,
+                  v => v === password || ui.mismatch
                 ]"
                 :type="visibleConfirm ? 'text' : 'password'"
                 :variant="variant"
@@ -115,7 +132,7 @@
                 type="submit"
                 variant="elevated"
               >
-                Reset Password
+                {{ ui.reset_btn }}
               </v-btn>
 
               <div class="text-center mt-6">
@@ -125,7 +142,7 @@
                   :rounded="rounded"
                   @click="router.push({ name: 'signin' })"
                 >
-                  Back to Login
+                  {{ ui.back_to_login }}
                 </v-btn>
               </div>
             </v-form>
@@ -135,3 +152,5 @@
     </v-row>
   </v-container>
 </template>
+
+<style></style>

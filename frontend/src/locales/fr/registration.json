@@ -1,0 +1,159 @@
+{
+    "tickets": {
+        "title": "Billets disponibles",
+        "subtitle": "Sélectionnez vos billets",
+        "browse_shop": "Parcourir la boutique",
+        "loading": "Chargement des billets...",
+        "no_tickets": {
+            "title": "Aucun billet disponible pour le moment",
+            "desc": "Les billets pour cet événement n'ont pas encore été créés par l'organisateur. Veuillez revenir plus tard ou contacter l'organisateur de l'événement pour plus d'informations.",
+            "back_btn": "Retour à l'événement"
+        },
+        "card": {
+            "in_cart": "Dans le panier",
+            "early_bird": "Early Bird",
+            "available": "{count} disponibles",
+            "status": {
+                "coming_soon": "Bientôt disponible",
+                "sale_ended": "Vente terminée",
+                "ends": "Se termine le {date}"
+            },
+            "discount": "ÉCONOMISEZ {percent}%",
+            "add_to_cart": "Ajouter au panier",
+            "sold_out": "Épuisé",
+            "unavailable": "Indisponible"
+        },
+        "errors": {
+            "limit_reached": "Vous pouvez sélectionner jusqu'à {max} billets par inscription"
+        }
+    },
+    "attendee": {
+        "title": "Informations sur le participant",
+        "subtitle": "Détails des participants",
+        "progress": "Participant {current} sur {total}",
+        "form": {
+            "ticket_type": "Type de billet",
+            "first_name": "Prénom",
+            "last_name": "Nom",
+            "email": "E-mail",
+            "phone": "Numéro de téléphone"
+        },
+        "buttons": {
+            "prev": "Précédent",
+            "next": "Participant suivant",
+            "complete": "Terminer l'inscription"
+        },
+        "rules": {
+            "ticket_required": "Le type de billet est requis",
+            "first_name_required": "Le prénom est requis",
+            "last_name_required": "Le nom est requis",
+            "email_required": "L'e-mail est requis",
+            "email_invalid": "L'e-mail doit être valide",
+            "max_length": "Ne doit pas dépasser 50 caractères"
+        },
+        "messages": {
+            "no_tickets": "Aucune donnée de billet trouvée. Veuillez revenir à la page des billets.",
+            "failed_proceed": "Échec du passage à la caisse. Veuillez réessayer."
+        }
+    },
+    "checkout": {
+        "title": "Paiement",
+        "recovery": {
+            "title": "Réservation déjà réussie !",
+            "desc": "Nous avons trouvé une réservation terminée pour cette session. Vous pouvez consulter vos billets maintenant ou commencer une nouvelle réservation s'il ne s'agissait pas de vous.",
+            "view_btn": "Voir les billets",
+            "dismiss_btn": "Ignorer"
+        },
+        "empty": {
+            "title": "Votre panier est vide",
+            "desc": "Vous n'avez aucun billet ou produit dans votre panier. Veuillez sélectionner des articles pour continuer le paiement.",
+            "back_btn": "Aller à l'inscription"
+        },
+        "summary": {
+            "title": "Récapitulatif de la commande",
+            "ticket": "Billet",
+            "product": "Produit",
+            "qty": "Qté : {count}",
+            "subtotal": "Sous-total",
+            "discount": "Remise ({code})",
+            "shipping": "Livraison",
+            "tax": "Taxe",
+            "total": "Total"
+        },
+        "stepper": {
+            "step1": {
+                "title": "Options de commande",
+                "shipping": {
+                    "title": "Sélection de la livraison",
+                    "label": "Mode de livraison",
+                    "pickup": "Retrait : {location}"
+                },
+                "promo": {
+                    "title": "Code promo",
+                    "apply": "Appliquer",
+                    "applied": "Appliqué : {code}",
+                    "remove": "Supprimer"
+                },
+                "continue": "Continuer vers le paiement",
+                "confirm": "Passer à la confirmation"
+            },
+            "step2": {
+                "title": "Mode de paiement",
+                "methods": {
+                    "card": {
+                        "label": "Carte de crédit / débit",
+                        "desc": "Paiement sécurisé via Stripe"
+                    },
+                    "om": {
+                        "label": "Orange Money",
+                        "desc": "Payer avec le portefeuille mobile OM"
+                    }
+                },
+                "continue": "Continuer",
+                "back": "Retour"
+            },
+            "step3": {
+                "title": "Confirmation",
+                "pay_title": "Paiement",
+                "pay_btn": "Terminer le paiement",
+                "pay_amount": "Payer {amount}"
+            }
+        },
+        "messages": {
+            "init_failed": "Échec de l'initialisation du paiement",
+            "wrong_event": "Ce lien de paiement est pour un événement différent. Veuillez sélectionner des billets pour cet événement.",
+            "init_error": "Échec de l'initialisation du paiement. Veuillez réessayer.",
+            "promo_error": "Échec de l'application du code promo"
+        }
+    },
+    "cart": {
+        "title": "Panier",
+        "items_count": "{count} article",
+        "items_count_plural": "{count} articles",
+        "empty": {
+            "title": "Votre panier est vide",
+            "subtitle": "Sélectionnez des billets ou des produits pour commencer",
+            "continue_btn": "Continuer les achats"
+        },
+        "item": {
+            "each": "chacun"
+        },
+        "summary": {
+            "subtotal": "Sous-total",
+            "shipping": "Livraison",
+            "total": "Total",
+            "checkout_btn": "Payer",
+            "continue_btn": "Continuer les achats"
+        },
+        "bar": {
+            "tickets": "{count} billet",
+            "tickets_plural": "{count} billets",
+            "products": "{count} produit",
+            "products_plural": "{count} produits",
+            "selected": "sélectionné(s)",
+            "total": "Total : {amount}",
+            "continue_reg": "Continuer vers l'inscription",
+            "continue_short": "Continuer ?"
+        }
+    }
+}

@@ -116,15 +116,17 @@ exports.generateSessionReportExcel = async ({ reportData, transactions }) => {
         summarySheet.addRow(['Sales Summary']);
         summarySheet.getRow(summarySheet.lastRow.number).font = { bold: true, size: 14 };
 
+        const symbol = reportData.currency === 'USD' ? '$' : (reportData.currency === 'XOF' ? 'CFA' : (reportData.currency || '$'));
+
         const salesInfo = [
             ['Total Orders:', reportData.totalOrders],
             ['Tickets Sold:', reportData.totalTicketsSold],
             ['Products Sold:', reportData.totalProductsSold],
             [''],
-            ['Cash Payments:', `$${(reportData.cashTotal / 100).toFixed(2)}`],
-            ['Card Payments:', `$${(reportData.cardTotal / 100).toFixed(2)}`],
-            ['Free/Comp:', `$${(reportData.freeTotal / 100).toFixed(2)}`],
-            ['Total Sales:', `$${(reportData.totalSales / 100).toFixed(2)}`],
+            ['Cash Payments:', `${symbol} ${(reportData.cashTotal / 100).toFixed(2)}`],
+            ['Card Payments:', `${symbol} ${(reportData.cardTotal / 100).toFixed(2)}`],
+            ['Free/Comp:', `${symbol} ${(reportData.freeTotal / 100).toFixed(2)}`],
+            ['Total Sales:', `${symbol} ${(reportData.totalSales / 100).toFixed(2)}`],
         ];
 
         salesInfo.forEach(row => {
@@ -139,12 +141,12 @@ exports.generateSessionReportExcel = async ({ reportData, transactions }) => {
         summarySheet.getRow(summarySheet.lastRow.number).font = { bold: true, size: 14 };
 
         const reconciliation = [
-            ['Opening Cash:', `$${(reportData.openingCash / 100).toFixed(2)}`],
-            ['Cash Sales:', `$${(reportData.cashTotal / 100).toFixed(2)}`],
-            ['Expected Cash:', `$${(reportData.expectedCash / 100).toFixed(2)}`],
-            ['Counted Cash:', `$${(reportData.closingCash / 100).toFixed(2)}`],
+            ['Opening Cash:', `${symbol} ${(reportData.openingCash / 100).toFixed(2)}`],
+            ['Cash Sales:', `${symbol} ${(reportData.cashTotal / 100).toFixed(2)}`],
+            ['Expected Cash:', `${symbol} ${(reportData.expectedCash / 100).toFixed(2)}`],
+            ['Counted Cash:', `${symbol} ${(reportData.closingCash / 100).toFixed(2)}`],
             [''],
-            ['Discrepancy:', `$${(Math.abs(reportData.discrepancy) / 100).toFixed(2)}`],
+            ['Discrepancy:', `${symbol} ${(Math.abs(reportData.discrepancy) / 100).toFixed(2)}`],
             ['Status:', reportData.discrepancy === 0 ? 'Balanced' : (reportData.discrepancy > 0 ? 'Over' : 'Short')],
         ];
 
@@ -188,7 +190,7 @@ exports.generateSessionReportExcel = async ({ reportData, transactions }) => {
                     orderNumber: tx.orderNumber,
                     createdAt: new Date(tx.createdAt).toLocaleString('en-US', { timeZone: reportData.timezone }),
                     paymentMethod: tx.paymentMethod.toUpperCase(),
-                    totalAmount: `$${(tx.totalAmount / 100).toFixed(2)}`,
+                    totalAmount: `${symbol} ${(tx.totalAmount / 100).toFixed(2)}`,
                     ticketCount: tx.ticketCount || 0,
                     productCount: tx.productCount || 0,
                     customerEmail: tx.customerEmail || 'N/A',

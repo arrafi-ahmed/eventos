@@ -520,7 +520,7 @@
       <v-card class="rounded-xl">
         <ProductForm
           v-if="showProductDialog"
-          :currency="event?.currency || 'XOF'"
+          :currency="event?.currency || 'USD'"
           :loading="savingProduct"
           :product="editingProduct"
           @cancel="closeProductDialog"

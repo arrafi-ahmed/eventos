@@ -3,6 +3,7 @@
     meta: {
       layout: 'default',
       title: 'Admin',
+      titleKey: 'pages.admin.title',
       requiresAuth: true,
       requiresAdmin: true,
     },

@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
@@ -12,6 +13,7 @@
     meta: {
       layout: 'default',
       title: 'Registration Successful',
+      titleKey: 'pages.tickets.success',
     },
   })
 
@@ -19,6 +21,7 @@
   const router = useRouter()
   const theme = useTheme()
   const store = useStore()
+  const { t } = useI18n()
 
   const { rounded, size, variant } = useUiProps()
 
@@ -34,7 +37,7 @@
       const keysToRemove = [
         'attendeesData', 'registrationData', 'selectedTickets', 'selectedProducts',
         'tempSessionId', 'cartHash', 'isCheckoutExist', 'totalAmount',
-        'sponsorshipData', 'selectedShippingOption', 'shippingAddress',
+        'selectedShippingOption', 'shippingAddress',
         'paymentIntentId', 'clientSecret',
       ]
       keysToRemove.forEach(k => localStorage.removeItem(k))
@@ -141,18 +144,18 @@
       <!-- Loading State -->
       <v-col v-if="isLoading" class="text-center" cols="12">
         <v-progress-circular color="primary" indeterminate size="64" />
-        <p class="mt-4 text-medium-emphasis">Finalizing your order...</p>
+        <p class="mt-4 text-medium-emphasis">{{ t('pages.success.finalizing') }}</p>
       </v-col>
 
       <!-- Error State -->
       <v-col v-else-if="error" cols="12" sm="8" md="6" lg="5">
         <v-card class="text-center pa-10 rounded-xl" variant="outlined" border>
           <v-icon class="mb-6" color="warning" size="80">mdi-calendar-remove-outline</v-icon>
-          <h3 class="text-h5 font-weight-bold mb-3">Invalid Registration</h3>
+          <h3 class="text-h5 font-weight-bold mb-3">{{ t('pages.success.invalid_title') }}</h3>
           <p class="text-body-1 text-medium-emphasis mb-8">{{ error }}</p>
           <div class="d-flex flex-column gap-3">
             <v-btn color="primary" variant="flat" size="large" :rounded="rounded" block @click="goToHome">
-              Back to Events
+              {{ t('pages.success.back_events') }}
             </v-btn>
           </div>
         </v-card>
@@ -165,18 +168,18 @@
           <v-avatar color="success" size="72" class="mb-4 elevation-4">
             <v-icon color="white" size="40">mdi-check</v-icon>
           </v-avatar>
-          <h1 class="text-h4 font-weight-bold mb-2">Payment Received!</h1>
+          <h1 class="text-h4 font-weight-bold mb-2">{{ t('pages.success.payment_received') }}</h1>
           <p class="text-body-1 text-medium-emphasis">
-            We've sent your tickets to <strong class="text-high-emphasis">{{ userEmail }}</strong>
+            {{ t('pages.success.sent_to') }} <strong class="text-high-emphasis">{{ userEmail }}</strong>
           </p>
           <v-chip v-if="tempRegistration.status === 'pending'" color="warning" class="mt-2" variant="tonal">
-            Processing final confirmation...
+            {{ t('pages.success.processing') }}
           </v-chip>
         </div>
 
         <v-card :rounded="rounded" class="elevation-1 border overflow-hidden">
           <div class="bg-surface-variant pa-4 d-flex justify-space-between align-center">
-            <span class="text-subtitle-2 font-weight-bold">Order Summary</span>
+            <span class="text-subtitle-2 font-weight-bold">{{ t('pages.success.order_summary') }}</span>
             <span class="text-caption">#{{ orderRef.orderNumber || orderRef.order_number || 'Pending' }}</span>
           </div>
           
@@ -200,22 +203,22 @@
             <v-divider class="my-4" />
 
             <div class="d-flex justify-space-between mb-2 text-body-2 text-medium-emphasis">
-              <span>Subtotal</span>
+              <span>{{ t('pages.checkout.subtotal') }}</span>
               <span>{{ formatPrice(subtotalAmount, orderRef.currency) }}</span>
             </div>
             
             <div v-if="discountAmount > 0" class="d-flex justify-space-between mb-2 text-body-2 text-success">
-              <span>Discount</span>
+              <span>{{ t('pages.checkout.discount') }}</span>
               <span>-{{ formatPrice(discountAmount, orderRef.currency) }}</span>
             </div>
 
             <div v-if="taxAmount > 0" class="d-flex justify-space-between mb-2 text-body-2 text-medium-emphasis">
-              <span>Tax</span>
+              <span>{{ t('pages.checkout.tax') }}</span>
               <span>{{ formatPrice(taxAmount, orderRef.currency) }}</span>
             </div>
 
             <div class="d-flex justify-space-between align-center mt-6">
-              <span class="text-h6 font-weight-bold">Total Paid</span>
+              <span class="text-h6 font-weight-bold">{{ t('pages.success.total_paid') }}</span>
               <span class="text-h5 font-weight-black text-primary">{{ formatPrice(totalAmount, orderRef.currency) }}</span>
             </div>
           </v-card-text>
@@ -224,13 +227,13 @@
           
           <v-card-actions class="pa-6 bg-surface">
             <v-btn block color="primary" variant="flat" size="large" :rounded="rounded" @click="goToHome">
-              Return to Events
+              {{ t('pages.success.return_home') }}
             </v-btn>
           </v-card-actions>
         </v-card>
 
         <p class="text-center mt-6 text-caption text-medium-emphasis">
-          Have questions? Contact support or check your dashboard.
+          {{ t('pages.success.questions') }}
         </p>
       </v-col>
     </v-row>

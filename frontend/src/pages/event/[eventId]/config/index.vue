@@ -4,6 +4,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { EventConfig } from '@/models/EventConfig'
@@ -14,6 +15,7 @@
     meta: {
       layout: 'default',
       title: 'Event Configuration',
+      titleKey: 'organizer.config.title',
       requiresOrganizer: true,
       requiresAuth: true,
     },
@@ -21,9 +23,54 @@
 
   const { xs } = useDisplay()
   const { rounded, variant, density } = useUiProps()
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    titleKey: 'organizer.config.title',
+    title: t('pages.organizer.config.title'),
+    loading: t('pages.organizer.config.loading'),
+    sections: {
+      tickets: t('pages.organizer.config.sections.tickets'),
+      schedule: t('pages.organizer.config.sections.schedule'),
+      commerce: t('pages.organizer.config.sections.commerce'),
+      marketing: t('pages.organizer.config.sections.marketing'),
+      payments: t('pages.organizer.config.sections.payments')
+    },
+    fields: {
+      max_tickets: t('pages.organizer.config.fields.max_tickets'),
+      unique_qr: t('pages.organizer.config.fields.unique_qr'),
+      unique_qr_hint: t('pages.organizer.config.fields.unique_qr_hint'),
+      onsite_quota: t('pages.organizer.config.fields.onsite_quota'),
+      onsite_quota_hint: t('pages.organizer.config.fields.onsite_quota_hint'),
+      default_quota: t('pages.organizer.config.fields.default_quota'),
+      low_stock: t('pages.organizer.config.fields.low_stock'),
+      quota_defaults_hint: t('pages.organizer.config.fields.quota_defaults_hint'),
+      all_day: t('pages.organizer.config.fields.all_day'),
+      all_day_hint: t('pages.organizer.config.fields.all_day_hint'),
+      single_day: t('pages.organizer.config.fields.single_day'),
+      single_day_hint: t('pages.organizer.config.fields.single_day_hint'),
+      show_end_time: t('pages.organizer.config.fields.show_end_time'),
+      show_end_time_hint: t('pages.organizer.config.fields.show_end_time_hint'),
+      date_format: t('pages.organizer.config.fields.date_format'),
+      date_format_hint: t('pages.organizer.config.fields.date_format_hint'),
+      enable_shop: t('pages.organizer.config.fields.enable_shop'),
+      enable_shop_hint: t('pages.organizer.config.fields.enable_shop_hint'),
+      disable_delivery: t('pages.organizer.config.fields.disable_delivery'),
+      disable_delivery_hint: t('pages.organizer.config.fields.disable_delivery_hint'),
+      shipping_fee: t('pages.organizer.config.fields.shipping_fee'),
+      abandoned_cart: t('pages.organizer.config.fields.abandoned_cart'),
+      abandoned_cart_hint: t('pages.organizer.config.fields.abandoned_cart_hint'),
+      payment_methods_desc: t('pages.organizer.config.fields.payment_methods_desc'),
+      payment_warning: t('pages.organizer.config.fields.payment_warning'),
+      stripe: t('pages.organizer.config.fields.stripe'),
+      om: t('pages.organizer.config.fields.om')
+    },
+    save: t('common.save')
+  }))
 
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
   const prefetchedEvent = computed(() => store.getters['event/getEventById'](route.params.eventId))
@@ -109,7 +156,8 @@
     <!-- Header Section -->
     <PageTitle
       :subtitle="event?.name"
-      title="Event Configuration"
+      :title="ui.title"
+      :title-key="ui.titleKey"
     />
 
     <v-row v-if="isLoading" justify="center">
@@ -130,7 +178,7 @@
               size="64"
             />
             <p class="mt-4 text-body-1">
-              Loading configuration...
+              {{ ui.loading }}
             </p>
           </v-card-text>
         </v-card>
@@ -153,7 +201,7 @@
           <v-card class="mb-6 overflow-hidden" elevation="2" :rounded="rounded">
             <v-card-title class="pa-4 bg-surface d-flex align-center">
               <v-icon class="me-3" color="primary" size="28">mdi-ticket-account</v-icon>
-              <span class="text-h6 font-weight-bold">Tickets & Registration</span>
+              <span class="text-h6 font-weight-bold">{{ ui.sections.tickets }}</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
@@ -163,12 +211,12 @@
                 :hide-input="false"
                 inset
                 hide-details="auto"
-                label="Max Ticket Purchase Per Registration"
+                :label="ui.fields.max_tickets"
                 class="mb-6"
                 prepend-inner-icon="mdi-numeric"
                 :reverse="false"
                 :rounded="rounded"
-                :rules="[(v) => v > 0 || 'Must be greater than 0']"
+                :rules="[(v) => v > 0 || t('rules.must_be_gt_0')]"
                 :variant="variant"
               />
               <v-divider class="mb-6" />
@@ -177,9 +225,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, each ticket issues a unique QR code. When disabled, one QR code is issued for the entire group (Bulk Registration)."
+                :hint="ui.fields.unique_qr_hint"
                 inset
-                label="Unique QR Code per Ticket"
+                :label="ui.fields.unique_qr"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -188,45 +236,47 @@
                 class="mb-4"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, you can reserve a portion of ticket stock for on-site (box office) sales. Online sales will stop once the quota is reached."
+                :hint="ui.fields.onsite_quota_hint"
                 inset
-                label="Enable On-site Quota Management"
+                :label="ui.fields.onsite_quota"
                 persistent-hint
               />
               <v-expand-transition>
                 <div v-if="config.enableOnSiteQuota">
-                  <div class="d-flex gap-4 mt-4">
-                    <v-number-input
-                      v-model.number="config.defaultOnSiteQuota"
-                      :density="density"
-                      hide-details="auto"
-                      class="flex-1"
-                      label="Default On-site Quota (per ticket)"
-                      inset
-                      min="0"
-                      control-variant="default"
-                      prepend-inner-icon="mdi-store-clock"
-                      :rounded="rounded"
-                      :rules="[(v) => v >= 0 || 'Must be 0 or greater']"
-                      :variant="variant"
-                    />
-                    <v-number-input
-                      v-model.number="config.defaultLowStockThreshold"
-                      :density="density"
-                      hide-details="auto"
-                      class="flex-1"
-                      label="Default Low Stock Threshold"
-                      inset
-                      min="0"
-                      control-variant="default"
-                      prepend-inner-icon="mdi-alert-circle-outline"
-                      :rounded="rounded"
-                      :rules="[(v) => v >= 0 || 'Must be 0 or greater']"
-                      :variant="variant"
-                    />
-                  </div>
+                  <v-row class="mt-2">
+                    <v-col cols="12" sm="6">
+                      <v-number-input
+                        v-model.number="config.defaultOnSiteQuota"
+                        :density="density"
+                        hide-details="auto"
+                        :label="ui.fields.default_quota"
+                        inset
+                        min="0"
+                        control-variant="default"
+                        prepend-inner-icon="mdi-store-clock"
+                        :rounded="rounded"
+                        :rules="[(v) => v >= 0 || t('rules.must_be_ge_0')]"
+                        :variant="variant"
+                      />
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-number-input
+                        v-model.number="config.defaultLowStockThreshold"
+                        :density="density"
+                        hide-details="auto"
+                        :label="ui.fields.low_stock"
+                        inset
+                        min="0"
+                        control-variant="default"
+                        prepend-inner-icon="mdi-alert-circle-outline"
+                        :rounded="rounded"
+                        :rules="[(v) => v >= 0 || t('rules.must_be_ge_0')]"
+                        :variant="variant"
+                      />
+                    </v-col>
+                  </v-row>
                   <p class="text-caption text-medium-emphasis mt-2">
-                    These values will be applied as defaults to new tickets. You can still override them per ticket.
+                    {{ ui.fields.quota_defaults_hint }}
                   </p>
                 </div>
               </v-expand-transition>
@@ -237,7 +287,7 @@
           <v-card class="mb-6 overflow-hidden" elevation="2" :rounded="rounded">
             <v-card-title class="pa-4 bg-surface d-flex align-center">
               <v-icon class="me-3" color="primary" size="28">mdi-calendar-clock</v-icon>
-              <span class="text-h6 font-weight-bold">Schedule & Timing</span>
+              <span class="text-h6 font-weight-bold">{{ ui.sections.schedule }}</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
@@ -246,9 +296,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="Enable if this event lasts the entire day (no specific start or end time)."
+                :hint="ui.fields.all_day_hint"
                 inset
-                label="All Day Event"
+                :label="ui.fields.all_day"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -257,9 +307,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="Turn off if this event continues for multiple days."
+                :hint="ui.fields.single_day_hint"
                 inset
-                label="Single Day Event"
+                :label="ui.fields.single_day"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -268,18 +318,18 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, the event end time will be displayed on customer-facing pages."
+                :hint="ui.fields.show_end_time_hint"
                 inset
-                label="Show End Time"
+                :label="ui.fields.show_end_time"
                 persistent-hint
               />
               <v-divider class="mb-6" />
               <v-select
                 v-model="config.dateFormat"
-                hint="Choose how dates will be displayed on customer-facing pages"
+                :hint="ui.fields.date_format_hint"
                 hide-details="auto"
                 :items="dateFormatOptions"
-                label="Date Format"
+                :label="ui.fields.date_format"
                 persistent-hint
                 prepend-inner-icon="mdi-calendar"
                 :rounded="rounded"
@@ -292,7 +342,7 @@
           <v-card class="mb-6 overflow-hidden" elevation="2" :rounded="rounded">
             <v-card-title class="pa-4 bg-surface d-flex align-center">
               <v-icon class="me-3" color="primary" size="28">mdi-store</v-icon>
-              <span class="text-h6 font-weight-bold">Commerce & Logistics</span>
+              <span class="text-h6 font-weight-bold">{{ ui.sections.commerce }}</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
@@ -301,9 +351,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="Displays a merchandise section on the event page so attendees can buy goods with their tickets."
+                :hint="ui.fields.enable_shop_hint"
                 inset
-                label="Enable Merchandise Shop"
+                :label="ui.fields.enable_shop"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -312,9 +362,9 @@
                 class="mb-6"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, only pickup option will be available during checkout and delivery will be disabled."
+                :hint="ui.fields.disable_delivery_hint"
                 inset
-                label="Disable Delivery"
+                :label="ui.fields.disable_delivery"
                 persistent-hint
               />
               <v-divider class="mb-6" />
@@ -323,13 +373,13 @@
                 control-variant="default"
                 :hide-input="false"
                 inset
-                label="Shipping Fee"
+                :label="ui.fields.shipping_fee"
                 :min="0"
                 hide-details="auto"
                 :prefix="getCurrencySymbol({ code: event?.currency || 'XOF', type: 'symbol' })"
                 :reverse="false"
                 :rounded="rounded"
-                :rules="[(v) => v >= 0 || 'Must be 0 or greater']"
+                :rules="[(v) => v >= 0 || t('rules.must_be_ge_0')]"
                 :step="0.01"
                 :variant="variant"
               />
@@ -340,7 +390,7 @@
           <v-card class="mb-6 overflow-hidden" elevation="2" :rounded="rounded">
             <v-card-title class="pa-4 bg-surface d-flex align-center">
               <v-icon class="me-3" color="primary" size="28">mdi-bullhorn</v-icon>
-              <span class="text-h6 font-weight-bold">Automated Marketing</span>
+              <span class="text-h6 font-weight-bold">{{ ui.sections.marketing }}</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
@@ -348,9 +398,9 @@
                 v-model="config.enableAbandonedCartEmails"
                 color="primary"
                 hide-details="auto"
-                hint="When enabled, automated reminder emails will be sent to users who abandon their cart (expired temp registrations). Emails are sent via cron job every 6-12 hours."
+                :hint="ui.fields.abandoned_cart_hint"
                 inset
-                label="Enable Abandoned Cart Email Reminders"
+                :label="ui.fields.abandoned_cart"
                 persistent-hint
               />
             </v-card-text>
@@ -360,12 +410,12 @@
           <v-card class="mb-6 overflow-hidden" elevation="2" :rounded="rounded">
             <v-card-title class="pa-4 bg-surface d-flex align-center">
               <v-icon class="me-3" color="primary" size="28">mdi-credit-card-settings</v-icon>
-              <span class="text-h6 font-weight-bold">Payment Methods</span>
+              <span class="text-h6 font-weight-bold">{{ ui.sections.payments }}</span>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
-              <p class="text-body-2 text-medium-emphasis mb-4">
-                Select the payment gateways you want to enable for this event.
+               <p class="text-body-2 text-medium-emphasis mb-4">
+                {{ ui.fields.payment_methods_desc }}
               </p>
 
               <v-checkbox
@@ -374,6 +424,7 @@
                 color="primary"
                 hide-details
                 label="Stripe (Credit/Debit Cards, Google Pay, Apple Pay)"
+                :label="ui.fields.stripe"
                 value="stripe"
               >
                 <template #append>
@@ -386,6 +437,7 @@
                 color="primary"
                 hide-details
                 label="Orange Money (Mobile Money)"
+                :label="ui.fields.om"
                 value="om"
               >
                 <template #append>
@@ -400,7 +452,7 @@
                 type="warning"
                 variant="tonal"
               >
-                You must select at least one payment method for paid tickets.
+                {{ ui.fields.payment_warning }}
               </v-alert>
             </v-card-text>
           </v-card>
@@ -417,7 +469,7 @@
               :size="xs ? 'default' : 'large'"
               type="submit"
             >
-              Save
+              {{ ui.save }}
             </v-btn>
           </div>
         </v-form>

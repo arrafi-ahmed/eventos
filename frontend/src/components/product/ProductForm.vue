@@ -16,7 +16,7 @@
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: null,
     },
   })
 
@@ -56,6 +56,7 @@
   }
 
   const isEdit = computed(() => !!props.product)
+  const displayCurrency = computed(() => props.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD')
 
   // Initialize form with product data if editing
   onMounted(() => {
@@ -219,10 +220,10 @@
               :density="density"
               hide-details="auto"
               hint="Price (0 = free product)"
-              :label="`Price (${getCurrencySymbol({ code: currency, type: 'symbol' })})`"
+              :label="`Price (${getCurrencySymbol({ code: displayCurrency, type: 'symbol' })})`"
               min="0"
               persistent-hint
-              :prefix="getCurrencySymbol({ code: currency, type: 'symbol' })"
+              :prefix="getCurrencySymbol({ code: displayCurrency, type: 'symbol' })"
               :rounded="rounded"
               :rules="[rules.priceMin]"
               step="0.01"

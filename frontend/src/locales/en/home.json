@@ -1,0 +1,96 @@
+{
+    "title": "Home",
+    "hero_title": "Sell Tickets, Manage Events, Track Everything",
+    "hero_subtitle": "Everything you need to run successful events—from ticket sales to QR check-in, all in one platform",
+    "create_event": "Create Your First Event",
+    "browse_events": "Browse Events",
+    "upcoming_events": "Upcoming Events",
+    "join_us": "Join us for these inspiring experiences",
+    "browse_all_events": "Browse All Events",
+    "loading_events": "Loading events...",
+    "no_upcoming_events": "No upcoming events",
+    "check_back_soon": "Check back soon for new events and concerts.",
+    "powerful_features": "Powerful features for organizers and attendees",
+    "everything_you_need": "Everything you need to run your events seamlessly",
+    "ready_to_start": "Ready to start selling tickets?",
+    "join_thousands": "Join thousands of organizers who trust our platform to manage their events, sell tickets, and track attendees seamlessly.",
+    "signup_free": "Sign Up for Free",
+    "go_to_dashboard": "Go to Dashboard",
+    "event": {
+        "reserve_now": "Reserve Now",
+        "status": {
+            "today": "Today",
+            "tomorrow": "Tomorrow",
+            "this_week": "This Week",
+            "next_week": "Next Week",
+            "upcoming": "Upcoming",
+            "past": "Past"
+        }
+    },
+    "features": {
+        "event_management": {
+            "title": "Event Management",
+            "desc": "Create and manage events with ease"
+        },
+        "onsite_sales": {
+            "title": "On-Site Sales",
+            "desc": "Walk-in ticket sales with cash/card payments"
+        },
+        "counter_management": {
+            "title": "Ticket Counter Management",
+            "desc": "Multiple counters with cash session tracking"
+        },
+        "online_payments": {
+            "title": "Online Payments",
+            "desc": "Stripe integration with multi-currency"
+        },
+        "qr_checkin": {
+            "title": "QR Check-In",
+            "desc": "Fast scanning with check-in agent access"
+        },
+        "ai_chatbot": {
+            "title": "AI Chatbot",
+            "desc": "AI-powered after-sales support chatbot"
+        },
+        "attendee_management": {
+            "title": "Attendee Management",
+            "desc": "Complete attendee dashboard and tools"
+        },
+        "sales_analytics": {
+            "title": "Sales Analytics",
+            "desc": "Track online vs. on-site performance"
+        },
+        "merchandise_shop": {
+            "title": "Merchandise Shop",
+            "desc": "Sell products and track orders"
+        },
+        "form_builder": {
+            "title": "Form Builder",
+            "desc": "Custom registration forms"
+        },
+        "role_access": {
+            "title": "Role-Based Access",
+            "desc": "Manage permissions for organizers, cashiers, and staff"
+        },
+        "custom_branding": {
+            "title": "Custom Branding",
+            "desc": "Personalize your event pages with logos and colors"
+        },
+        "visitor_tracking": {
+            "title": "Visitor Tracking",
+            "desc": "Monitor page views and ticket interest"
+        },
+        "cart_recovery": {
+            "title": "Cart Recovery",
+            "desc": "Remind users about abandoned ticket selections"
+        },
+        "promo_codes": {
+            "title": "Promo Codes",
+            "desc": "Create discounts and special offers"
+        },
+        "early_bird": {
+            "title": "Early Bird Pricing",
+            "desc": "Automatic price changes based on date"
+        }
+    }
+}

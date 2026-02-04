@@ -1,4 +1,4 @@
-export function parseAsLocalDate ({ input, midday = false } = {}) {
+export function parseAsLocalDate({ input, midday = false } = {}) {
   if (!input) {
     return null
   }
@@ -17,18 +17,18 @@ export function parseAsLocalDate ({ input, midday = false } = {}) {
   return new Date(input)
 }
 
-export function toUTCISOString ({ inputDate } = {}) {
+export function toUTCISOString({ inputDate } = {}) {
   const date = new Date(inputDate)
   const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60_000)
   const result = utcDate.toISOString()
   return result
 }
 
-export function fromUTCToLocal ({ utcString } = {}) {
+export function fromUTCToLocal({ utcString } = {}) {
   return new Date(utcString)
 }
 
-export function splitDateTime ({ inputDate, isOutputUTC = false }) {
+export function splitDateTime({ inputDate, isOutputUTC = false }) {
   if (!inputDate) {
     return { dateStr: '', timeStr: '' }
   }
@@ -48,7 +48,7 @@ export function splitDateTime ({ inputDate, isOutputUTC = false }) {
   return { dateStr, timeStr }
 }
 
-export function mergeDateTime ({ dateStr, timeStr = '12:00', isOutputUTC = false } = {}) {
+export function mergeDateTime({ dateStr, timeStr = '12:00', isOutputUTC = false } = {}) {
   if (!dateStr) {
     return null
   }
@@ -76,7 +76,7 @@ export function mergeDateTime ({ dateStr, timeStr = '12:00', isOutputUTC = false
  * Formats a date string or object according to a timezone and format string.
  * Uses Intl.DateTimeFormat for robust IANA timezone support.
  */
-export function formatInTimezone (input, timezone = 'UTC', format = 'MM/DD/YYYY HH:mm') {
+export function formatInTimezone(input, timezone = 'UTC', format = 'MM/DD/YYYY HH:mm') {
   if (!input) {
     return ''
   }
@@ -104,15 +104,14 @@ export function formatInTimezone (input, timezone = 'UTC', format = 'MM/DD/YYYY 
     partValues[p.type] = p.value
   }
 
-  // Full month names
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ]
-  const monthNamesShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ]
+  // Use Intl.DateTimeFormat to get localized month names
+  const locale = (typeof window !== 'undefined' && localStorage.getItem('user-locale')) || 'en'
+  const monthNames = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2024, i, 1)),
+  )
+  const monthNamesShort = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(2024, i, 1)),
+  )
 
   // Month is 1-indexed in partValues because of 'en-US' locale and '2-digit'
   const monthIndex = Number.parseInt(partValues.month, 10) - 1
@@ -131,7 +130,7 @@ export function formatInTimezone (input, timezone = 'UTC', format = 'MM/DD/YYYY 
   return format.replace(/YYYY|MM|DD|HH|mm|ss|MMM|MMMM/g, t => map[t])
 }
 
-export function formatDate ({ input, format = 'MM/DD/YYYY', timezone } = {}) {
+export function formatDate({ input, format = 'MM/DD/YYYY', timezone } = {}) {
   // If timezone is provided, use the new robust formatter
   if (timezone) {
     return formatInTimezone(input, timezone, format)
@@ -143,14 +142,13 @@ export function formatDate ({ input, format = 'MM/DD/YYYY', timezone } = {}) {
   }
 
   const pad = n => String(n).padStart(2, '0')
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ]
-  const monthNamesShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ]
+  const locale = (typeof window !== 'undefined' && localStorage.getItem('user-locale')) || 'en'
+  const monthNames = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2024, i, 1)),
+  )
+  const monthNamesShort = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(2024, i, 1)),
+  )
 
   const map = {
     YYYY: date.getFullYear(),
@@ -166,7 +164,7 @@ export function formatDate ({ input, format = 'MM/DD/YYYY', timezone } = {}) {
   return format.replace(/YYYY|MM|DD|HH|mm|ss|MMM|MMMM/g, t => map[t])
 }
 
-export function formatDateTime ({ input, timezone } = {}) {
+export function formatDateTime({ input, timezone } = {}) {
   if (!input) {
     return 'N/A'
   }
@@ -176,12 +174,12 @@ export function formatDateTime ({ input, timezone } = {}) {
   return new Date(input).toLocaleString()
 }
 
-export function formatEventDate ({ input, eventConfig = {}, midday = false } = {}) {
+export function formatEventDate({ input, eventConfig = {}, midday = false } = {}) {
   const dateFormat = eventConfig?.dateFormat || 'MM/DD/YYYY HH:mm'
   return formatDate({ input, format: dateFormat, midday })
 }
 
-export function formatTimeRange ({ start, end, eventConfig = {} } = {}) {
+export function formatTimeRange({ start, end, eventConfig = {} } = {}) {
   if (!start || !end) {
     return ''
   }
@@ -196,7 +194,7 @@ export function formatTimeRange ({ start, end, eventConfig = {} } = {}) {
   return `${startTime} - ${endTime}`
 }
 
-export function formatEventDateDisplay ({ event, eventConfig = {} } = {}) {
+export function formatEventDateDisplay({ event, eventConfig = {} } = {}) {
   if (!event) {
     return 'Date TBA'
   }

@@ -7,7 +7,11 @@
   const { title, subtitle, showBackButton, backRoute, compact, posTitle } = defineProps({
     title: {
       type: String,
-      required: true,
+      default: '',
+    },
+    titleKey: {
+      type: String,
+      default: '',
     },
     subtitle: {
       type: String,
@@ -74,7 +78,7 @@
           @click="handleBack"
         />
         <div class="text-truncate" :class="{ 'text-center': posTitle==='center' }">
-          <div class="text-h5 text-md-h4 font-weight-bold text-truncate">{{ title }}</div>
+          <div class="text-h5 text-md-h4 font-weight-bold text-truncate">{{ titleKey ? $t(titleKey) : title }}</div>
           <div v-if="subtitle" class="text-body-2 text-medium-emphasis pt-1 text-truncate">{{ subtitle }}</div>
         </div>
       </div>
@@ -103,9 +107,11 @@
 
 <style scoped>
 .page-title-wrapper {
+  margin-top: 16px;
   margin-bottom: 24px;
 }
 .page-title-wrapper-compact {
+  margin-top: 8px;
   margin-bottom: 16px;
 }
 

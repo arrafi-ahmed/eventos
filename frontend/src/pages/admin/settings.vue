@@ -1,18 +1,23 @@
 <script setup>
-  import { onMounted, ref } from 'vue'
+  import { onMounted, ref, computed } from 'vue'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import ColorPicker from '@/components/ColorPicker.vue'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
+  import CurrencySelector from '@/components/CurrencySelector.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import { formatDateTime, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'settings-admin',
     meta: {
       layout: 'default',
       title: 'Settings',
+      titleKey: 'pages.admin.settings',
       requiresAdmin: true,
       requiresAuth: true,
     },
@@ -21,6 +26,109 @@
   const { xs } = useDisplay()
   const store = useStore()
   const { rounded, variant, density, size } = useUiProps()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('settings.title'),
+    subtitle: t('settings.subtitle'),
+    homepage_banners: {
+      title: t('settings.sections.homepage_banners.title'),
+      subtitle: t('settings.sections.homepage_banners.subtitle'),
+      no_banners: t('settings.sections.homepage_banners.no_banners'),
+      create_first: t('settings.sections.homepage_banners.create_first'),
+      add_btn: t('settings.sections.homepage_banners.add_btn'),
+      count: (count) => t('settings.sections.homepage_banners.count', { count }),
+      active: t('settings.sections.homepage_banners.status.active'),
+      inactive: t('settings.sections.homepage_banners.status.inactive'),
+      edit: t('settings.sections.homepage_banners.actions.edit'),
+      delete: t('settings.sections.homepage_banners.actions.delete'),
+      delete_confirm: (index) => t('settings.sections.homepage_banners.delete_confirm', { index }),
+      delete_title: t('settings.sections.homepage_banners.delete_title'),
+    },
+    header: {
+      title: t('settings.sections.header.title'),
+      subtitle: t('settings.sections.header.subtitle'),
+      logos: t('settings.sections.header.logos'),
+      light_logo: t('settings.sections.header.light_logo'),
+      dark_logo: t('settings.sections.header.dark_logo'),
+      upload_light: t('settings.sections.header.upload_light'),
+      upload_dark: t('settings.sections.header.upload_dark'),
+      desktop_width: t('settings.sections.header.desktop_width'),
+      mobile_width: t('settings.sections.header.mobile_width'),
+      view: t('settings.sections.header.view'),
+      no_logos_hint: t('settings.sections.header.no_logos_hint'),
+      logo_position: t('settings.sections.header.logo_position'),
+      menu_position: t('settings.sections.header.menu_position'),
+      save_btn: t('settings.sections.header.save_btn'),
+      options: {
+        left: t('common.positions.left'),
+        center: t('common.positions.center'),
+        right: t('common.positions.right'),
+      },
+      views: {
+        desktop: t('common.views.desktop'),
+        mobile: t('common.views.mobile'),
+      },
+    },
+    footer: {
+      title: t('settings.sections.footer.title'),
+      subtitle: t('settings.sections.footer.subtitle'),
+      style: t('settings.sections.footer.style'),
+      copyright: t('settings.sections.footer.copyright'),
+      company_info: t('settings.sections.footer.company_info'),
+      company_name: t('settings.sections.footer.company_name'),
+      address: t('settings.sections.footer.address'),
+      email: t('settings.sections.footer.email'),
+      phone: t('settings.sections.footer.phone'),
+      quick_links: t('settings.sections.footer.quick_links'),
+      link_title: t('settings.sections.footer.link_title'),
+      route_name: t('settings.sections.footer.route_name'),
+      social_links: t('settings.sections.footer.social_links'),
+      facebook: t('settings.sections.footer.facebook'),
+      instagram: t('settings.sections.footer.instagram'),
+      tiktok: t('settings.sections.footer.tiktok'),
+      save_btn: t('settings.sections.footer.save_btn'),
+      styles: {
+        oneline: t('common.footer_styles.oneline'),
+        expanded: t('common.footer_styles.expanded'),
+      },
+    },
+    appearance: {
+      title: t('settings.sections.appearance.title'),
+      subtitle: t('settings.sections.appearance.subtitle'),
+      default_theme: t('settings.sections.appearance.default_theme'),
+      colors: t('settings.sections.appearance.tabs.colors'),
+      advanced: t('settings.sections.appearance.tabs.advanced'),
+      light: t('settings.sections.appearance.tabs.light'),
+      dark: t('settings.sections.appearance.tabs.dark'),
+      parse_btn: t('settings.sections.appearance.parse_btn'),
+      save_btn: t('settings.sections.appearance.save_btn'),
+      themes: {
+        light: t('common.themes.light'),
+        dark: t('common.themes.dark'),
+      },
+    },
+    localization: {
+      title: t('settings.sections.localization.title'),
+      subtitle: t('settings.sections.localization.subtitle'),
+      language: t('settings.sections.localization.language'),
+      currency: t('settings.sections.localization.currency'),
+      save_btn: t('settings.sections.localization.save_btn'),
+    },
+    organizer_banner: {
+      title: t('settings.sections.organizer_banner.title'),
+      subtitle: t('settings.sections.organizer_banner.subtitle'),
+      enable: t('settings.sections.organizer_banner.enable'),
+      enable_hint: t('settings.sections.organizer_banner.enable_hint'),
+      icon: t('settings.sections.organizer_banner.icon'),
+      icon_hint: t('settings.sections.organizer_banner.icon_hint'),
+      title_label: t('settings.sections.organizer_banner.banner_title'),
+      desc_label: t('settings.sections.organizer_banner.banner_desc'),
+      cta_text: t('settings.sections.organizer_banner.cta_text'),
+      cta_url: t('settings.sections.organizer_banner.cta_url'),
+      save_btn: t('settings.sections.organizer_banner.save_btn'),
+    },
+  }))
 
   const banners = ref([])
   const loading = ref(false)
@@ -114,6 +222,85 @@
       console.error('Error fetching banners:', error)
     } finally {
       loading.value = false
+    }
+  }
+
+  // Unified fetch for system settings
+  async function fetchSystemSettings() {
+    try {
+        loading.value = true
+        await store.dispatch('systemSettings/fetchSettings')
+        const settings = store.state.systemSettings.settings
+        
+        // Populate Footer
+        footerSettings.value = {
+            style: settings.footer?.style || 'expanded',
+            companyName: settings.footer?.companyName || '',
+            companyAddress: settings.footer?.companyAddress || '',
+            companyEmail: settings.footer?.companyEmail || '',
+            companyPhone: settings.footer?.companyPhone || '',
+            quickLinks: Array.isArray(settings.footer?.quickLinks) ? [...settings.footer.quickLinks] : [],
+            socialLinks: {
+                facebook: settings.footer?.socialLinks?.facebook || '',
+                instagram: settings.footer?.socialLinks?.instagram || '',
+                tiktok: settings.footer?.socialLinks?.tiktok || '',
+            },
+            copyrightText: settings.footer?.copyrightText || '',
+        }
+
+        // Populate Header
+        headerSettings.value = {
+            logoImage: settings.header?.logoImage || null,
+            logoImageDark: settings.header?.logoImageDark || null,
+            logoPosition: settings.header?.logoPosition || 'left',
+            menuPosition: settings.header?.menuPosition || 'right',
+            logoWidthLeft: settings.header?.logoWidthLeft || 300,
+            logoWidthMobile: settings.header?.logoWidthMobile || 120,
+        }
+        logoPreview.value = settings.header?.logoImage ? getApiPublicImageUrl(settings.header.logoImage, 'header-logo') : null
+        logoPreviewDark.value = settings.header?.logoImageDark ? getApiPublicImageUrl(settings.header.logoImageDark, 'header-logo') : null
+        logoFile.value = null
+        logoFileDark.value = null
+
+        // Populate Appearance
+        appearanceSettings.value = {
+            defaultTheme: settings.appearance?.defaultTheme || 'dark',
+            lightColors: settings.appearance?.lightColors || {},
+            lightVariables: settings.appearance?.lightVariables || {},
+            darkColors: settings.appearance?.darkColors || {},
+            darkVariables: settings.appearance?.darkVariables || {},
+        }
+        advancedJson.value = {
+            light: JSON.stringify({
+                colors: appearanceSettings.value.lightColors,
+                variables: appearanceSettings.value.lightVariables,
+            }, null, 2),
+            dark: JSON.stringify({
+                colors: appearanceSettings.value.darkColors,
+                variables: appearanceSettings.value.darkVariables,
+            }, null, 2),
+        }
+
+        // Populate Organizer Banner
+        organizerBannerSettings.value = {
+            isEnabled: settings.organizer_dashboard_banner?.isEnabled !== false, // Default to true if missing? or false? logic says !== false so true by default? Check old logic: !== false.
+            icon: settings.organizer_dashboard_banner?.icon,
+            title: settings.organizer_dashboard_banner?.title,
+            description: settings.organizer_dashboard_banner?.description,
+            ctaButtonText: settings.organizer_dashboard_banner?.ctaButtonText,
+            ctaButtonUrl: settings.organizer_dashboard_banner?.ctaButtonUrl,
+        }
+
+        // Populate Localization
+        localizationSettings.value = {
+            defaultCurrency: settings.localization?.defaultCurrency || 'USD',
+            defaultLanguage: settings.localization?.defaultLanguage || 'en',
+        }
+
+    } catch (error) {
+        console.error('Error fetching system settings:', error)
+    } finally {
+        loading.value = false
     }
   }
 
@@ -300,31 +487,6 @@
   }
 
   // Footer settings functions
-  async function fetchFooterSettings () {
-    try {
-      footerLoading.value = true
-      await store.dispatch('footerSettings/fetchSettings')
-      const settings = store.state.footerSettings.settings
-      footerSettings.value = {
-        style: settings.style || 'expanded',
-        companyName: settings.companyName || '',
-        companyAddress: settings.companyAddress || '',
-        companyEmail: settings.companyEmail || '',
-        companyPhone: settings.companyPhone || '',
-        quickLinks: Array.isArray(settings.quickLinks) ? [...settings.quickLinks] : [],
-        socialLinks: {
-          facebook: settings.socialLinks?.facebook || '',
-          instagram: settings.socialLinks?.instagram || '',
-          tiktok: settings.socialLinks?.tiktok || '',
-        },
-        copyrightText: settings.copyrightText || '',
-      }
-    } catch (error) {
-      console.error('Error fetching footer settings:', error)
-    } finally {
-      footerLoading.value = false
-    }
-  }
 
   async function saveFooterSettings () {
     try {
@@ -344,7 +506,10 @@
         },
         copyrightText: footerSettings.value.copyrightText?.trim() || null,
       }
-      await store.dispatch('footerSettings/updateSettings', payload)
+      await store.dispatch('systemSettings/updateSettings', {
+        section: 'footer',
+        data: payload
+      })
       // Refresh unified layout cache
       await store.dispatch('layout/fetchAllLayoutData')
     } catch (error) {
@@ -370,31 +535,6 @@
   }
 
   // Header settings functions
-  async function fetchHeaderSettings () {
-    try {
-      headerLoading.value = true
-      await store.dispatch('headerSettings/fetchSettings')
-      const settings = store.state.headerSettings.settings
-      headerSettings.value = {
-        logoImage: settings.logoImage || null,
-        logoImageDark: settings.logoImageDark || null,
-        logoPosition: settings.logoPosition || 'left',
-        menuPosition: settings.menuPosition || 'right',
-        logoWidthLeft: settings.logoWidthLeft || 300,
-        logoWidthMobile: settings.logoWidthMobile || 120,
-      }
-      // Set logo previews if logos exist
-      logoPreview.value = settings.logoImage ? getApiPublicImageUrl(settings.logoImage, 'header-logo') : null
-      logoPreviewDark.value = settings.logoImageDark ? getApiPublicImageUrl(settings.logoImageDark, 'header-logo') : null
-      // Clear file inputs
-      logoFile.value = null
-      logoFileDark.value = null
-    } catch (error) {
-      console.error('Error fetching header settings:', error)
-    } finally {
-      headerLoading.value = false
-    }
-  }
 
   async function saveHeaderSettings () {
     try {
@@ -411,8 +551,11 @@
       data.append('logoWidthLeft', headerSettings.value.logoWidthLeft)
       data.append('logoWidthMobile', headerSettings.value.logoWidthMobile)
 
-      await store.dispatch('headerSettings/updateSettings', data)
-      await fetchHeaderSettings()
+      await store.dispatch('systemSettings/updateSettings', {
+        section: 'header',
+        data
+      })
+      await fetchSystemSettings()
       // Refresh unified layout cache
       await store.dispatch('layout/fetchAllLayoutData')
     } catch (error) {
@@ -457,49 +600,21 @@
   }
 
   // Appearance settings functions
-  async function fetchAppearanceSettings () {
-    try {
-      appearanceLoading.value = true
-      await store.dispatch('appearanceSettings/fetchSettings')
-      const settings = store.state.appearanceSettings.settings
-      appearanceSettings.value = {
-        defaultTheme: settings.defaultTheme || 'dark',
-        lightColors: settings.lightColors || {},
-        lightVariables: settings.lightVariables || {},
-        darkColors: settings.darkColors || {},
-        darkVariables: settings.darkVariables || {},
-      }
-      // Initialize advanced JSON
-      advancedJson.value = {
-        light: JSON.stringify({
-          colors: appearanceSettings.value.lightColors,
-          variables: appearanceSettings.value.lightVariables,
-        }, null, 2),
-        dark: JSON.stringify({
-          colors: appearanceSettings.value.darkColors,
-          variables: appearanceSettings.value.darkVariables,
-        }, null, 2),
-      }
-    } catch (error) {
-      console.error('Error fetching appearance settings:', error)
-    } finally {
-      appearanceLoading.value = false
-    }
-  }
 
   async function saveAppearanceSettings () {
     try {
       appearanceLoading.value = true
-      await store.dispatch('appearanceSettings/updateSettings', {
-        defaultTheme: appearanceSettings.value.defaultTheme,
-        lightColors: appearanceSettings.value.lightColors,
-        lightVariables: appearanceSettings.value.lightVariables,
-        darkColors: appearanceSettings.value.darkColors,
-        darkVariables: appearanceSettings.value.darkVariables,
+      await store.dispatch('systemSettings/updateSettings', {
+        section: 'appearance',
+        data: {
+            defaultTheme: appearanceSettings.value.defaultTheme,
+            lightColors: appearanceSettings.value.lightColors,
+            lightVariables: appearanceSettings.value.lightVariables,
+            darkColors: appearanceSettings.value.darkColors,
+            darkVariables: appearanceSettings.value.darkVariables,
+        }
       })
-      await fetchAppearanceSettings()
-      // Reload page to apply theme changes
-      window.location.reload()
+      await fetchSystemSettings()
     } catch (error) {
       console.error('Error saving appearance settings:', error)
     } finally {
@@ -619,23 +734,35 @@
   ]
 
   // Organizer dashboard banner functions
-  async function fetchOrganizerBannerSettings () {
+
+  // Localization settings
+  const localizationLoading = ref(false)
+  const localizationSettings = ref({
+    defaultCurrency: 'USD',
+    defaultLanguage: 'en',
+  })
+
+  const languageOptions = computed(() => [
+    { title: t('common.languages.en'), value: 'en' },
+    { title: t('common.languages.fr'), value: 'fr' },
+  ])
+
+
+  async function saveLocalizationSettings () {
     try {
-      organizerBannerLoading.value = true
-      await store.dispatch('organizerDashboardBanner/fetchSettings')
-      const settings = store.state.organizerDashboardBanner.settings
-      organizerBannerSettings.value = {
-        isEnabled: settings.isEnabled !== false,
-        icon: settings.icon,
-        title: settings.title,
-        description: settings.description,
-        ctaButtonText: settings.ctaButtonText,
-        ctaButtonUrl: settings.ctaButtonUrl,
-      }
+      localizationLoading.value = true
+      await store.dispatch('systemSettings/updateSettings', {
+        section: 'localization',
+        data: {
+            defaultCurrency: localizationSettings.value.defaultCurrency,
+            defaultLanguage: localizationSettings.value.defaultLanguage,
+        }
+      })
+      await fetchSystemSettings()
     } catch (error) {
-      console.error('Error fetching organizer dashboard banner settings:', error)
+      console.error('Error saving localization settings:', error)
     } finally {
-      organizerBannerLoading.value = false
+      localizationLoading.value = false
     }
   }
 
@@ -645,8 +772,9 @@
 
       // If disabled, only update isEnabled flag
       if (!organizerBannerSettings.value.isEnabled) {
-        await store.dispatch('organizerDashboardBanner/updateSettings', {
-          isEnabled: false,
+        await store.dispatch('systemSettings/updateSettings', {
+            section: 'organizer_dashboard_banner',
+            data: { isEnabled: false }
         })
         // Refresh unified layout cache
         await store.dispatch('layout/fetchAllLayoutData')
@@ -663,13 +791,16 @@
         throw new Error('All fields are required when banner is enabled')
       }
 
-      await store.dispatch('organizerDashboardBanner/updateSettings', {
-        isEnabled: true,
-        icon,
-        title,
-        description: organizerBannerSettings.value.description?.trim() || null,
-        ctaButtonText,
-        ctaButtonUrl,
+      await store.dispatch('systemSettings/updateSettings', {
+        section: 'organizer_dashboard_banner',
+        data: {
+            isEnabled: true,
+            icon,
+            title,
+            description: organizerBannerSettings.value.description?.trim() || null,
+            ctaButtonText,
+            ctaButtonUrl,
+        }
       })
       // Refresh unified layout cache
       await store.dispatch('layout/fetchAllLayoutData')
@@ -683,10 +814,7 @@
 
   onMounted(() => {
     fetchBanners()
-    fetchFooterSettings()
-    fetchHeaderSettings()
-    fetchAppearanceSettings()
-    fetchOrganizerBannerSettings()
+    fetchSystemSettings()
   })
 </script>
 
@@ -694,8 +822,9 @@
   <v-container class="settings-container">
     <PageTitle
       :show-back-button="true"
-      subtitle="Manage system settings and configurations"
-      title="Settings"
+      :subtitle="ui.subtitle"
+      :title="ui.title"
+      :title-key="'pages.admin.settings'"
     />
 
     <v-row align="center" justify="center">
@@ -714,11 +843,11 @@
           <v-expansion-panel>
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-home</v-icon>
-              <span class="text-h6">Customize Homepage</span>
+              <span class="text-h6">{{ ui.homepage_banners.title }}</span>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <div class="text-body-2 text-medium-emphasis mb-4">
-                Manage rotating banners displayed on the homepage
+                {{ ui.homepage_banners.subtitle }}
               </div>
 
               <!-- Banners List -->
@@ -737,8 +866,8 @@
                 >
                   mdi-image-off
                 </v-icon>
-                <p class="text-h6 text-grey mb-2">No banners yet</p>
-                <p class="text-body-2 text-grey mb-4">Create your first homepage banner</p>
+                <p class="text-h6 text-grey mb-2">{{ ui.homepage_banners.no_banners }}</p>
+                <p class="text-body-2 text-grey mb-4">{{ ui.homepage_banners.create_first }}</p>
                 <v-btn
                   color="primary"
                   prepend-icon="mdi-plus"
@@ -746,14 +875,14 @@
                   :size="size"
                   @click="openCreateDialog"
                 >
-                  Add Banner
+                  {{ ui.homepage_banners.add_btn }}
                 </v-btn>
               </div>
 
               <div v-else>
                 <div class="d-flex align-center justify-space-between mb-4">
                   <div class="text-body-1 font-weight-medium">
-                    Banners ({{ banners.length }})
+                    {{ ui.homepage_banners.count(banners.length) }}
                   </div>
                   <v-btn
                     color="primary"
@@ -762,7 +891,7 @@
                     :size="size"
                     @click="openCreateDialog"
                   >
-                    Add Banner
+                    {{ ui.homepage_banners.add_btn }}
                   </v-btn>
                 </div>
 
@@ -790,7 +919,7 @@
                             size="small"
                             variant="flat"
                           >
-                            {{ isBannerActive(banner) ? 'Active' : 'Inactive' }}
+                            {{ isBannerActive(banner) ? ui.homepage_banners.active : ui.homepage_banners.inactive }}
                           </v-chip>
                         </div>
                       </v-img>
@@ -798,7 +927,7 @@
                       <v-card-text class="pa-4">
                         <div class="d-flex align-center justify-space-between">
                           <div class="text-h6">
-                            Banner #{{ index + 1 }}
+                            {{ ui.homepage_banners.count(index + 1) }}
                           </div>
                           <v-switch
                             color="success"
@@ -820,12 +949,12 @@
                           variant="text"
                           @click="openEditDialog(banner)"
                         >
-                          Edit
+                          {{ ui.homepage_banners.edit }}
                         </v-btn>
                         <v-spacer />
                         <confirmation-dialog
-                          :popup-content="`Are you sure you want to delete Banner #${index + 1}? This action cannot be undone.`"
-                          popup-title="Delete Banner"
+                          :popup-content="ui.homepage_banners.delete_confirm(index + 1)"
+                          :popup-title="ui.homepage_banners.delete_title"
                           @confirm="deleteBanner"
                         >
                           <template #activator="{ onClick }">
@@ -838,7 +967,7 @@
                               variant="text"
                               @click="confirmDelete(banner); onClick()"
                             >
-                              Delete
+                              {{ ui.homepage_banners.delete }}
                             </v-btn>
                           </template>
                         </confirmation-dialog>
@@ -855,11 +984,11 @@
           <v-expansion-panel v-if="false">
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-view-dashboard-variant</v-icon>
-              <span class="text-h6">Customize Header</span>
+              <span class="text-h6">{{ ui.header.title }}</span>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <div class="text-body-2 text-medium-emphasis mb-4">
-                Configure header logo, alignment, and menu position
+                {{ ui.header.subtitle }}
               </div>
 
               <v-form>
@@ -870,12 +999,12 @@
                   variant="outlined"
                 >
                   <v-card-title class="text-subtitle-1">
-                    Logos
+                    {{ ui.header.logos }}
                   </v-card-title>
                   <v-card-text>
                     <v-row>
                       <v-col cols="12" md="6">
-                        <div class="text-caption mb-1">Light Theme Logo</div>
+                        <div class="text-caption mb-1">{{ ui.header.light_logo }}</div>
                         <v-file-upload
                           v-model="logoFile"
                           accept="image/*"
@@ -901,7 +1030,7 @@
                         </div>
                       </v-col>
                       <v-col cols="12" md="6">
-                        <div class="text-caption mb-1">Dark Theme Logo</div>
+                        <div class="text-caption mb-1">{{ ui.header.dark_logo }}</div>
                         <v-file-upload
                           v-model="logoFileDark"
                           accept="image/*"
@@ -937,10 +1066,10 @@
                         :density="density"
                         hide-details="auto"
                         :items="[
-                          { title: 'Desktop', value: 'desktop' },
-                          { title: 'Mobile', value: 'mobile' }
+                          { title: ui.header.views.desktop, value: 'desktop' },
+                          { title: ui.header.views.mobile, value: 'mobile' }
                         ]"
-                        label="View"
+                        :label="ui.header.view"
                         max-width="100"
                         :rounded="rounded"
                         variant="plain"
@@ -990,7 +1119,7 @@
                           mdi-text
                         </v-icon>
                         <p class="text-body-2 text-grey">
-                          No logos uploaded. App name will be displayed as text.
+                          {{ ui.header.no_logos_hint }}
                         </p>
                     </div>
                   </v-card-text>
@@ -1003,11 +1132,11 @@
                   :density="density"
                   hide-details="auto"
                   :items="[
-                    { title: 'Left', value: 'left' },
-                    { title: 'Center', value: 'center' },
-                    { title: 'Right', value: 'right' }
+                    { title: ui.header.options.left, value: 'left' },
+                    { title: ui.header.options.center, value: 'center' },
+                    { title: ui.header.options.right, value: 'right' }
                   ]"
-                  label="Logo Position"
+                  :label="ui.header.logo_position"
                   :rounded="rounded"
                   :variant="variant"
                 />
@@ -1019,11 +1148,11 @@
                   :density="density"
                   hide-details="auto"
                   :items="[
-                    { title: 'Left', value: 'left' },
-                    { title: 'Center', value: 'center' },
-                    { title: 'Right', value: 'right' }
+                    { title: ui.header.options.left, value: 'left' },
+                    { title: ui.header.options.center, value: 'center' },
+                    { title: ui.header.options.right, value: 'right' }
                   ]"
-                  label="Menu Position"
+                  :label="ui.header.menu_position"
                   :rounded="rounded"
                   :variant="variant"
                 />
@@ -1037,7 +1166,7 @@
                   :size="size"
                   @click="saveHeaderSettings"
                 >
-                  Save Header Settings
+                  {{ ui.header.save_btn }}
                 </v-btn>
               </v-form>
             </v-expansion-panel-text>
@@ -1048,11 +1177,11 @@
           <v-expansion-panel v-if="false">
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-format-page-break</v-icon>
-              <span class="text-h6">Customize Footer</span>
+              <span class="text-h6">{{ ui.footer.title }}</span>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <div class="text-body-2 text-medium-emphasis mb-4">
-                Configure footer style and content
+                {{ ui.footer.subtitle }}
               </div>
 
               <v-form>
@@ -1063,10 +1192,10 @@
                   :density="density"
                   hide-details="auto"
                   :items="[
-                    { title: 'One Line (Simple)', value: 'oneline' },
-                    { title: 'Expanded (Full Sections)', value: 'expanded' }
+                    { title: ui.footer.styles.oneline, value: 'oneline' },
+                    { title: ui.footer.styles.expanded, value: 'expanded' }
                   ]"
-                  label="Footer Style"
+                  :label="ui.footer.style"
                   :rounded="rounded"
                   :variant="variant"
                 />
@@ -1077,7 +1206,7 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Copyright Text (Optional)"
+                  :label="ui.footer.copyright"
                   :rounded="rounded"
                   :variant="variant"
                 />
@@ -1091,7 +1220,7 @@
                     variant="outlined"
                   >
                     <v-card-title class="text-subtitle-1">
-                      Company Information
+                      {{ ui.footer.company_info }}
                     </v-card-title>
                     <v-card-text>
                       <v-text-field
@@ -1099,7 +1228,7 @@
                         class="mb-4"
                         :density="density"
                         hide-details="auto"
-                        label="Company Name"
+                        :label="ui.footer.company_name"
                         :rounded="rounded"
                         :variant="variant"
                       />
@@ -1108,7 +1237,7 @@
                         class="mb-4"
                         :density="density"
                         hide-details="auto"
-                        label="Address"
+                        :label="ui.footer.address"
                         :rounded="rounded"
                         rows="2"
                         :variant="variant"
@@ -1118,7 +1247,7 @@
                         class="mb-4"
                         :density="density"
                         hide-details="auto"
-                        label="Email"
+                        :label="ui.footer.email"
                         :rounded="rounded"
                         type="email"
                         :variant="variant"
@@ -1128,7 +1257,7 @@
                         class="mb-4"
                         :density="density"
                         hide-details="auto"
-                        label="Phone"
+                        :label="ui.footer.phone"
                         :rounded="rounded"
                         :variant="variant"
                       />
@@ -1142,7 +1271,7 @@
                     variant="outlined"
                   >
                     <v-card-title class="text-subtitle-1">
-                      Quick Links
+                      {{ ui.footer.quick_links }}
                     </v-card-title>
                     <v-card-text>
                       <div
@@ -1214,7 +1343,7 @@
                     variant="outlined"
                   >
                     <v-card-title class="text-subtitle-1">
-                      Social Media Links
+                      {{ ui.footer.social_links }}
                     </v-card-title>
                     <v-card-text>
                       <v-text-field
@@ -1257,7 +1386,7 @@
                   :size="size"
                   @click="saveFooterSettings"
                 >
-                  Save Footer Settings
+                  {{ ui.footer.save_btn }}
                 </v-btn>
               </v-form>
             </v-expansion-panel-text>
@@ -1267,28 +1396,30 @@
           <v-expansion-panel>
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-palette</v-icon>
-              <span class="text-h6">Appearance</span>
+              <span class="text-h6">{{ ui.appearance.title }}</span>
             </v-expansion-panel-title>
-            <v-expansion-panel-text>
-              <div class="text-body-2 text-medium-emphasis mb-4">
-                Configure theme and color scheme for light and dark modes
-              </div>
+              <v-expansion-panel-text>
+                <div class="text-body-2 text-medium-emphasis mb-4">
+                  {{ ui.appearance.subtitle }}
+                </div>
 
               <v-form>
-                <!-- Default Theme -->
-                <v-select
-                  v-model="appearanceSettings.defaultTheme"
-                  class="mb-4"
-                  :density="density"
-                  hide-details="auto"
-                  :items="[
-                    { title: 'Dark', value: 'dark' },
-                    { title: 'Light', value: 'light' }
-                  ]"
-                  label="Default Theme"
-                  :rounded="rounded"
-                  :variant="variant"
-                />
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="appearanceSettings.defaultTheme"
+                      :density="density"
+                      hide-details="auto"
+                      :items="[
+                        { title: ui.appearance.themes.dark, value: 'dark' },
+                        { title: ui.appearance.themes.light, value: 'light' }
+                      ]"
+                      :label="ui.appearance.default_theme"
+                      :rounded="rounded"
+                      :variant="variant"
+                    />
+                  </v-col>
+                </v-row>
 
                 <!-- Mode Tabs (Colors, Advanced) -->
                 <v-tabs
@@ -1297,10 +1428,10 @@
                   :density="density"
                 >
                   <v-tab value="colors">
-                    Colors
+                    {{ ui.appearance.colors }}
                   </v-tab>
                   <v-tab value="advanced">
-                    Advanced (JSON)
+                    {{ ui.appearance.advanced }}
                   </v-tab>
                 </v-tabs>
 
@@ -1314,10 +1445,10 @@
                       :density="density"
                     >
                       <v-tab value="light">
-                        Light Theme
+                        {{ ui.appearance.light }}
                       </v-tab>
                       <v-tab value="dark">
-                        Dark Theme
+                        {{ ui.appearance.dark }}
                       </v-tab>
                     </v-tabs>
 
@@ -1427,7 +1558,7 @@
                               :size="size"
                               @click="parseAdvancedJson('light')"
                             >
-                              Parse & Apply JSON
+                              {{ ui.appearance.parse_btn }}
                             </v-btn>
                           </v-card-text>
                         </v-card>
@@ -1461,7 +1592,7 @@
                               :size="size"
                               @click="parseAdvancedJson('dark')"
                             >
-                              Parse & Apply JSON
+                              {{ ui.appearance.parse_btn }}
                             </v-btn>
                           </v-card-text>
                         </v-card>
@@ -1480,7 +1611,57 @@
                   :size="size"
                   @click="saveAppearanceSettings"
                 >
-                  Save Appearance Settings
+                  {{ ui.appearance.save_btn }}
+                </v-btn>
+              </v-form>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+
+          <!-- Localization Settings Section -->
+          <v-expansion-panel>
+            <v-expansion-panel-title>
+              <v-icon class="me-2">mdi-translate</v-icon>
+              <span class="text-h6">{{ ui.localization.title }}</span>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <div class="text-body-2 text-medium-emphasis mb-4">
+                {{ ui.localization.subtitle }}
+              </div>
+
+              <v-form>
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="localizationSettings.defaultLanguage"
+                      :density="density"
+                      hide-details="auto"
+                      :items="languageOptions"
+                      :label="ui.localization.language"
+                      :rounded="rounded"
+                      :variant="variant"
+                    />
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <CurrencySelector
+                      v-model="localizationSettings.defaultCurrency"
+                      :density="density"
+                      :label="ui.localization.currency"
+                      :rounded="rounded"
+                      :variant="variant"
+                    />
+                  </v-col>
+                </v-row>
+
+                <v-btn
+                  class="mt-4"
+                  color="primary"
+                  :loading="localizationLoading"
+                  prepend-icon="mdi-content-save"
+                  :rounded="rounded"
+                  :size="size"
+                  @click="saveLocalizationSettings"
+                >
+                  {{ ui.localization.save_btn }}
                 </v-btn>
               </v-form>
             </v-expansion-panel-text>
@@ -1490,11 +1671,11 @@
           <v-expansion-panel>
             <v-expansion-panel-title>
               <v-icon class="me-2">mdi-view-dashboard</v-icon>
-              <span class="text-h6">Organizer Dashboard Banner</span>
+              <span class="text-h6">{{ ui.organizer_banner.title }}</span>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <div class="text-body-2 text-medium-emphasis mb-4">
-                Customize the promotional banner displayed on the organizer dashboard
+                {{ ui.organizer_banner.subtitle }}
               </div>
 
               <v-form>
@@ -1504,9 +1685,9 @@
                   class="mb-4"
                   color="primary"
                   :density="density"
-                  hint="Show or hide the banner on organizer dashboard"
+                  :hint="ui.organizer_banner.enable_hint"
                   inset
-                  label="Enable Banner"
+                  :label="ui.organizer_banner.enable"
                   persistent-hint
                 />
 
@@ -1518,8 +1699,8 @@
                     class="mb-4"
                     :density="density"
                     hide-details="auto"
-                    hint="Material Design icon name (e.g., mdi-printer, mdi-star)"
-                    label="Icon *"
+                    :hint="ui.organizer_banner.icon_hint"
+                    :label="ui.organizer_banner.icon"
                     persistent-hint
                     prepend-inner-icon="mdi-palette"
                     required
@@ -1533,7 +1714,7 @@
                     class="mb-4"
                     :density="density"
                     hide-details="auto"
-                    label="Title *"
+                    :label="ui.organizer_banner.title_label"
                     required
                     :rounded="rounded"
                     :variant="variant"
@@ -1545,7 +1726,7 @@
                     class="mb-4"
                     :density="density"
                     hide-details="auto"
-                    label="Description"
+                    :label="ui.organizer_banner.desc_label"
                     :rounded="rounded"
                     rows="2"
                     :variant="variant"
@@ -1557,7 +1738,7 @@
                     class="mb-4"
                     :density="density"
                     hide-details="auto"
-                    label="CTA Button Text *"
+                    :label="ui.organizer_banner.cta_text"
                     required
                     :rounded="rounded"
                     :variant="variant"
@@ -1569,8 +1750,8 @@
                     class="mb-4"
                     :density="density"
                     hide-details="auto"
-                    hint="Must start with http:// or https://"
-                    label="CTA Button URL *"
+                    :hint="ui.organizer_banner.cta_url_hint"
+                    :label="ui.organizer_banner.cta_url"
                     persistent-hint
                     prepend-inner-icon="mdi-link"
                     required
@@ -1588,7 +1769,7 @@
                   :size="size"
                   @click="saveOrganizerBannerSettings"
                 >
-                  Save Banner Settings
+                  {{ ui.organizer_banner.save_btn }}
                 </v-btn>
               </v-form>
             </v-expansion-panel-text>
@@ -1724,7 +1905,6 @@
 <style scoped>
 .settings-container {
   min-height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 .settings-panels {
@@ -1758,7 +1938,6 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .settings-container {
-    padding: 16px;
   }
 }
 </style>

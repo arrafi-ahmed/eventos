@@ -73,7 +73,9 @@ export const actions = {
       $axios
         .get('/auth/me')
         .then(response => {
-          commit('setCurrentUser', response.data?.payload?.currentUser)
+          if (response?.data?.payload?.currentUser) {
+            commit('setCurrentUser', response.data.payload.currentUser)
+          }
           resolve(response)
         })
         .catch(error => {

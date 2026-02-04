@@ -3,6 +3,7 @@
   import { useRoute } from 'vue-router'
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import ProgressLoader from '@/components/ProgressLoader.vue'
   import { appInfo } from '@/utils'
 
@@ -12,10 +13,12 @@
 
   const snackbars = computed(() => store.state.snackbars)
   const currentTheme = computed(() => store.getters['preferences/currentTheme'])
-  const appearanceSettings = computed(() => store.state.appearanceSettings?.settings || {
+  const appearanceSettings = computed(() => store.state.systemSettings?.settings?.appearance || {
     defaultTheme: 'dark',
     lightColors: {},
+    lightVariables: {},
     darkColors: {},
+    darkVariables: {},
   })
 
   const THEME_COLORS = {
@@ -30,7 +33,11 @@
 
   function applyTheme (value) {
     const normalized = value === 'light' ? 'light' : 'dark'
-    theme.global.name.value = normalized
+    if (typeof theme.change === 'function') {
+      theme.change(normalized)
+    } else {
+      theme.global.name.value = normalized
+    }
     document.documentElement.dataset.theme = normalized
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) {
@@ -38,9 +45,24 @@
     }
   }
 
-  watch(route, to => {
-    document.title = (to.meta.title && to.meta.title + ' | ' + appInfo.name) || appInfo.name
-  })
+  const { t, locale } = useI18n()
+  
+  // Watch for route or locale changes to update document title
+  watch(
+    [() => route.path, () => locale.value],
+    () => {
+      const metaTitle = route.meta.title
+      // If we have a titleKey in meta, use it, otherwise fallback to title, or app name
+      const titleText = route.meta.titleKey 
+        ? t(route.meta.titleKey) 
+        : (metaTitle ? (t(metaTitle, metaTitle)) : appInfo.name)
+        
+      document.title = (titleText !== appInfo.name) 
+        ? `${titleText} | ${appInfo.name}` 
+        : appInfo.name
+    },
+    { immediate: true }
+  )
 
   // Initialize cart from localStorage on app mount
   // Also load layout/design data (footer, banners) on first load
@@ -57,21 +79,11 @@
       }
       
       Promise.all(promises).then(([layoutData]) => {
-        // Update individual store modules for backward compatibility
-        if (layoutData.footer) {
-          store.commit('footerSettings/setSettings', layoutData.footer)
-        }
-        if (layoutData.header) {
-          store.commit('headerSettings/setSettings', layoutData.header)
-        }
-        if (layoutData.appearance) {
-          store.commit('appearanceSettings/setSettings', layoutData.appearance)
-        }
-        if (layoutData.organizerDashboardBanner) {
-          store.commit('organizerDashboardBanner/setSettings', layoutData.organizerDashboardBanner)
-        }
-        if (layoutData.homepageBanners) {
-          store.commit('homepage/setActiveBanners', layoutData.homepageBanners)
+        if (layoutData) {
+          store.commit('systemSettings/setSettings', layoutData)
+          if (layoutData.homepageBanners) {
+            store.commit('homepage/setActiveBanners', layoutData.homepageBanners)
+          }
         }
       }).catch(err => console.error('Error fetching data:', err))
     } catch (error) {
@@ -79,17 +91,6 @@
     }
   })
 
-  // Clear checkout when changing events (using slug-based routing)
-  watch(
-    () => route.params.slug,
-    (newSlug) => {
-      const cartSlug = store.state.checkout.cartEventSlug
-      // If we have items in the cart for a DIFFERENT event, clear it
-      if (newSlug && cartSlug && newSlug !== cartSlug) {
-        store.dispatch('checkout/clearCheckout')
-      }
-    },
-  )
 
   // Watch for appearance settings changes and update theme colors and variables
   watch(

@@ -1,0 +1,50 @@
+{
+    "title": "Event Check-in",
+    "scanner_tab": "Scanner",
+    "search_tab": "Search",
+    "history_tab": "History",
+    "stats": {
+        "title": "Attendance Stats",
+        "total_expected": "Total Expected",
+        "checked_in": "Checked-in",
+        "remaining": "Remaining",
+        "complete": "Complete"
+    },
+    "scanner": {
+        "recent_scanned": "Recently Scanned",
+        "checked_in_overlay": "CHECKED IN",
+        "already_checked_overlay": "ALREADY CHECKED-IN",
+        "invalid_code_overlay": "INVALID CODE"
+    },
+    "search": {
+        "label": "Search Attendee",
+        "placeholder": "Name or email (Press Enter to search)",
+        "checkin_btn": "Check-in",
+        "checked_in_chip": "Checked-in",
+        "no_results": "No results for \"{keyword}\"",
+        "empty_state": "Enter name or email and press search"
+    },
+    "history": {
+        "checked_in_at": "Checked in at {time} • {email}",
+        "no_history_title": "No recent check-ins",
+        "no_history_msg": "Successful scans will appear here"
+    },
+    "details": {
+        "title": "Attendee Details",
+        "status": "Status",
+        "pending": "Pending",
+        "checked_in": "Checked In",
+        "email": "Email",
+        "phone": "Phone",
+        "ticket_info": "Ticket Information",
+        "price": "Price",
+        "free": "Free",
+        "checkin_btn": "Check-in Attendee",
+        "already_checked_btn": "Already Checked-in"
+    },
+    "confirm": {
+        "title": "Confirm Check-in",
+        "cancel": "Cancel",
+        "confirm_btn": "Confirm Check-in"
+    }
+}

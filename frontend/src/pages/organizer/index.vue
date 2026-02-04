@@ -3,6 +3,7 @@
     meta: {
       layout: 'default',
       title: 'Organizer',
+      titleKey: 'pages.organizer.title',
       requiresAuth: true,
     },
   })

@@ -123,7 +123,7 @@ export class Event {
     }
 
     if (!this.currency || this.currency.length !== 3) {
-      errors.push('Currency must be a valid 3-letter code (e.g., USD, EUR, GBP)')
+      errors.push('Currency must be a valid 3-letter code (e.g., XOF, USD, EUR, GBP)')
     }
 
     return {

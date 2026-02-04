@@ -1,4 +1,4 @@
-const {query} = require("../db");
+const { query } = require("../db");
 
 /**
  * Get cache timestamps for all layout settings
@@ -9,41 +9,21 @@ exports.getCacheTimestamps = async () => {
     const timestamps = {};
 
     try {
-        // Footer settings
-        const footerResult = await query(
-            "SELECT updated_at FROM footer_settings ORDER BY id ASC LIMIT 1",
+        // System settings (consolidated) - fetch all updated_at by key
+        const systemResult = await query(
+            "SELECT key, updated_at FROM system_settings",
             []
         );
-        timestamps.footer = footerResult.rows.length > 0
-            ? footerResult.rows[0].updatedAt || footerResult.rows[0].updated_at
-            : null;
 
-        // Header settings
-        const headerResult = await query(
-            "SELECT updated_at FROM header_settings ORDER BY id ASC LIMIT 1",
-            []
-        );
-        timestamps.header = headerResult.rows.length > 0
-            ? headerResult.rows[0].updatedAt || headerResult.rows[0].updated_at
-            : null;
+        const systemTimestamps = systemResult.rows.reduce((acc, row) => {
+            acc[row.key] = row.updatedAt || row.updated_at
+            return acc
+        }, {})
 
-        // Appearance settings
-        const appearanceResult = await query(
-            "SELECT updated_at FROM appearance_settings ORDER BY id ASC LIMIT 1",
-            []
-        );
-        timestamps.appearance = appearanceResult.rows.length > 0
-            ? appearanceResult.rows[0].updatedAt || appearanceResult.rows[0].updated_at
-            : null;
-
-        // Organizer dashboard banner
-        const bannerResult = await query(
-            "SELECT updated_at FROM organizer_dashboard_banner ORDER BY id ASC LIMIT 1",
-            []
-        );
-        timestamps.organizerDashboardBanner = bannerResult.rows.length > 0
-            ? bannerResult.rows[0].updatedAt || bannerResult.rows[0].updated_at
-            : null;
+        timestamps.footer = systemTimestamps.footer || null;
+        timestamps.header = systemTimestamps.header || null;
+        timestamps.appearance = systemTimestamps.appearance || null;
+        timestamps.organizerDashboardBanner = systemTimestamps.organizer_dashboard_banner || null;
 
         // Homepage banners - get the most recent updated_at from homepage_section where section_type = 'banner'
         const homepageBannersResult = await query(

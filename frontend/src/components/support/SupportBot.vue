@@ -5,15 +5,15 @@
       <!-- Loading state while initializing -->
       <div v-if="isInitializing" class="text-center text-medium-emphasis py-8">
         <v-progress-circular indeterminate size="24" />
-        <p class="mt-2">Loading conversation...</p>
+        <p class="mt-2">{{ t('components.support_bot.loading') }}</p>
       </div>
 
       <!-- Empty state -->
       <div v-else-if="messages.length === 0" class="text-center text-medium-emphasis py-8">
-        <p class="mb-4">How can I help you today?</p>
+        <p class="mb-4">{{ t('components.support_bot.welcome') }}</p>
         <div class="intent-buttons-container">
           <div class="d-flex justify-space-between align-center mb-3">
-            <span class="text-body-2 text-medium-emphasis">Choose an option:</span>
+            <span class="text-body-2 text-medium-emphasis">{{ t('components.support_bot.choose_option') }}</span>
           </div>
           <QuickIntentButtons
             @select="handleSelectIntent"
@@ -66,7 +66,7 @@
       <!-- Quick Intent Buttons (only shown via "more" button when chat has started) -->
       <div v-if="showIntentButtons && messages.length > 0" class="intent-buttons-container mb-4">
         <div class="d-flex justify-space-between align-center mb-3">
-          <span class="text-body-2 text-medium-emphasis">Choose an option:</span>
+          <span class="text-body-2 text-medium-emphasis">{{ t('components.support_bot.choose_option') }}</span>
           <v-btn
             :density="density"
             icon="mdi-close"
@@ -82,7 +82,7 @@
     <!-- Quick Intent Buttons (shown when low confidence) -->
     <v-card-text v-if="currentIntent === 'show_buttons'">
       <div class="d-flex justify-space-between align-center mb-3">
-        <span class="text-body-2 text-medium-emphasis">Need help? Try one of these:</span>
+        <span class="text-body-2 text-medium-emphasis">{{ t('components.support_bot.need_help') }}</span>
         <v-btn
           :density="density"
           icon="mdi-close"
@@ -113,7 +113,7 @@
         :density="density"
         :disabled="isLoading"
         hide-details
-        placeholder="Type your message..."
+        :placeholder="t('components.support_bot.input_placeholder')"
         :rounded="rounded"
         :variant="variant"
         @keyup.enter="handleSend"
@@ -136,6 +136,7 @@
 
 <script setup>
   import { nextTick, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useSupportBot } from '@/composables/useSupportBot'
   import { useUiProps } from '@/composables/useUiProps'
   import ChatMessage from './ChatMessage.vue'
@@ -143,6 +144,7 @@
   import OTPVerification from './OTPVerification.vue'
   import QuickIntentButtons from './QuickIntentButtons.vue'
 
+  const { t } = useI18n()
   const { rounded, size, variant, density } = useUiProps()
 
   const {

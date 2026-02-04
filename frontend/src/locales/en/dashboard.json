@@ -1,0 +1,80 @@
+{
+    "title": "Dashboard",
+    "subtitle": "Analytics & insights",
+    "filters": {
+        "btn": "Filters",
+        "title": "Report Filters",
+        "events": "Events",
+        "counter": "Ticket Counter",
+        "cashier": "Cashier",
+        "payment_method": "Payment Method",
+        "date_range": "Date Range",
+        "custom_date_range": "Custom Date Range",
+        "reset": "Reset",
+        "apply": "Apply Filters"
+    },
+    "actions": {
+        "download": "Download",
+        "excel": "Excel",
+        "pdf": "PDF"
+    },
+    "loading": "Loading report data...",
+    "stats": {
+        "events": "Events",
+        "tickets": "Tickets",
+        "organizers": "Organizers",
+        "attendance": "Attendance",
+        "total_events": "Total Events",
+        "total_tickets": "Total Tickets Sold",
+        "total_organizers": "Total Organizers",
+        "attendance_rate": "Overall Attendance"
+    },
+    "charts": {
+        "checkin_status": "Check-in Status",
+        "sales_channels": "Sales Channels",
+        "no_checkin_data": "No check-in data available",
+        "no_channel_data": "No channel data available",
+        "capacity_details": "Ticket Capacity Details",
+        "select_event_hint": "Please select a specific event from the filters to view detailed charts and capacity trends.",
+        "checked_in": "Checked In",
+        "absent": "Absent"
+    },
+    "table": {
+        "breakdown": "{type} Breakdown",
+        "report_type": "Report Type",
+        "types": {
+            "event": "By Event",
+            "counter": "By Counter",
+            "cashier": "By Cashier",
+            "payment": "By Payment Method"
+        },
+        "headers": {
+            "event_name": "Event Name",
+            "date": "Date",
+            "orders": "Orders",
+            "revenue": "Revenue",
+            "counter_name": "Counter Name",
+            "location": "Location",
+            "cashier": "Cashier",
+            "counter": "Counter",
+            "payment_method": "Payment Method",
+            "currency": "Currency",
+            "transactions": "Transactions",
+            "amount": "Amount",
+            "percentage": "Percentage",
+            "ticket_type": "Ticket Type",
+            "sold": "Sold",
+            "remaining": "Remaining",
+            "total_capacity": "Total Capacity",
+            "utilization": "Utilization",
+            "cash": "Cash",
+            "card": "Card",
+            "free": "Free"
+        }
+    },
+    "messages": {
+        "export_success": "Report exported successfully!",
+        "export_error": "Error exporting report",
+        "load_error": "Error loading report data"
+    }
+}

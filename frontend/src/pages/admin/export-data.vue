@@ -2,6 +2,7 @@
   import { onMounted, ref } from 'vue'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -11,6 +12,7 @@
     meta: {
       layout: 'default',
       title: 'Export Data',
+      titleKey: 'pages.admin.export',
       requiresAdmin: true,
       requiresAuth: true,
     },
@@ -18,6 +20,7 @@
 
   const { xs } = useDisplay()
   const store = useStore()
+  const { t } = useI18n()
   const { rounded, variant, density } = useUiProps()
 
   const exportFormat = ref('csv')
@@ -129,8 +132,9 @@
   <v-container class="sales-export-container">
     <PageTitle
       :show-back-button="true"
-      subtitle="Export site data"
-      title="Export Data"
+      :subtitle="t('menu.export_data')"
+      :title="t('pages.admin.export')"
+      :title-key="'pages.admin.export'"
     />
 
     <v-row justify="center">
@@ -278,7 +282,6 @@
 <style scoped>
 .sales-export-container {
   min-height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 .form-card {
@@ -289,7 +292,6 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .sales-export-container {
-    padding: 16px;
   }
 
   .d-flex.gap-2 {

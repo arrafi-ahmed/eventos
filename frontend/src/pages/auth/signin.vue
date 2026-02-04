@@ -1,16 +1,20 @@
 <script setup>
   import { computed, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
   import { useUiProps } from '@/composables/useUiProps'
   import { isValidEmail } from '@/utils'
 
+  const { t } = useI18n()
+
   definePage({
     name: 'signin',
     meta: {
       layout: 'default',
-      title: 'Signin',
+      title: 'Sign In',
+      titleKey: 'auth.signin.meta_title',
       requiresNoAuth: true,
     },
   })
@@ -19,6 +23,26 @@
   const { rounded, size, variant, density } = useUiProps()
   const store = useStore()
   const router = useRouter()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('auth.signin.title'),
+    welcome_back: t('auth.signin.welcome_back'),
+    email: t('auth.labels.email'),
+    password: t('auth.labels.password'),
+    email_required: t('auth.rules.email_required'),
+    email_invalid: t('auth.rules.email_invalid'),
+    password_required: t('auth.rules.password_required'),
+    forgot_password: t('auth.signin.forgot_password'),
+    login_btn: t('auth.signin.title'),
+    not_registered: t('auth.signin.not_registered'),
+    create_account: t('auth.signin.create_account'),
+    forgot_dialog: {
+      title: t('auth.signin.forgot_password_dialog.title'),
+      subtitle: t('auth.signin.forgot_password_dialog.subtitle'),
+      request_link: t('auth.signin.forgot_password_dialog.request_link'),
+    },
+  }))
 
   const email = ref(null)
   const password = ref(null)
@@ -81,11 +105,11 @@
           :rounded="rounded"
         >
           <v-card-title class="text-center font-weight-bold">
-            <h1>Login</h1>
+            <h1>{{ ui.title }}</h1>
           </v-card-title>
           <v-card-subtitle class="text-center">
             <h2 class="font-weight-regular">
-              Hi, Welcome back 👋
+              {{ ui.welcome_back }}
             </h2>
           </v-card-subtitle>
           <v-card-text>
@@ -102,12 +126,12 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Email"
+                :label="ui.email"
                 required
                 :rounded="rounded"
                 :rules="[
-                  (v) => !!v || 'Email is required!',
-                  (v) => isValidEmail(v) || 'Invalid Email',
+                  (v) => !!v || ui.email_required,
+                  (v) => isValidEmail(v) || ui.email_invalid,
                 ]"
                 :variant="variant"
               />
@@ -120,10 +144,10 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Password"
+                :label="ui.password"
                 required
                 :rounded="rounded"
-                :rules="[(v) => !!v || 'Password is required!']"
+                :rules="[(v) => !!v || ui.password_required]"
                 :type="visible ? 'text' : 'password'"
                 :variant="variant"
                 @click:append-inner="visible = !visible"
@@ -141,7 +165,7 @@
                   class="clickable text-secondary mt-1 mt-sm-0 text-center"
                   @click="dialog = !dialog"
                 >
-                  Forgot Password?
+                  {{ ui.forgot_password }}
                 </span>
               </div>
               <v-btn
@@ -151,10 +175,10 @@
                 :rounded="rounded"
                 type="submit"
               >
-                Login
+                {{ ui.login_btn }}
               </v-btn>
               <div class="text-center mt-2 mt-md-4">
-                Not registered yet?
+                {{ ui.not_registered }}
                 <span
                   class="clickable text-secondary"
                   @click="
@@ -163,7 +187,7 @@
                     })
                   "
                 >
-                  Create an account
+                  {{ ui.create_account }}
                 </span>
               </div>
             </v-form>
@@ -180,10 +204,10 @@
   >
     <v-card class="pa-5" :rounded="rounded">
       <v-card-title class="text-center">
-        <h2>Forgot Password?</h2>
+        <h2>{{ ui.forgot_dialog.title }}</h2>
       </v-card-title>
       <v-card-subtitle class="text-center text-wrap">
-        Please enter the email address you'd like your password reset informations sent to
+        {{ ui.forgot_dialog.subtitle }}
       </v-card-subtitle>
       <v-card-text>
         <v-form
@@ -198,9 +222,9 @@
             clearable
             :density="density"
             hide-details="auto"
-            label="Email"
+            :label="ui.email"
             :rounded="rounded"
-            :rules="[(v) => !!v || 'Email is required!', (v) => isValidEmail(v) || 'Invalid Email']"
+            :rules="[(v) => !!v || ui.email_required, (v) => isValidEmail(v) || ui.email_invalid]"
             :variant="variant"
           />
 
@@ -214,7 +238,7 @@
               type="submit"
               variant="elevated"
             >
-              Request reset link
+              {{ ui.forgot_dialog.request_link }}
             </v-btn>
           </v-card-actions>
         </v-form>

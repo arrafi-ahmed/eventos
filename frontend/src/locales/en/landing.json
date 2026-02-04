@@ -1,0 +1,25 @@
+{
+    "title": "Complete Your Registration",
+    "subtitle": "Enter your details to proceed to ticket selection",
+    "meta_title": "Event Registration",
+    "prefilled_alert": "Form has been prefilled with your previous data",
+    "form": {
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "email": "Email",
+        "phone": "Phone Number",
+        "first_name_required": "First name is required",
+        "last_name_required": "Last name is required",
+        "email_required": "Email is required",
+        "email_invalid": "Email must be valid"
+    },
+    "loading_event": "Loading event information...",
+    "processing": "Processing...",
+    "continue": "Continue",
+    "errors": {
+        "fill_required": "Please fill in all required fields correctly.",
+        "registration_failed": "Registration failed. Please try again.",
+        "event_info_missing": "Event information not available. Please try again.",
+        "event_not_found": "Event not found!"
+    }
+}

@@ -1,0 +1,91 @@
+{
+    "dashboard": {
+        "title": "Tableau de bord de l'organisateur",
+        "subtitle": "Aperçu de vos événements et de vos performances de vente",
+        "create_event": "Créer un événement",
+        "no_events": "Aucun événement trouvé. Commencez par créer votre premier événement !"
+    },
+    "config": {
+        "title": "Configuration de l'événement",
+        "loading": "Chargement de la configuration...",
+        "sections": {
+            "tickets": "Billets et inscription",
+            "schedule": "Calendrier et horaires",
+            "commerce": "Commerce et logistique",
+            "marketing": "Marketing automatisé",
+            "payments": "Modes de paiement"
+        },
+        "fields": {
+            "max_tickets": "Achat maximum de billets par inscription",
+            "unique_qr": "Code QR unique par billet",
+            "unique_qr_hint": "Lorsqu'il est activé, chaque billet émet un code QR unique. Lorsqu'il est désactivé, un seul code QR est émis pour tout le groupe (inscription groupée).",
+            "onsite_quota": "Activer la gestion des quotas sur place",
+            "onsite_quota_hint": "Lorsqu'il est activé, vous pouvez réserver une partie du stock de billets pour les ventes sur place (guichet). Les ventes en ligne s'arrêteront une fois le quota atteint.",
+            "default_quota": "Quota par défaut sur place (nombre de billets)",
+            "low_stock": "Seuil de stock bas par défaut (nombre de billets)",
+            "quota_defaults_hint": "Ces valeurs seront appliquées par défaut aux nouveaux billets. Vous pouvez toujours les modifier par billet.",
+            "all_day": "Événement toute la journée",
+            "all_day_hint": "Activez cette option si cet événement dure toute la journée (pas d'heure de début ou de fin spécifique).",
+            "single_day": "Événement d'une seule journée",
+            "single_day_hint": "Désactivez cette option si cet événement se poursuit sur plusieurs jours.",
+            "show_end_time": "Afficher l'heure de fin",
+            "show_end_time_hint": "Lorsqu'il est activé, l'heure de fin de l'événement sera affichée sur les pages destinées aux clients.",
+            "date_format": "Format de date",
+            "date_format_hint": "Choisissez comment les dates seront affichées sur les pages destinées aux clients",
+            "enable_shop": "Activer la boutique de produits dérivés",
+            "enable_shop_hint": "Affiche une section de produits dérivés sur la page de l'événement afin que les participants puissent acheter des articles avec leurs billets.",
+            "disable_delivery": "Désactiver la livraison",
+            "disable_delivery_hint": "Lorsqu'il est activé, seule l'option de ramassage sera disponible lors du paiement et la livraison sera désactivée.",
+            "shipping_fee": "Frais de livraison",
+            "abandoned_cart": "Activer les e-mails de rappel pour panier abandonné",
+            "abandoned_cart_hint": "Lorsqu'ils sont activés, des e-mails de rappel automatisés seront envoyés aux utilisateurs qui abandonnent leur panier (inscriptions temporaires expirées). Les e-mails sont envoyés via une tâche cron toutes les 6 à 12 heures.",
+            "payment_methods_desc": "Sélectionnez les passerelles de paiement que vous souhaitez activer pour cet événement.",
+            "payment_warning": "Vous devez sélectionner au moins un mode de paiement pour les billets payants.",
+            "stripe": "Stripe (Cartes de crédit/débit, Google Pay, Apple Pay)",
+            "om": "Orange Money (Paiement mobile)"
+        },
+        "save": "Enregistrer"
+    },
+    "add_event": {
+        "title": "Ajouter un événement",
+        "fields": {
+            "name": "Nom de l'événement",
+            "description": "Description (facultatif)",
+            "location": "Lieu (facultatif)",
+            "slug": "Slug URL (facultatif)",
+            "slug_hint": "URL personnalisée pour votre événement (ex: 'nom-evenement-2024'). Laissez vide pour générer automatiquement à partir du nom.",
+            "date": "Date de l'événement",
+            "start_time": "Heure de début",
+            "end_time": "Heure de fin",
+            "tax_type": "Type de taxe",
+            "tax_amount": "Montant de la taxe",
+            "banner": "Télécharger la bannière",
+            "tax_types": {
+                "percent": "Pourcentage %",
+                "fixed": "Montant fixe"
+            }
+        },
+        "buttons": {
+            "config": "Configuration",
+            "create": "Créer"
+        }
+    },
+    "counters": {
+        "title": "Guichets de vente",
+        "subtitle": "Gérez les points de vente physiques de votre organisation",
+        "add": "Ajouter un guichet",
+        "edit": "Modifier le guichet",
+        "no_data_title": "Aucun guichet trouvé",
+        "no_data": "Aucun guichet de vente trouvé. Commencez par en ajouter un pour débuter les ventes sur place.",
+        "form": {
+            "name": "Nom du guichet",
+            "status": "Statut du guichet (Actif/Inactif)"
+        },
+        "table": {
+            "name": "Nom",
+            "status": "Statut",
+            "created": "Créé le",
+            "actions": "Actions"
+        }
+    }
+}

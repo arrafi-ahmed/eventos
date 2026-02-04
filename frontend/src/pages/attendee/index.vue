@@ -1,12 +1,15 @@
 <script setup>
   import { computed, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
-  import { apiCall } from '@/utils'
+  import { apiCall, isValidEmail } from '@/utils'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'profile',
@@ -21,6 +24,47 @@
   const router = useRouter()
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
   const { rounded, variant, density, size } = useUiProps()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('profile.title'),
+    subtitle: t('profile.subtitle'),
+    edit_organization: t('profile.edit_organization'),
+    update_profile: {
+      title: t('profile.sections.update_profile.title'),
+      full_name: t('profile.labels.full_name'),
+      email: t('profile.labels.email'),
+      password_hint: t('profile.sections.update_profile.password_hint'),
+      current_password: t('profile.labels.current_password'),
+      new_password: t('profile.labels.new_password'),
+      confirm_new_password: t('profile.labels.confirm_new_password'),
+      save_btn: t('profile.sections.update_profile.save_btn'),
+      no_changes: t('profile.sections.update_profile.no_changes'),
+      mismatch: t('profile.sections.update_profile.mismatch'),
+    },
+    appearance: {
+      title: t('profile.sections.appearance.title'),
+      hint: t('profile.sections.appearance.hint'),
+      dark_mode: t('profile.sections.appearance.dark_mode'),
+      dark_mode_desc: t('profile.sections.appearance.dark_mode_desc'),
+    },
+    delete_account: {
+      title: t('profile.sections.delete_account.title'),
+      hint: t('profile.sections.delete_account.hint'),
+      confirm_label: (email) => t('profile.sections.delete_account.confirm_label', { email }),
+      confirm_required: t('profile.sections.delete_account.confirm_required'),
+      password_required: t('profile.sections.delete_account.password_required'),
+      delete_btn: t('profile.sections.delete_account.delete_btn'),
+      popup_title: t('profile.sections.delete_account.popup_title'),
+      popup_content: t('profile.sections.delete_account.popup_content'),
+      confirm_email_hint: t('profile.sections.delete_account.confirm_email_hint'),
+    },
+    rules: {
+      name_required: t('profile.rules.name_required'),
+      email_required: t('auth.rules.email_required'),
+      email_invalid: t('auth.rules.email_invalid'),
+    },
+  }))
 
   const updateFormRef = ref(null)
   const isUpdateValid = ref(true)
@@ -47,10 +91,9 @@
   const isDarkTheme = computed(() => currentTheme.value === 'dark')
   const vuetifyTheme = useTheme()
 
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const emailRules = [
-    v => !!String(v ?? '').trim() || 'Email is required',
-    v => emailPattern.test(String(v ?? '').trim()) || 'Invalid email',
+    v => !!String(v ?? '').trim() || ui.value.rules.email_required,
+    v => isValidEmail(v) || ui.value.rules.email_invalid,
   ]
 
   watch(
@@ -84,13 +127,13 @@
     if (!isUpdateValid.value) return
 
     if (profileForm.value.newPassword && profileForm.value.newPassword !== profileForm.value.confirmPassword) {
-      store.commit('addSnackbar', { text: 'New passwords do not match.', color: 'error' })
+      store.commit('addSnackbar', { text: ui.value.update_profile.mismatch, color: 'error' })
       return
     }
 
     const payload = buildUpdatePayload()
     if (Object.keys(payload).length === 0) {
-      store.commit('addSnackbar', { text: 'No changes detected.', color: 'info' })
+      store.commit('addSnackbar', { text: ui.value.update_profile.no_changes, color: 'info' })
       return
     }
 
@@ -113,7 +156,7 @@
     if (!isDeleteValid.value) return
 
     if (deleteForm.value.confirmation !== currentUser.value?.email) {
-      store.commit('addSnackbar', { text: 'Please type your email to confirm deletion.', color: 'error' })
+      store.commit('addSnackbar', { text: ui.value.delete_account.confirm_email_hint, color: 'error' })
       return
     }
 
@@ -149,8 +192,8 @@
   <v-container class="settings-container">
     <PageTitle
       :show-back-button="true"
-      subtitle="Manage your profile, theme, and account access"
-      title="Profile"
+      :subtitle="ui.subtitle"
+      :title="ui.title"
       @click:back="router.back()"
     >
       <template
@@ -166,7 +209,7 @@
           variant="tonal"
           @click="router.push({ name: 'organization-edit' })"
         >
-          Edit Organization
+          {{ ui.edit_organization }}
         </v-btn>
       </template>
     </PageTitle>
@@ -185,7 +228,7 @@
           <v-expansion-panel value="update-profile">
             <v-expansion-panel-title>
               <div class="text-subtitle-1 font-weight-medium">
-                Update Profile
+                {{ ui.update_profile.title }}
               </div>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
@@ -199,9 +242,9 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Full Name"
+                  :label="ui.update_profile.full_name"
                   :rounded="rounded"
-                  :rules="[(v) => !!v || 'Full name is required']"
+                  :rules="[(v) => !!v || ui.rules.name_required]"
                   :variant="variant"
                 />
 
@@ -210,7 +253,7 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Email"
+                  :label="ui.update_profile.email"
                   :rounded="rounded"
                   :rules="emailRules"
                   :variant="variant"
@@ -222,7 +265,7 @@
                   density="compact"
                   variant="tonal"
                 >
-                  Changing your email or password requires your current password.
+                  {{ ui.update_profile.password_hint }}
                 </v-alert>
 
                 <v-text-field
@@ -230,7 +273,7 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Current Password"
+                  :label="ui.update_profile.current_password"
                   :rounded="rounded"
                   :type="'password'"
                   :variant="variant"
@@ -241,7 +284,7 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="New Password"
+                  :label="ui.update_profile.new_password"
                   :rounded="rounded"
                   :type="'password'"
                   :variant="variant"
@@ -252,7 +295,7 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Confirm New Password"
+                  :label="ui.update_profile.confirm_new_password"
                   :rounded="rounded"
                   :type="'password'"
                   :variant="variant"
@@ -268,7 +311,7 @@
                   :size="size"
                   type="submit"
                 >
-                  Save Changes
+                  {{ ui.update_profile.save_btn }}
                 </v-btn>
               </v-form>
             </v-expansion-panel-text>
@@ -277,7 +320,7 @@
           <v-expansion-panel value="appearance">
             <v-expansion-panel-title>
               <div class="text-subtitle-1 font-weight-medium">
-                Appearance
+                {{ ui.appearance.title }}
               </div>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
@@ -287,15 +330,15 @@
                 density="compact"
                 variant="tonal"
               >
-                Theme changes apply instantly and are saved to your account.
+                {{ ui.appearance.hint }}
               </v-alert>
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-body-1 font-weight-medium">
-                    Dark mode
+                    {{ ui.appearance.dark_mode }}
                   </div>
                   <div class="text-caption text-medium-emphasis">
-                    Toggle between light and dark experience
+                    {{ ui.appearance.dark_mode_desc }}
                   </div>
                 </div>
                 <v-switch
@@ -313,7 +356,7 @@
           <v-expansion-panel value="delete-profile">
             <v-expansion-panel-title>
               <div class="text-subtitle-1 font-weight-medium text-error">
-                Delete Profile
+                {{ ui.delete_account.title }}
               </div>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
@@ -323,7 +366,7 @@
                 density="compact"
                 variant="tonal"
               >
-                This action is permanent. All data associated with your account will be removed if possible.
+                {{ ui.delete_account.hint }}
               </v-alert>
 
               <v-form
@@ -336,9 +379,9 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  :label="`Type your email (${currentUser?.email || ''}) to confirm`"
+                  :label="ui.delete_account.confirm_label(currentUser?.email || '')"
                   :rounded="rounded"
-                  :rules="[(v) => !!v || 'Confirmation is required']"
+                  :rules="[(v) => !!v || ui.delete_account.confirm_required]"
                   :variant="variant"
                 />
 
@@ -347,16 +390,16 @@
                   class="mb-4"
                   :density="density"
                   hide-details="auto"
-                  label="Current Password"
+                  :label="ui.update_profile.current_password"
                   :rounded="rounded"
-                  :rules="[(v) => !!v || 'Current password is required']"
+                  :rules="[(v) => !!v || ui.delete_account.password_required]"
                   :type="'password'"
                   :variant="variant"
                 />
 
                 <ConfirmationDialog
-                  popup-content="Are you absolutely sure? This action cannot be undone."
-                  popup-title="Delete Account"
+                  :popup-content="ui.delete_account.popup_content"
+                  :popup-title="ui.delete_account.popup_title"
                   @confirm="handleDeleteProfile"
                 >
                   <template #activator="{ onClick }">
@@ -370,7 +413,7 @@
                       :size="size"
                       @click="onClick"
                     >
-                      Delete Account
+                      {{ ui.delete_account.delete_btn }}
                     </v-btn>
                   </template>
                 </ConfirmationDialog>

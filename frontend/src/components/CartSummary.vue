@@ -1,10 +1,13 @@
 <script setup>
-  import { computed, ref, watch } from 'vue'
+  import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
   import { useUiProps } from '@/composables/useUiProps'
   import { formatPrice } from '@/utils'
+
+  const { t } = useI18n()
 
   const { rounded, size, variant } = useUiProps()
   const { xs } = useDisplay()
@@ -64,7 +67,7 @@
     return subtotal + shipping
   }
 
-  const eventCurrency = computed(() => event.value?.currency || 'USD')
+  const eventCurrency = computed(() => event.value?.currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD')
 
   // Calculate shipping cost for products
   const shippingCost = computed(() => {
@@ -131,29 +134,32 @@
     store.dispatch('checkout/goToCheckout', { router, route })
   }
 
-  // Watch for state changes and sync with localStorage
-  watch(
-    () => selectedTickets.value,
-    newTickets => {
-      localStorage.setItem('selectedTickets', JSON.stringify(newTickets))
-    },
-    { deep: true },
-  )
+  // Cross-tab synchronization handler
+  function handleStorageSync (event) {
+    // Only refresh if cart-related keys changed in another tab
+    const cartKeys = ['selectedTickets', 'selectedProducts', 'cartEventSlug', 'isCheckoutExist']
+    if (cartKeys.includes(event.key)) {
+      console.log(`[Storage Event] Key "${event.key}" changed in another tab. Syncing...`)
+      store.dispatch('checkout/initializeFromStorage')
+    }
+  }
 
-  watch(
-    () => selectedProducts.value,
-    newProducts => {
-      localStorage.setItem('selectedProducts', JSON.stringify(newProducts))
-    },
-    { deep: true },
-  )
+  onMounted(() => {
+    // Initialize state from storage on mount (handling fresh tab load)
+    store.dispatch('checkout/initializeFromStorage')
 
-  watch(
-    () => isCheckoutExist.value,
-    newVal => {
-      localStorage.setItem('isCheckoutExist', newVal)
-    },
-  )
+    // Listen for storage changes from other tabs
+    window.addEventListener('storage', handleStorageSync)
+
+    // Sync current slug if cart is empty, but don't clear it automatically anymore
+    if (route.params.slug) {
+      store.dispatch('checkout/enforceExclusivity', route.params.slug)
+    }
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageSync)
+  })
 </script>
 
 <template>
@@ -178,18 +184,18 @@
             <div :class="{ 'mb-2': xs }">
               <div class="text-body-2 font-weight-medium">
                 <span v-if="totalSelectedTickets > 0">
-                  <span>{{ totalSelectedTickets }} ticket{{ totalSelectedTickets > 1 ? 's' : '' }}</span>
+                  <span>{{ totalSelectedTickets }} {{ t('components.cart.ticket', totalSelectedTickets) }}</span>
                 </span>
                 <span
                   v-if="totalSelectedTickets > 0 && event?.config?.enableMerchandiseShop && totalSelectedProducts > 0"
                 >, </span>
                 <span v-if="event?.config?.enableMerchandiseShop && totalSelectedProducts > 0">
-                  {{ totalSelectedProducts }} product{{ totalSelectedProducts > 1 ? 's' : '' }}
+                  {{ totalSelectedProducts }} {{ t('components.cart.product', totalSelectedProducts) }}
                 </span>
-                <span> selected</span>
+                <span> {{ t('components.cart.selected') }}</span>
               </div>
               <div class="text-body-2 font-weight-bold">
-                Total: {{ formatPrice(getTotalAmount(), eventCurrency) }}
+                {{ t('components.cart.total_label') }}: {{ formatPrice(getTotalAmount(), eventCurrency) }}
               </div>
             </div>
           </div>
@@ -210,7 +216,7 @@
               >
                 mdi-cart
               </v-icon>
-              Cart
+              {{ t('components.cart.cart_btn') }}
             </v-btn>
             <v-btn
               class="ml-2 flex-grow-1"
@@ -227,7 +233,7 @@
               >
                 mdi-arrow-right
               </v-icon>
-              {{ xs ? 'Continue?' : 'Continue to Registration' }}
+              {{ xs ? t('components.cart.continue_xs') : t('components.cart.checkout_btn') }}
             </v-btn>
           </div>
         </div>
@@ -260,10 +266,10 @@
             </div>
             <div class="ml-3">
               <div class="text-h6 font-weight-bold">
-                Cart
+                {{ t('components.cart.header') }}
               </div>
               <div class="text-caption">
-                {{ totalSelectedItems }} item{{ totalSelectedItems !== 1 ? 's' : '' }}
+                {{ totalSelectedItems }} {{ t('components.cart.ticket', totalSelectedItems) }}
               </div>
             </div>
           </div>
@@ -297,10 +303,10 @@
             </v-icon>
           </div>
           <h3 class="text-h6 text-grey-darken-1 mb-2 mt-4">
-            Your cart is empty
+            {{ t('components.cart.empty_title') }}
           </h3>
           <p class="text-body-2 text-grey-lighten-1 mb-6">
-            Select tickets or products to get started
+            {{ t('components.cart.empty_desc') }}
           </p>
           <v-btn
             class="continue-btn"
@@ -310,7 +316,7 @@
             variant="outlined"
             @click="closeCartDialog"
           >
-            Continue Shopping
+            {{ t('components.cart.continue_shopping') }}
           </v-btn>
         </div>
 
@@ -331,7 +337,7 @@
                     {{ item.title }}
                   </h6>
                   <div class="item-price">
-                    {{ formatPrice(item.price, eventCurrency) }} each
+                    {{ formatPrice(item.price, eventCurrency) }} {{ t('components.cart.each') }}
                   </div>
                 </div>
 
@@ -418,7 +424,7 @@
                     {{ item.name }}
                   </h6>
                   <div class="item-price">
-                    {{ formatPrice(item.price, eventCurrency) }} each
+                    {{ formatPrice(item.price, eventCurrency) }} {{ t('components.cart.each') }}
                   </div>
                 </div>
 
@@ -486,18 +492,18 @@
           <!-- Summary Section -->
           <div class="cart-summary">
             <div class="summary-line">
-              <span class="summary-label">Subtotal</span>
+              <span class="summary-label">{{ t('components.cart.subtotal') }}</span>
               <span class="summary-amount">{{ formatPrice(getSubtotalAmount(), eventCurrency) }}</span>
             </div>
             <div
               v-if="shippingCost > 0"
               class="summary-line"
             >
-              <span class="summary-label">Shipping</span>
+              <span class="summary-label">{{ t('components.cart.shipping') }}</span>
               <span class="summary-amount">{{ formatPrice(shippingCost, eventCurrency) }}</span>
             </div>
             <div class="summary-line total-line">
-              <span class="summary-label">Total</span>
+              <span class="summary-label">{{ t('components.cart.total') }}</span>
               <span class="summary-amount">{{ formatPrice(getTotalAmount(), eventCurrency) }}</span>
             </div>
 
@@ -519,7 +525,7 @@
                 mdi-credit-card-outline
               </v-icon>
               <span class="font-weight-medium">
-                Checkout
+                {{ t('components.cart.checkout') }}
               </span>
             </v-btn>
 
@@ -533,7 +539,7 @@
                 variant="text"
                 @click="closeCartDialog"
               >
-                Continue Shopping
+                {{ t('components.cart.continue_shopping') }}
               </v-btn>
             </div>
           </div>

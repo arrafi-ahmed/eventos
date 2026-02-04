@@ -1,16 +1,20 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
   import { useUiProps } from '@/composables/useUiProps'
   import { isValidEmail, isValidPass, showApiQueryMsg } from '@/utils'
 
+  const { t } = useI18n()
+
   definePage({
     name: 'register',
     meta: {
       layout: 'default',
       title: 'Register',
+      titleKey: 'auth.register.meta_title',
       requiresNoAuth: true,
     },
   })
@@ -19,6 +23,26 @@
   const { rounded, size, variant, density } = useUiProps()
   const router = useRouter()
   const store = useStore()
+
+  // Computed UI Pattern
+  const ui = computed(() => ({
+    title: t('auth.register.title'),
+    name: t('auth.labels.name'),
+    email_address: t('auth.labels.email_address'),
+    password: t('auth.labels.password'),
+    confirm_password: t('auth.labels.confirm_password'),
+    name_required: t('auth.rules.name_required'),
+    name_too_long: t('auth.rules.name_too_long'),
+    email_required: t('auth.rules.email_required'),
+    email_invalid: t('auth.rules.email_invalid'),
+    confirm_password_required: t('auth.rules.confirm_password_required'),
+    passwords_dont_match: t('auth.rules.passwords_dont_match'),
+    register_as: t('auth.register.i_want_to_register_as'),
+    register_btn: t('auth.register.title'),
+    already_registered: t('auth.register.already_registered'),
+    role_required: t('auth.rules.role_required'),
+  }))
+
   const calcHome = computed(() => store.getters['auth/calcHome'])
   const userInit = {
     fullName: null,
@@ -27,10 +51,10 @@
     role: 40, // Default to attendee
   }
   const user = reactive({ ...userInit })
-  const roleOptions = [
-    { title: 'Attendee', value: 40 },
-    { title: 'Organizer', value: 30 },
-  ]
+  const roleOptions = computed(() => [
+    { title: t('auth.register.roles.attendee'), value: 40 },
+    { title: t('auth.register.roles.organizer'), value: 30 },
+  ])
   const confirmPassword = ref(null)
   const visible = ref(false)
   const form = ref(null)
@@ -54,6 +78,7 @@
     showApiQueryMsg()
   })
 </script>
+
 <template>
   <v-container class="fill-height">
     <v-row
@@ -73,7 +98,7 @@
           :rounded="rounded"
         >
           <v-card-title class="text-center font-weight-bold">
-            <h1>Register</h1>
+            <h1>{{ ui.title }}</h1>
           </v-card-title>
           <v-card-subtitle class="text-center">
             <!--            <h2 class="font-weight-regular">Hi, Welcome back 👋</h2>-->
@@ -92,12 +117,12 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Name"
+                :label="ui.name"
                 required
                 :rounded="rounded"
                 :rules="[
-                  (v) => !!v || 'Name is required!',
-                  (v) => (v && v.length <= 50) || 'Must not exceed 50 characters',
+                  (v) => !!v || ui.name_required,
+                  (v) => (v && v.length <= 50) || ui.name_too_long,
                 ]"
                 :variant="variant"
               />
@@ -109,12 +134,12 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Email Address"
+                :label="ui.email_address"
                 required
                 :rounded="rounded"
                 :rules="[
-                  (v) => !!v || 'Email is required!',
-                  (v) => isValidEmail(v) || 'Invalid Email',
+                  (v) => !!v || ui.email_required,
+                  (v) => isValidEmail(v) || ui.email_invalid,
                 ]"
                 :variant="variant"
               />
@@ -127,7 +152,7 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Password"
+                :label="ui.password"
                 required
                 :rounded="rounded"
                 :rules="isValidPass"
@@ -142,12 +167,12 @@
                 clearable
                 :density="density"
                 hide-details="auto"
-                label="Confirm Password"
+                :label="ui.confirm_password"
                 required
                 :rounded="rounded"
                 :rules="[
-                  (v) => !!v || 'Confirm Password is required!',
-                  (v) => v === user.password || 'Confirm password didn\'t match!',
+                  (v) => !!v || ui.confirm_password_required,
+                  (v) => v === user.password || ui.passwords_dont_match,
                 ]"
                 :type="visible ? 'text' : 'password'"
                 :variant="variant"
@@ -157,7 +182,7 @@
               <!-- Role Selection -->
               <div class="mt-2 mt-md-4">
                 <div class="text-body-2 text-medium-emphasis mb-2">
-                  I want to register as <span class="text-error">*</span>
+                  {{ ui.register_as }} <span class="text-error">*</span>
                 </div>
                 <v-radio-group
                   v-model="user.role"
@@ -165,7 +190,7 @@
                   color="primary"
                   :density="density"
                   hide-details="auto"
-                  :rules="[(v) => !!v || 'Role is required!']"
+                  :rules="[(v) => !!v || ui.role_required]"
                 >
                   <v-radio
                     :label="roleOptions[0].title"
@@ -186,7 +211,7 @@
                 :rounded="rounded"
                 @click="registerUser"
               >
-                Register
+                {{ ui.register_btn }}
               </v-btn>
 
               <div class="mt-2 mt-md-4 text-center">
@@ -194,7 +219,7 @@
                   class="clickable text-secondary"
                   @click="router.push({ name: 'signin' })"
                 >
-                  Already registered?
+                  {{ ui.already_registered }}
                 </span>
               </div>
             </v-form>

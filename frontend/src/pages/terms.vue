@@ -1,20 +1,31 @@
 <script setup>
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'terms',
     meta: {
       layout: 'default',
-      title: 'Terms and Conditions',
+      title: 'Terms & Conditions',
+      titleKey: 'pages.terms.title',
     },
   })
+
+  const ui = computed(() => ({
+    title: t('footer.terms_conditions'),
+    subtitle: t('common.legal.terms_subtitle'),
+  }))
 </script>
 
 <template>
   <v-container class="terms-container">
     <PageTitle
-      subtitle="Please read these terms carefully before using our service"
-      title="Terms and Conditions"
+      :subtitle="ui.subtitle"
+      :title="ui.title"
+      :title-key="'pages.terms.title'"
     />
 
     <v-row justify="center">
@@ -143,7 +154,6 @@
 <style scoped>
 .terms-container {
   min-height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 .terms-content {
@@ -158,9 +168,4 @@
   margin-bottom: 8px;
 }
 
-@media (max-width: 768px) {
-  .terms-container {
-    padding: 16px;
-  }
-}
 </style>

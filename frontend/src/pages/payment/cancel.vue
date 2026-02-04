@@ -64,6 +64,7 @@ definePage({
   meta: {
     layout: 'headerless',
     title: 'Payment Cancelled',
+    titleKey: 'pages.payment.cancel',
   },
 })
 

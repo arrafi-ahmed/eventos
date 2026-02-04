@@ -1,21 +1,28 @@
 <script setup>
-  import { ref } from 'vue'
-
+  import { computed, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
+
+  const { t } = useI18n()
 
   definePage({
     name: 'not-found',
     meta: {
       layout: 'default',
-      title: 'Not Found',
+      title: 'Page Not Found',
+      titleKey: 'pages.not_found.title',
     },
   })
 
   const route = useRoute()
   const store = useStore()
   const status = ref(route.params.status || 404)
-  const message = ref(route.params.message || 'Looks like you\'re lost!')
+  const message = ref(route.params.message || t('common.not_found.message'))
+
+  const ui = computed(() => ({
+    go_home: t('common.not_found.go_home'),
+  }))
 </script>
 
 <template>
@@ -37,7 +44,7 @@
           to="/"
           variant="text"
         >
-          Go Home
+          {{ ui.go_home }}
         </v-btn>
       </v-col>
     </v-row>

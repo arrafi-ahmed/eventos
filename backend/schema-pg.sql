@@ -41,7 +41,7 @@ CREATE TABLE event
     landing_config     JSONB,
     config             JSONB,
     slug               VARCHAR(255) UNIQUE,
-    currency           VARCHAR(3)   NOT NULL DEFAULT 'USD',
+    currency           VARCHAR(3)   NOT NULL,
     tax_amount INT,
     tax_type   VARCHAR(20),
     status     VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
@@ -150,7 +150,7 @@ CREATE TABLE orders
     id                       SERIAL PRIMARY KEY,
     order_number             VARCHAR(50) UNIQUE NOT NULL,
     total_amount             INT                NOT NULL,
-    currency                 VARCHAR(3)         NOT NULL DEFAULT 'USD',
+    currency                 VARCHAR(3)         NOT NULL,
     payment_status           VARCHAR(20)        NOT NULL DEFAULT 'pending', -- pending, paid, failed, refunded
     payment_gateway          VARCHAR(50),                                   -- stripe, orange_money, paypal, etc.
     gateway_transaction_id   VARCHAR(255),                                  -- Transaction ID from gateway
@@ -178,26 +178,6 @@ CREATE TABLE orders
     updated_at               TIMESTAMP                   DEFAULT NOW()
 );
 
-CREATE TABLE extras
-(
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    description TEXT,
-    price       INT,
-    currency    VARCHAR(3) NOT NULL DEFAULT 'USD',
-    content     JSONB, -- [{name, quantity}]
-    event_id    INT          NOT NULL REFERENCES event (id) ON DELETE CASCADE
-);
-
-CREATE TABLE extras_purchase
-(
-    id              SERIAL PRIMARY KEY,
-    extras_data     JSONB,                       -- [{name, price, content:[{name, quantity}]}]
-    status          BOOLEAN,                     
-    qr_uuid         VARCHAR(255) UNIQUE NOT NULL,
-    scanned_at      TIMESTAMP DEFAULT NULL,     
-    registration_id INT                 NOT NULL REFERENCES registration (id) ON DELETE CASCADE
-);
 
 CREATE TABLE form_question
 (
@@ -210,40 +190,6 @@ CREATE TABLE form_question
     event_id    INTEGER     REFERENCES event ON DELETE CASCADE
 );
 
-CREATE TABLE sponsorship
-(
-    id                       SERIAL PRIMARY KEY,
-    sponsor_data             JSONB       NOT NULL,                                        -- Store all sponsor information as JSONB
-    package_type             VARCHAR(50) NOT NULL,                                        -- elite, premier, diamond, etc.
-    amount                   INT         NOT NULL,
-    currency                 VARCHAR(3)  NOT NULL DEFAULT 'USD',
-    payment_status           VARCHAR(20) NOT NULL DEFAULT 'pending',                      -- pending, paid, failed, refunded
-    payment_gateway          VARCHAR(50),
-    gateway_transaction_id   VARCHAR(255),
-    gateway_response         JSONB,
-    stripe_payment_intent_id VARCHAR(255),
-    event_id                 INT         NOT NULL REFERENCES event (id) ON DELETE CASCADE,
-    organization_id          INT         NOT NULL REFERENCES organization (id) ON DELETE CASCADE,
-    registration_id          INT         REFERENCES registration (id) ON DELETE SET NULL, -- Optional link to registration
-    created_at               TIMESTAMP            DEFAULT NOW(),
-    updated_at               TIMESTAMP            DEFAULT NOW()
-);
-
-CREATE TABLE sponsorship_package
-(
-    id              SERIAL PRIMARY KEY,
-    name            VARCHAR(100) NOT NULL,
-    description     TEXT,
-    price           INT          NOT NULL,
-    currency        VARCHAR(3)   NOT NULL DEFAULT 'USD',
-    available_count INT                   DEFAULT -1, -- -1 means unlimited
-    features        JSONB        NOT NULL,            -- Array of features with included boolean
-    is_active       BOOLEAN               DEFAULT true,
-    event_id        INT          NOT NULL REFERENCES event (id) ON DELETE CASCADE,
-    organization_id INT          NOT NULL REFERENCES organization (id) ON DELETE CASCADE,
-    created_at      TIMESTAMP             DEFAULT NOW(),
-    updated_at      TIMESTAMP             DEFAULT NOW()
-);
 
 CREATE TABLE product
 (
@@ -296,34 +242,9 @@ CREATE TABLE event_visitor
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE footer_settings 
-(
-    id SERIAL PRIMARY KEY,
-    style VARCHAR(20) NOT NULL DEFAULT 'expanded' CHECK (style IN ('oneline', 'expanded')),
-    company_name VARCHAR(255),
-    company_address TEXT,
-    company_email VARCHAR(255),
-    company_phone VARCHAR(50),
-    quick_links JSONB DEFAULT '[]',
-    social_links JSONB DEFAULT '{}',
-    copyright_text VARCHAR(255),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
 
-CREATE TABLE header_settings 
-(
-    id SERIAL PRIMARY KEY,
-    logo_image VARCHAR(255),
-    logo_image_dark VARCHAR(255),
-    logo_position VARCHAR(20) NOT NULL DEFAULT 'left' CHECK (logo_position IN ('left', 'center', 'right')),
-    menu_position VARCHAR(20) NOT NULL DEFAULT 'right' CHECK (menu_position IN ('left', 'center', 'right')),
-    logo_width_left INT DEFAULT 300,
-    logo_width_center INT DEFAULT 180,
-    logo_width_mobile INT DEFAULT 120,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+
+
 
 CREATE TABLE password_reset_requests
 (
@@ -335,16 +256,12 @@ CREATE TABLE password_reset_requests
     created_at TIMESTAMP    DEFAULT NOW()
 );
 
-CREATE TABLE appearance_settings
+CREATE TABLE system_settings
 (
-    id              SERIAL PRIMARY KEY,
-    default_theme   VARCHAR(20) NOT NULL DEFAULT 'dark' CHECK (default_theme IN ('dark', 'light')),
-    light_colors    JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    light_variables JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    dark_colors     JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    dark_variables  JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    created_at      TIMESTAMPTZ DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ DEFAULT NOW()
+    key                      VARCHAR(100) PRIMARY KEY,
+    value                    JSONB DEFAULT '{}'::jsonb,
+    created_at               TIMESTAMPTZ DEFAULT NOW(),
+    updated_at               TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE homepage_section
@@ -378,18 +295,7 @@ CREATE TABLE homepage_form_submission
     created_at TIMESTAMP     DEFAULT NOW()
 );
 
-CREATE TABLE organizer_dashboard_banner
-(
-    id              SERIAL PRIMARY KEY,
-    is_enabled      BOOLEAN      NOT NULL DEFAULT false,
-    icon            VARCHAR(100) NOT NULL,
-    title           VARCHAR(255) NOT NULL,
-    description     TEXT,
-    cta_button_text VARCHAR(100) NOT NULL,
-    cta_button_url  VARCHAR(500) NOT NULL,
-    created_at      TIMESTAMPTZ  DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ  DEFAULT NOW()
-);
+
 
 CREATE TABLE promo_code (
     id SERIAL PRIMARY KEY,
@@ -508,15 +414,13 @@ CREATE INDEX idx_temp_registration_reminder_email_sent ON temp_registration (rem
 CREATE INDEX idx_password_reset_requests_token ON password_reset_requests (token);
 CREATE INDEX idx_password_reset_requests_email ON password_reset_requests (email);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_appearance_settings_singleton ON appearance_settings ((1));
-CREATE UNIQUE INDEX IF NOT EXISTS idx_organizer_dashboard_banner_singleton ON organizer_dashboard_banner ((1));
+
 
 CREATE INDEX idx_orders_sales_channel ON orders (sales_channel);
 CREATE INDEX idx_orders_cashier_id ON orders (cashier_id);
 CREATE INDEX idx_orders_ticket_counter_id ON orders (ticket_counter_id);
     CREATE INDEX idx_orders_cash_session_id ON orders (cash_session_id);
     CREATE INDEX idx_orders_gateway_transaction_id ON orders (gateway_transaction_id);
-    CREATE INDEX idx_sponsorship_gateway_transaction_id ON sponsorship (gateway_transaction_id);
 
 CREATE INDEX idx_ticket_counter_organization_id ON ticket_counter (organization_id);
 CREATE INDEX idx_cash_session_organization_id ON cash_session (organization_id);
@@ -533,8 +437,7 @@ CREATE INDEX idx_event_visitor_visited_at ON event_visitor(visited_at);
 CREATE INDEX idx_event_visitor_converted ON event_visitor(converted);
 CREATE INDEX idx_event_visitor_event_visited ON event_visitor(event_id, visited_at);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_header_settings_singleton ON header_settings ((1));
-CREATE UNIQUE INDEX IF NOT EXISTS idx_footer_settings_singleton ON footer_settings ((1));
+
 
 CREATE INDEX IF NOT EXISTS idx_support_sessions_session_id ON support_sessions(session_id);
 CREATE INDEX IF NOT EXISTS idx_support_sessions_user_email ON support_sessions(user_email);

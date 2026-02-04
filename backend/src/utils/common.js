@@ -3,7 +3,7 @@ const path = require("path");
 const qr = require("qrcode");
 const { API_BASE_URL, VUE_BASE_URL, ANDROID_BASE_URL, NODE_ENV } = process.env;
 
-const appInfo = { name: "EventOS", version: 1.0 };
+const appInfo = { name: "ticketi", version: 1.0 };
 
 const excludedSecurityURLs = [];
 
@@ -160,7 +160,7 @@ const getCurrencySymbol = ({ code, type }) => {
     return currencyData[type];
 };
 
-const defaultCurrency = getCurrencySymbol({ code: "xof" });
+const defaultCurrency = getCurrencySymbol({ code: "usd" });
 
 const generateQrData = async ({ registrationId, attendeeId, qrUuid }) => {
     const data = JSON.stringify({

@@ -2,6 +2,7 @@
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import AppNoData from '@/components/AppNoData.vue'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
@@ -13,11 +14,13 @@
     meta: {
       layout: 'default',
       title: 'Organizations',
+      titleKey: 'pages.admin.organizations',
       requiresAdmin: true,
       requiresAuth: true,
     },
   })
 
+  const { t } = useI18n()
   const { rounded, density, size } = useUiProps()
 
   const router = useRouter()
@@ -104,6 +107,7 @@
       :back-route="{ name: 'admin-dashboard' }"
       subtitle="Manage every organization on the platform"
       title="Organizations"
+      :title-key="'pages.admin.organizations'"
     >
       <template #actions>
         <v-row align="center">

@@ -1,6 +1,7 @@
 <script setup>
   import { onMounted, ref, computed } from 'vue'
   import { useStore } from 'vuex'
+  import { useI18n } from 'vue-i18n'
   import PageTitle from '@/components/PageTitle.vue'
   import { useUiProps } from '@/composables/useUiProps'
   import $axios from '@/plugins/axios'
@@ -11,12 +12,14 @@
     meta: {
       layout: 'default',
       title: 'Cashier Sales Logs',
+      titleKey: 'pages.manage.sales_logs',
       requiresOrganizer: true,
       requiresAuth: true,
     },
   })
 
   const { rounded, density, variant } = useUiProps()
+  const { t } = useI18n()
   const store = useStore()
   
   const loading = ref(false)
@@ -69,6 +72,7 @@
         <PageTitle
           subtitle="Detailed logs of all tickets sold by cashiers"
           title="Cashier Sales Logs"
+          :title-key="'pages.manage.sales_logs'"
         />
       </v-col>
     </v-row>

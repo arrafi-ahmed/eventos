@@ -4,7 +4,7 @@ import { currencies } from '@/utils/currency-list'
 import { countries } from '@/utils/country-list'
 
 export const appInfo = {
-  name: 'EventOS',
+  name: 'ticketi',
   version: 1.0,
   company: {
     name: null,
@@ -35,13 +35,13 @@ export const getApiPublicImageUrl = (imageName, type) => `${apiBaseUrl}/${type}/
 
 export function getUserImageUrl(imageName) {
   return imageName === 'null' || !imageName
-    ? getClientPublicImageUrl('default-user.jpg')
+    ? getClientPublicImageUrl('default-user.png')
     : getApiPublicImageUrl(imageName, 'user')
 }
 
 export function getOrganizationImageUrl(imageName) {
   return imageName === 'null' || !imageName
-    ? getClientPublicImageUrl('default-user.jpg')
+    ? getClientPublicImageUrl('default-user.png')
     : getApiPublicImageUrl(imageName, 'organization-logo')
 }
 
@@ -55,7 +55,7 @@ export function getEventImageUrl(imageName) {
 
 export function getProductImageUrl(imageName) {
   if (imageName === 'null' || !imageName) {
-    return null // Return null to show icon instead of image
+    return getClientPublicImageUrl('default-product.png')
   }
   return getApiPublicImageUrl(imageName, 'product-image')
 }
@@ -79,11 +79,6 @@ export const checkinItems = [
   { title: 'Checked-in', value: true },
 ]
 
-export const extrasItems = [
-  { title: '', value: null },
-  { title: 'Not Redeemed', value: false },
-  { title: 'Redeemed', value: true },
-]
 
 export function getQueryParam(param) {
   const queryParams = new URLSearchParams(window.location.search)
@@ -197,29 +192,33 @@ export function getCountryList(filterName) {
   return countries.map(item => item[filterName])
 }
 
-export function getCurrencySymbol({ code, type }) {
-  if (!code) return null
-  const codeUpper = code.toString().toUpperCase()
-  const currency = currencies.find(c => c.code === codeUpper)
+// Getter for default currency (from Vuex store)
+export const defaultCurrency = () => store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD'
 
-  if (!currency) {
+export const getCurrencySymbol = ({ code, type }) => {
+  // If code is provided, use it directly (this avoids store dependency when code is known)
+  // If not provided, fallback to store's default currency
+  const currency = code || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD'
+  const codeLower = currency.toString().toLowerCase()
+
+  const currencyMap = {
+    usd: { icon: 'mdi-currency-usd', symbol: '$', code: 'usd' },
+    gbp: { icon: 'mdi-currency-gbp', symbol: '£', code: 'gbp' },
+    eur: { icon: 'mdi-currency-eur', symbol: '€', code: 'eur' },
+    thb: { icon: 'mdi-currency-thb', symbol: '฿', code: 'thb' },
+    gnf: { icon: 'mdi-currency-cash', symbol: 'FG', code: 'gnf' },
+    xof: { icon: 'mdi-currency-cash', symbol: 'CFA', code: 'xof' },
+  }
+
+  const currencyData = currencyMap[codeLower]
+  if (!currencyData) {
     return null
   }
-
-  const currencyData = {
-    icon: 'mdi-cash', // Default icon
-    symbol: currency.symbol,
-    value: currency.code.toLowerCase(),
-    ...currency,
-  }
-
   if (type === undefined) {
     return currencyData
   }
   return currencyData[type]
 }
-
-export const defaultCurrency = getCurrencySymbol({ code: 'xof' })
 
 /**
  * Format price for display - converts cents to currency units
@@ -228,16 +227,19 @@ export const defaultCurrency = getCurrencySymbol({ code: 'xof' })
  * @param {object} options - Formatting options
  * @returns {string} Formatted price string
  */
-export function formatPrice(price, currency = 'USD', options = {}) {
+export const formatPrice = (price, currency, options = {}) => {
+  const finalCurrency = currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD'
   if (!price && price !== 0) {
     return ''
   }
 
   // Convert cents to currency units (prices are always stored in cents)
-  const amount = price / 100
+  // Get ratio for scaling (100 for cents, 1 for JPY/XOF etc)
+  const ratio = getCurrencyMinorUnitRatio(finalCurrency)
+  const amount = price / ratio
 
   // Get custom symbol if available
-  const symbol = getCurrencySymbol({ code: currency, type: 'symbol' })
+  const symbol = getCurrencySymbol({ code: finalCurrency, type: 'symbol' })
 
   const defaultOptions = {
     minimumFractionDigits: 0,
@@ -260,9 +262,36 @@ export function formatPrice(price, currency = 'USD', options = {}) {
   // Fallback to standard currency formatting if symbol not found
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: finalCurrency,
     ...formatOptions,
   }).format(amount)
+}
+
+/*
+* Formats a given amount into a currency string.
+*
+* @param {number} amount - The amount to formatting.
+* @param {string} [currency] - The currency code (e.g., 'USD', 'EUR'). If not provided, it falls back to the default currency from the store.
+* @returns {string} The formatted currency string.
+*/
+export const formatCurrency = (amount, currency) => {
+  const finalCurrency = currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD'
+  const symbol = getCurrencySymbol({ code: finalCurrency, type: 'symbol' })
+
+  // Get ratio to scale correctly
+  const ratio = getCurrencyMinorUnitRatio(finalCurrency)
+  const value = amount / ratio
+
+  // Use Intl.NumberFormat for proper formatting
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: finalCurrency,
+    }).format(value)
+  } catch (e) {
+    // Fallback if Intl fails or currency code is invalid
+    return `${symbol} ${value.toFixed(2)}`
+  }
 }
 
 /**
@@ -271,14 +300,15 @@ export function formatPrice(price, currency = 'USD', options = {}) {
  * @param {string} currency - Currency code
  * @returns {string} Compact formatted price string
  */
-export function formatPriceCompact(price, currency = 'USD') {
+export function formatPriceCompact(price, currency) {
+  const finalCurrency = currency || store.state.systemSettings?.settings?.localization?.defaultCurrency || 'USD'
   if (!price && price !== 0) {
     return ''
   }
 
   // Convert cents to currency units (prices are always stored in cents)
   const amount = price / 100
-  const symbol = getCurrencySymbol({ code: currency, type: 'symbol' }) || '$'
+  const symbol = getCurrencySymbol({ code: finalCurrency, type: 'symbol' }) || '$'
 
   if (amount >= 1000) {
     return `${symbol}${(amount / 1000).toFixed(1)}k`

@@ -1,5 +1,6 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -14,6 +15,7 @@
     meta: {
       layout: 'default',
       title: 'Edit Organization',
+      titleKey: 'pages.organizer.edit',
       requiresAuth: true,
     },
   })
@@ -23,6 +25,7 @@
   const router = useRouter()
   const store = useStore()
   const { rounded, density, variant, size } = useUiProps()
+  const { t } = useI18n()
 
   const currentUser = computed(() => store.state.auth.currentUser)
   const targetOrganizationId = computed(() => {
@@ -124,6 +127,7 @@
       :back-route="backRoute"
       subtitle="Update your organization details and configuration"
       title="Edit Organization"
+      :title-key="'pages.organizer.edit'"
     />
 
     <v-row justify="center">
